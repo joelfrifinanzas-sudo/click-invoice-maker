@@ -28,7 +28,6 @@ const Index = () => {
               <InvoicePreview 
                 invoiceData={invoiceData} 
                 onBack={handleBackToForm}
-                invoiceNumber={`${Date.now().toString().slice(-6)}`}
               />
             </div>
           )

@@ -5,16 +5,37 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Download, Printer, ArrowLeft } from 'lucide-react';
 import { InvoiceData } from './InvoiceForm';
+import { generateInvoicePDF, getNextInvoiceNumber } from '@/utils/pdfGenerator';
+import { useState, useEffect } from 'react';
 
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
   onBack: () => void;
-  invoiceNumber?: string;
 }
 
-export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber = '001' }: InvoicePreviewProps) => {
+export const InvoicePreview = ({ invoiceData, onBack }: InvoicePreviewProps) => {
+  const [invoiceNumber, setInvoiceNumber] = useState<string>('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  useEffect(() => {
+    // Generar número de factura al cargar el componente
+    const number = getNextInvoiceNumber();
+    setInvoiceNumber(number);
+  }, []);
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      await generateInvoicePDF(invoiceData, invoiceNumber);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   const formatCurrency = (amount: string) => {
@@ -38,9 +59,9 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber = '001' }: I
             <Printer className="w-4 h-4 mr-2" />
             Imprimir
           </Button>
-          <Button>
+          <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF}>
             <Download className="w-4 h-4 mr-2" />
-            Descargar PDF
+            {isGeneratingPDF ? 'Generando PDF...' : 'Descargar PDF'}
           </Button>
         </div>
       </div>
@@ -64,6 +85,7 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber = '001' }: I
               </div>
             </div>
             <div className="text-right">
+              <p className="text-sm text-invoice-gray mb-1">{invoiceData.businessName}</p>
               <p className="text-sm text-invoice-gray">Fecha de emisión:</p>
               <p className="font-semibold">
                 {format(invoiceData.date, "dd 'de' MMMM 'de' yyyy", { locale: es })}
@@ -122,8 +144,19 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber = '001' }: I
             </div>
           </div>
 
+          {/* Firma */}
+          <div className="mt-12 pt-6 border-t border-border">
+            <div className="flex justify-between items-start">
+              <div className="text-center">
+                <div className="w-48 border-b border-border mb-2"></div>
+                <p className="text-sm font-medium">{invoiceData.signatureName}</p>
+                <p className="text-xs text-invoice-gray">Firma autorizada</p>
+              </div>
+            </div>
+          </div>
+
           {/* Footer */}
-          <div className="mt-12 pt-6 border-t border-border text-center text-sm text-invoice-gray">
+          <div className="mt-8 text-center text-sm text-invoice-gray">
             <p>Gracias por su preferencia</p>
             <p className="mt-2">Esta factura fue generada con <span className="text-invoice-blue font-medium">Factura en 1 Click</span></p>
           </div>

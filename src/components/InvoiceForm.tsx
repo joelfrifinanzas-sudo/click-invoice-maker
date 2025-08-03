@@ -18,6 +18,8 @@ export interface InvoiceData {
   amount: string;
   date: Date;
   logo: string | null;
+  businessName: string;
+  signatureName: string;
 }
 
 interface InvoiceFormProps {
@@ -32,13 +34,18 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     amount: '',
     date: new Date(),
     logo: localStorage.getItem('invoice-logo') || null,
+    businessName: localStorage.getItem('business-name') || '',
+    signatureName: localStorage.getItem('signature-name') || '',
   });
 
   const [dragActive, setDragActive] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.clientName && formData.concept && formData.amount) {
+    if (formData.clientName && formData.concept && formData.amount && formData.businessName && formData.signatureName) {
+      // Guardar datos del negocio para futuros usos
+      localStorage.setItem('business-name', formData.businessName);
+      localStorage.setItem('signature-name', formData.signatureName);
       onGenerateInvoice(formData);
     }
   };
@@ -139,6 +146,30 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
             )}
           </div>
 
+          {/* Business Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="businessName">Nombre de tu negocio *</Label>
+              <Input
+                id="businessName"
+                value={formData.businessName}
+                onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
+                placeholder="Ej: Mi Empresa S.R.L."
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="signatureName">Nombre para firma *</Label>
+              <Input
+                id="signatureName"
+                value={formData.signatureName}
+                onChange={(e) => setFormData(prev => ({ ...prev, signatureName: e.target.value }))}
+                placeholder="Ej: Juan Rodríguez"
+                required
+              />
+            </div>
+          </div>
+
           {/* Client Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -221,7 +252,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
           <Button 
             type="submit" 
             className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
-            disabled={!formData.clientName || !formData.concept || !formData.amount}
+            disabled={!formData.clientName || !formData.concept || !formData.amount || !formData.businessName || !formData.signatureName}
           >
             <Receipt className="w-4 h-4 mr-2" />
             Generar Factura
