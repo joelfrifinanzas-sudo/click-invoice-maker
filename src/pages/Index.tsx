@@ -1,11 +1,38 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { InvoiceForm, InvoiceData } from '@/components/InvoiceForm';
+import { InvoicePreview } from '@/components/InvoicePreview';
 
 const Index = () => {
+  const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handleGenerateInvoice = (data: InvoiceData) => {
+    setInvoiceData(data);
+    setShowPreview(true);
+  };
+
+  const handleBackToForm = () => {
+    setShowPreview(false);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-subtle p-4">
+      <div className="container mx-auto py-8">
+        {!showPreview ? (
+          <div className="animate-fade-in">
+            <InvoiceForm onGenerateInvoice={handleGenerateInvoice} />
+          </div>
+        ) : (
+          invoiceData && (
+            <div className="animate-slide-up">
+              <InvoicePreview 
+                invoiceData={invoiceData} 
+                onBack={handleBackToForm}
+                invoiceNumber={`${Date.now().toString().slice(-6)}`}
+              />
+            </div>
+          )
+        )}
       </div>
     </div>
   );
