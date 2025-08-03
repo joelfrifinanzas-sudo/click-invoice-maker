@@ -14,6 +14,7 @@ import { es } from 'date-fns/locale';
 export interface InvoiceData {
   clientName: string;
   clientId: string;
+  clientPhone: string;
   concept: string;
   amount: string;
   date: Date;
@@ -30,6 +31,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   const [formData, setFormData] = useState<InvoiceData>({
     clientName: '',
     clientId: '',
+    clientPhone: '',
     concept: '',
     amount: '',
     date: new Date(),
@@ -191,6 +193,18 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                 placeholder="Ej: 001-1234567-8"
               />
             </div>
+          </div>
+
+          {/* Client Contact */}
+          <div className="space-y-2">
+            <Label htmlFor="clientPhone">Teléfono del cliente (opcional)</Label>
+            <Input
+              id="clientPhone"
+              type="tel"
+              value={formData.clientPhone}
+              onChange={(e) => setFormData(prev => ({ ...prev, clientPhone: e.target.value }))}
+              placeholder="Ej: +1 809-123-4567 (para envío por WhatsApp)"
+            />
           </div>
 
           {/* Service Details */}

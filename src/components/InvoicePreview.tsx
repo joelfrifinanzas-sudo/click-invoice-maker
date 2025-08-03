@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Download, Printer, ArrowLeft } from 'lucide-react';
+import { Download, Printer, ArrowLeft, MessageCircle, Mail } from 'lucide-react';
 import { InvoiceData } from './InvoiceForm';
 import { generateInvoicePDF, getNextInvoiceNumber } from '@/utils/pdfGenerator';
+import { generateWhatsAppLink, generateEmailLink } from '@/utils/shareUtils';
 import { useState, useEffect } from 'react';
 
 interface InvoicePreviewProps {
@@ -38,6 +39,16 @@ export const InvoicePreview = ({ invoiceData, onBack }: InvoicePreviewProps) => 
     }
   };
 
+  const handleWhatsAppShare = () => {
+    const whatsappLink = generateWhatsAppLink(invoiceData, invoiceNumber);
+    window.open(whatsappLink, '_blank');
+  };
+
+  const handleEmailShare = () => {
+    const emailLink = generateEmailLink(invoiceData, invoiceNumber);
+    window.location.href = emailLink;
+  };
+
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
     return new Intl.NumberFormat('es-DO', {
@@ -54,7 +65,7 @@ export const InvoicePreview = ({ invoiceData, onBack }: InvoicePreviewProps) => 
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver al formulario
         </Button>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2" />
             Imprimir
@@ -62,6 +73,14 @@ export const InvoicePreview = ({ invoiceData, onBack }: InvoicePreviewProps) => 
           <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF}>
             <Download className="w-4 h-4 mr-2" />
             {isGeneratingPDF ? 'Generando PDF...' : 'Descargar PDF'}
+          </Button>
+          <Button variant="outline" onClick={handleWhatsAppShare} className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100">
+            <MessageCircle className="w-4 h-4 mr-2" />
+            Enviar por WhatsApp
+          </Button>
+          <Button variant="outline" onClick={handleEmailShare} className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
+            <Mail className="w-4 h-4 mr-2" />
+            Enviar por Correo
           </Button>
         </div>
       </div>
@@ -99,6 +118,9 @@ export const InvoicePreview = ({ invoiceData, onBack }: InvoicePreviewProps) => 
             <p className="font-medium text-lg">{invoiceData.clientName}</p>
             {invoiceData.clientId && (
               <p className="text-invoice-gray">Cédula/RNC: {invoiceData.clientId}</p>
+            )}
+            {invoiceData.clientPhone && (
+              <p className="text-invoice-gray">Teléfono: {invoiceData.clientPhone}</p>
             )}
           </div>
 
