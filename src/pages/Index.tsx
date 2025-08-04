@@ -1,14 +1,25 @@
 import { useState } from 'react';
 import { InvoiceForm, InvoiceData } from '@/components/InvoiceForm';
 import { InvoicePreview } from '@/components/InvoicePreview';
+import { Button } from '@/components/ui/button';
+import { History } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { saveInvoiceToHistory } from '@/utils/invoiceHistory';
+import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
 
 const Index = () => {
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
 
   const handleGenerateInvoice = (data: InvoiceData) => {
+    const nextInvoiceNumber = getNextInvoiceNumber();
     setInvoiceData(data);
+    setInvoiceNumber(nextInvoiceNumber);
     setShowPreview(true);
+    
+    // Guardar en historial
+    saveInvoiceToHistory(data, nextInvoiceNumber);
   };
 
   const handleBackToForm = () => {
@@ -20,6 +31,14 @@ const Index = () => {
       <div className="container mx-auto py-8">
         {!showPreview ? (
           <div className="animate-fade-in">
+            <div className="flex justify-end mb-4">
+              <Link to="/history">
+                <Button variant="outline" size="sm">
+                  <History className="w-4 h-4 mr-2" />
+                  Ver Historial
+                </Button>
+              </Link>
+            </div>
             <InvoiceForm onGenerateInvoice={handleGenerateInvoice} />
           </div>
         ) : (
@@ -28,6 +47,7 @@ const Index = () => {
               <InvoicePreview 
                 invoiceData={invoiceData} 
                 onBack={handleBackToForm}
+                invoiceNumber={invoiceNumber}
               />
             </div>
           )

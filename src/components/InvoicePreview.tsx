@@ -12,17 +12,14 @@ import { useState, useEffect } from 'react';
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
   onBack: () => void;
+  invoiceNumber?: string;
 }
 
-export const InvoicePreview = ({ invoiceData, onBack }: InvoicePreviewProps) => {
-  const [invoiceNumber, setInvoiceNumber] = useState<string>('');
+export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePreviewProps) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-
-  useEffect(() => {
-    // Generar número de factura al cargar el componente
-    const number = getNextInvoiceNumber();
-    setInvoiceNumber(number);
-  }, []);
+  
+  // Usar el número de factura pasado como prop o generar uno nuevo
+  const currentInvoiceNumber = invoiceNumber || getNextInvoiceNumber();
 
   const handlePrint = () => {
     window.print();
@@ -31,7 +28,7 @@ export const InvoicePreview = ({ invoiceData, onBack }: InvoicePreviewProps) => 
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      await generateInvoicePDF(invoiceData, invoiceNumber);
+      await generateInvoicePDF(invoiceData, currentInvoiceNumber);
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {
@@ -40,12 +37,12 @@ export const InvoicePreview = ({ invoiceData, onBack }: InvoicePreviewProps) => 
   };
 
   const handleWhatsAppShare = () => {
-    const whatsappLink = generateWhatsAppLink(invoiceData, invoiceNumber);
+    const whatsappLink = generateWhatsAppLink(invoiceData, currentInvoiceNumber);
     window.open(whatsappLink, '_blank');
   };
 
   const handleEmailShare = () => {
-    const emailLink = generateEmailLink(invoiceData, invoiceNumber);
+    const emailLink = generateEmailLink(invoiceData, currentInvoiceNumber);
     window.location.href = emailLink;
   };
 
@@ -100,7 +97,7 @@ export const InvoicePreview = ({ invoiceData, onBack }: InvoicePreviewProps) => 
               )}
               <div>
                 <h1 className="text-3xl font-bold text-invoice-blue">FACTURA</h1>
-                <p className="text-invoice-gray">#{invoiceNumber}</p>
+                <p className="text-invoice-gray">#{currentInvoiceNumber}</p>
               </div>
             </div>
             <div className="text-right">
