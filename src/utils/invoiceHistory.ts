@@ -1,4 +1,4 @@
-import { InvoiceData } from '@/components/InvoiceForm';
+import { InvoiceData, ServiceItem } from '@/components/InvoiceForm';
 
 export interface HistoryInvoice extends InvoiceData {
   invoiceNumber: string;

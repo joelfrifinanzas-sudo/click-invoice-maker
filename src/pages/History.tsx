@@ -116,10 +116,12 @@ const HistoryPage = () => {
                             <p className="text-sm text-muted-foreground">{invoice.clientId}</p>
                           )}
                           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {invoice.concept}
+                            {invoice.services.length === 1 
+                              ? invoice.services[0].concept 
+                              : `${invoice.services.length} servicios`}
                           </p>
                           <p className="text-lg font-semibold text-primary mt-2">
-                            {formatCurrency(invoice.amount)}
+                            {formatCurrency(invoice.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0).toString())}
                           </p>
                         </div>
                         <div className="flex gap-2">

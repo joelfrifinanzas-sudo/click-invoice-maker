@@ -11,9 +11,13 @@ export const generateWhatsAppLink = (invoiceData: InvoiceData, invoiceNumber: st
     }).format(num);
   };
 
-  const subtotal = parseFloat(invoiceData.amount);
+  const subtotal = invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
   const itbis = subtotal * 0.18;
   const total = subtotal + itbis;
+
+  const servicesText = invoiceData.services.map((service, index) => 
+    `${index + 1}. ${service.concept} - ${formatCurrency(service.amount)}`
+  ).join('\n');
 
   const message = `🧾 *FACTURA #${invoiceNumber}*
 
@@ -22,8 +26,8 @@ export const generateWhatsAppLink = (invoiceData: InvoiceData, invoiceNumber: st
 👤 *Cliente:* ${invoiceData.clientName}
 ${invoiceData.clientId ? `📋 *Cédula/RNC:* ${invoiceData.clientId}` : ''}
 
-📝 *Concepto:*
-${invoiceData.concept}
+📝 *Servicios:*
+${servicesText}
 
 💰 *Detalle de pago:*
 • Subtotal: ${formatCurrency(subtotal.toString())}
@@ -56,9 +60,13 @@ export const generateEmailLink = (invoiceData: InvoiceData, invoiceNumber: strin
     }).format(num);
   };
 
-  const subtotal = parseFloat(invoiceData.amount);
+  const subtotal = invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
   const itbis = subtotal * 0.18;
   const total = subtotal + itbis;
+
+  const servicesText = invoiceData.services.map((service, index) => 
+    `${index + 1}. ${service.concept} - ${formatCurrency(service.amount)}`
+  ).join('\n');
 
   const subject = `Factura #${invoiceNumber} - ${invoiceData.businessName}`;
   
@@ -71,8 +79,8 @@ DETALLES DE LA FACTURA:
 - Cliente: ${invoiceData.clientName}
 ${invoiceData.clientId ? `- Cédula/RNC: ${invoiceData.clientId}` : ''}
 
-Concepto:
-${invoiceData.concept}
+Servicios:
+${servicesText}
 
 RESUMEN:
 - Subtotal: ${formatCurrency(subtotal.toString())}

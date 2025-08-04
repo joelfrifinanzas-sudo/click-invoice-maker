@@ -4,7 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Download, Printer, ArrowLeft, MessageCircle, Mail } from 'lucide-react';
-import { InvoiceData } from './InvoiceForm';
+import { InvoiceData, ServiceItem } from './InvoiceForm';
 import { generateInvoicePDF, getNextInvoiceNumber } from '@/utils/pdfGenerator';
 import { generateWhatsAppLink, generateEmailLink } from '@/utils/shareUtils';
 import { useState, useEffect } from 'react';
@@ -123,18 +123,20 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
 
           {/* Service Details */}
           <div className="mb-8">
-            <h3 className="font-semibold text-invoice-blue mb-4">DETALLES DEL SERVICIO</h3>
+            <h3 className="font-semibold text-invoice-blue mb-4">DETALLES DE LOS SERVICIOS</h3>
             <div className="border border-border rounded-lg overflow-hidden">
               <div className="bg-invoice-blue-light p-4 font-semibold text-invoice-blue grid grid-cols-3 gap-4">
                 <span>Descripción</span>
                 <span className="text-center">Cantidad</span>
                 <span className="text-right">Monto</span>
               </div>
-              <div className="p-4 grid grid-cols-3 gap-4 items-start">
-                <span className="text-sm leading-relaxed">{invoiceData.concept}</span>
-                <span className="text-center">1</span>
-                <span className="text-right font-semibold">{formatCurrency(invoiceData.amount)}</span>
-              </div>
+              {invoiceData.services.map((service, index) => (
+                <div key={index} className="p-4 grid grid-cols-3 gap-4 items-start border-b border-border last:border-b-0">
+                  <span className="text-sm leading-relaxed">{service.concept}</span>
+                  <span className="text-center">1</span>
+                  <span className="text-right font-semibold">{formatCurrency(service.amount)}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -145,19 +147,19 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
             <div className="text-right space-y-2">
               <div className="flex justify-between items-center min-w-[250px]">
                 <span className="text-invoice-gray">Subtotal:</span>
-                <span className="font-medium">{formatCurrency(invoiceData.amount)}</span>
+                <span className="font-medium">{formatCurrency(invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0).toString())}</span>
               </div>
               <div className="flex justify-between items-center min-w-[250px]">
                 <span className="text-invoice-gray">ITBIS (18%):</span>
                 <span className="font-medium">
-                  {formatCurrency((parseFloat(invoiceData.amount) * 0.18).toString())}
+                  {formatCurrency((invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0) * 0.18).toString())}
                 </span>
               </div>
               <Separator />
               <div className="flex justify-between items-center min-w-[250px] text-lg">
                 <span className="font-bold text-invoice-blue">TOTAL:</span>
                 <span className="font-bold text-invoice-blue text-xl">
-                  {formatCurrency((parseFloat(invoiceData.amount) * 1.18).toString())}
+                  {formatCurrency((invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0) * 1.18).toString())}
                 </span>
               </div>
             </div>

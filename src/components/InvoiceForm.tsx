@@ -6,17 +6,21 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Receipt, Upload, X } from 'lucide-react';
+import { CalendarIcon, Receipt, Upload, X, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { es } from 'date-fns/locale';
+
+export interface ServiceItem {
+  concept: string;
+  amount: string;
+}
 
 export interface InvoiceData {
   clientName: string;
   clientId: string;
   clientPhone: string;
-  concept: string;
-  amount: string;
+  services: ServiceItem[];
   date: Date;
   logo: string | null;
   businessName: string;
@@ -32,8 +36,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     clientName: '',
     clientId: '',
     clientPhone: '',
-    concept: '',
-    amount: '',
+    services: [{ concept: '', amount: '' }],
     date: new Date(),
     logo: localStorage.getItem('invoice-logo') || null,
     businessName: localStorage.getItem('business-name') || '',
@@ -44,12 +47,40 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.clientName && formData.concept && formData.amount && formData.businessName && formData.signatureName) {
+    const hasValidServices = formData.services.length > 0 && 
+      formData.services.every(service => service.concept.trim() && service.amount.trim());
+    
+    if (formData.clientName && hasValidServices && formData.businessName && formData.signatureName) {
       // Guardar datos del negocio para futuros usos
       localStorage.setItem('business-name', formData.businessName);
       localStorage.setItem('signature-name', formData.signatureName);
       onGenerateInvoice(formData);
     }
+  };
+
+  const addService = () => {
+    setFormData(prev => ({
+      ...prev,
+      services: [...prev.services, { concept: '', amount: '' }]
+    }));
+  };
+
+  const removeService = (index: number) => {
+    if (formData.services.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        services: prev.services.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  const updateService = (index: number, field: keyof ServiceItem, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      services: prev.services.map((service, i) => 
+        i === index ? { ...service, [field]: value } : service
+      )
+    }));
   };
 
   const handleLogoUpload = (file: File) => {
@@ -208,33 +239,72 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
           </div>
 
           {/* Service Details */}
-          <div className="space-y-2">
-            <Label htmlFor="concept">Concepto o detalle del servicio *</Label>
-            <Textarea
-              id="concept"
-              value={formData.concept}
-              onChange={(e) => setFormData(prev => ({ ...prev, concept: e.target.value }))}
-              placeholder="Describe el servicio o producto facturado..."
-              className="min-h-[100px]"
-              required
-            />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Servicios o productos *</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addService}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar servicio
+              </Button>
+            </div>
+            
+            {formData.services.map((service, index) => (
+              <div key={index} className="p-4 border border-border rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Servicio {index + 1}
+                  </span>
+                  {formData.services.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeService(index)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor={`concept-${index}`}>Concepto o detalle *</Label>
+                  <Textarea
+                    id={`concept-${index}`}
+                    value={service.concept}
+                    onChange={(e) => updateService(index, 'concept', e.target.value)}
+                    placeholder="Describe el servicio o producto..."
+                    className="min-h-[80px]"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor={`amount-${index}`}>Monto *</Label>
+                  <Input
+                    id={`amount-${index}`}
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={service.amount}
+                    onChange={(e) => updateService(index, 'amount', e.target.value)}
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Amount and Date */}
+          {/* Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Monto total *</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                placeholder="0.00"
-                required
-              />
-            </div>
+            <div></div>
             <div className="space-y-2">
               <Label>Fecha</Label>
               <Popover>
@@ -266,7 +336,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
           <Button 
             type="submit" 
             className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
-            disabled={!formData.clientName || !formData.concept || !formData.amount || !formData.businessName || !formData.signatureName}
+            disabled={!formData.clientName || !formData.businessName || !formData.signatureName || !formData.services.every(s => s.concept.trim() && s.amount.trim())}
           >
             <Receipt className="w-4 h-4 mr-2" />
             Generar Factura

@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { InvoiceData } from '@/components/InvoiceForm';
+import { InvoiceData, ServiceItem } from '@/components/InvoiceForm';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -112,16 +112,6 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
   pdf.setFont('helvetica', 'normal');
   
-  // Dividir el concepto en líneas si es muy largo
-  const maxWidth = pageWidth - 140;
-  const conceptLines = pdf.splitTextToSize(invoiceData.concept, maxWidth);
-  
-  conceptLines.forEach((line: string, index: number) => {
-    pdf.text(line, 25, yPosition + (index * 6));
-  });
-  
-  pdf.text('1', pageWidth - 120, yPosition);
-  
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
     return new Intl.NumberFormat('es-DO', {
@@ -130,9 +120,25 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
     }).format(num);
   };
   
-  pdf.text(formatCurrency(invoiceData.amount), pageWidth - 60, yPosition);
+  // Dividir cada concepto en líneas si es muy largo
+  const maxWidth = pageWidth - 140;
+  let maxLines = 0;
   
-  yPosition += Math.max(conceptLines.length * 6, 15) + 20;
+  invoiceData.services.forEach((service, index) => {
+    const conceptLines = pdf.splitTextToSize(service.concept, maxWidth);
+    maxLines = Math.max(maxLines, conceptLines.length);
+    
+    conceptLines.forEach((line: string, lineIndex: number) => {
+      pdf.text(line, 25, yPosition + (lineIndex * 6));
+    });
+    
+    pdf.text('1', pageWidth - 120, yPosition);
+    pdf.text(formatCurrency(service.amount), pageWidth - 60, yPosition);
+    
+    yPosition += Math.max(conceptLines.length * 6, 15) + 5;
+  });
+  
+  yPosition += 15;
   
   // Línea separadora
   pdf.setLineWidth(0.5);
@@ -142,7 +148,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   yPosition += 15;
   
   // Cálculos
-  const subtotal = parseFloat(invoiceData.amount);
+  const subtotal = invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
   const itbis = subtotal * 0.18;
   const total = subtotal + itbis;
   
