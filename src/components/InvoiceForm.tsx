@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { CalendarIcon, Receipt, Upload, X, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { es } from 'date-fns/locale';
+import { getCompanyProfile } from '@/utils/companyProfile';
 
 export interface ServiceItem {
   concept: string;
@@ -38,10 +39,21 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     clientPhone: '',
     services: [{ concept: '', amount: '' }],
     date: new Date(),
-    logo: localStorage.getItem('invoice-logo') || null,
-    businessName: localStorage.getItem('business-name') || '',
-    signatureName: localStorage.getItem('signature-name') || '',
+    logo: null,
+    businessName: '',
+    signatureName: '',
   });
+
+  // Cargar perfil de empresa al montar el componente
+  useEffect(() => {
+    const companyProfile = getCompanyProfile();
+    setFormData(prev => ({
+      ...prev,
+      logo: companyProfile.logo,
+      businessName: companyProfile.businessName,
+      signatureName: companyProfile.signatureName,
+    }));
+  }, []);
 
   const [dragActive, setDragActive] = useState(false);
 

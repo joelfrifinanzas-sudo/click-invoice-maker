@@ -7,7 +7,12 @@ export const getNextInvoiceNumber = (): string => {
   const lastNumber = localStorage.getItem('last-invoice-number') || '0';
   const nextNumber = parseInt(lastNumber) + 1;
   localStorage.setItem('last-invoice-number', nextNumber.toString());
-  return nextNumber.toString().padStart(4, '0');
+  
+  // Obtener prefijo del perfil de empresa
+  const companyProfile = JSON.parse(localStorage.getItem('company-profile') || '{}');
+  const prefix = companyProfile.invoicePrefix || 'FAC';
+  
+  return `${prefix}-${nextNumber.toString().padStart(4, '0')}`;
 };
 
 export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber: string) => {
