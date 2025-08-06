@@ -53,7 +53,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setFont('helvetica', 'normal');
   pdf.text(`#${invoiceNumber}`, 20, yPosition + 10);
   
-  // Fecha (alineada a la derecha)
+  // Fecha y NCF (alineados a la derecha)
   const pageWidth = pdf.internal.pageSize.getWidth();
   pdf.setFontSize(12);
   pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
@@ -62,6 +62,16 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setFont('helvetica', 'bold');
   const formattedDate = format(invoiceData.date, "dd 'de' MMMM 'de' yyyy", { locale: es });
   pdf.text(formattedDate, pageWidth - 80, yPosition + 8);
+  
+  // NCF
+  if (invoiceData.ncf) {
+    pdf.setFontSize(10);
+    pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+    pdf.text('NCF:', pageWidth - 80, yPosition + 20);
+    pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(invoiceData.ncf, pageWidth - 80, yPosition + 28);
+  }
   
   yPosition += 40;
   

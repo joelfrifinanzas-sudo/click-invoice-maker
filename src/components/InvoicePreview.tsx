@@ -7,6 +7,7 @@ import { Download, Printer, ArrowLeft, MessageCircle, Mail } from 'lucide-react'
 import { InvoiceData, ServiceItem } from './InvoiceForm';
 import { generateInvoicePDF, getNextInvoiceNumber } from '@/utils/pdfGenerator';
 import { generateWhatsAppLink, generateEmailLink } from '@/utils/shareUtils';
+import { shareInvoiceViaWhatsApp } from '@/utils/whatsappUtils';
 import { useState, useEffect } from 'react';
 
 interface InvoicePreviewProps {
@@ -36,9 +37,15 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
     }
   };
 
-  const handleWhatsAppShare = () => {
-    const whatsappLink = generateWhatsAppLink(invoiceData, currentInvoiceNumber);
-    window.open(whatsappLink, '_blank');
+  const handleWhatsAppShare = async () => {
+    try {
+      await shareInvoiceViaWhatsApp(invoiceData, currentInvoiceNumber);
+    } catch (error) {
+      console.error('Error sharing via WhatsApp:', error);
+      // Fallback al método anterior
+      const whatsappLink = generateWhatsAppLink(invoiceData, currentInvoiceNumber);
+      window.open(whatsappLink, '_blank');
+    }
   };
 
   const handleEmailShare = () => {
@@ -106,6 +113,12 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
               <p className="font-semibold">
                 {format(invoiceData.date, "dd 'de' MMMM 'de' yyyy", { locale: es })}
               </p>
+              {invoiceData.ncf && (
+                <div className="mt-3 p-2 bg-invoice-blue-light rounded">
+                  <p className="text-xs text-invoice-gray">NCF:</p>
+                  <p className="font-mono font-semibold text-sm">{invoiceData.ncf}</p>
+                </div>
+              )}
             </div>
           </div>
 

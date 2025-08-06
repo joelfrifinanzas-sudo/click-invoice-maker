@@ -11,6 +11,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { es } from 'date-fns/locale';
 import { getCompanyProfile } from '@/utils/companyProfile';
+import { NCFType, NCF_TYPES, determineNCFType, generateNCF } from '@/utils/ncfGenerator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export interface ServiceItem {
   concept: string;
@@ -26,6 +28,8 @@ export interface InvoiceData {
   logo: string | null;
   businessName: string;
   signatureName: string;
+  ncfType: NCFType;
+  ncf: string;
 }
 
 interface InvoiceFormProps {
@@ -36,12 +40,14 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   const [formData, setFormData] = useState<InvoiceData>({
     clientName: '',
     clientId: '',
-    clientPhone: '',
+    clientPhone: '+1 ',
     services: [{ concept: '', amount: '' }],
     date: new Date(),
     logo: null,
     businessName: '',
     signatureName: '',
+    ncfType: 'B02',
+    ncf: '',
   });
 
   // Cargar perfil de empresa al montar el componente
@@ -63,10 +69,21 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
       formData.services.every(service => service.concept.trim() && service.amount.trim());
     
     if (formData.clientName && hasValidServices && formData.businessName && formData.signatureName) {
+      // Generar NCF automáticamente
+      const totalAmount = formData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
+      const autoNCFType = determineNCFType(!!formData.clientId.trim(), totalAmount);
+      const generatedNCF = generateNCF(formData.ncfType || autoNCFType);
+      
+      const finalFormData = {
+        ...formData,
+        ncfType: formData.ncfType || autoNCFType,
+        ncf: generatedNCF
+      };
+      
       // Guardar datos del negocio para futuros usos
       localStorage.setItem('business-name', formData.businessName);
       localStorage.setItem('signature-name', formData.signatureName);
-      onGenerateInvoice(formData);
+      onGenerateInvoice(finalFormData);
     }
   };
 
@@ -238,16 +255,41 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
             </div>
           </div>
 
-          {/* Client Contact */}
-          <div className="space-y-2">
-            <Label htmlFor="clientPhone">Teléfono del cliente (opcional)</Label>
-            <Input
-              id="clientPhone"
-              type="tel"
-              value={formData.clientPhone}
-              onChange={(e) => setFormData(prev => ({ ...prev, clientPhone: e.target.value }))}
-              placeholder="Ej: +1 809-123-4567 (para envío por WhatsApp)"
-            />
+          {/* Client Contact and NCF */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="clientPhone">Teléfono del cliente (opcional)</Label>
+              <Input
+                id="clientPhone"
+                type="tel"
+                value={formData.clientPhone}
+                onChange={(e) => setFormData(prev => ({ ...prev, clientPhone: e.target.value }))}
+                placeholder="Ej: +1 809-123-4567 (para envío por WhatsApp)"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ncfType">Tipo de NCF</Label>
+              <Select
+                value={formData.ncfType}
+                onValueChange={(value: NCFType) => setFormData(prev => ({ ...prev, ncfType: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar tipo de NCF" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(NCF_TYPES).map(([key, config]) => (
+                    <SelectItem key={key} value={key}>
+                      {config.type} - {config.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {NCF_TYPES[formData.ncfType]?.requiresClientId 
+                  ? "Requiere Cédula/RNC del cliente" 
+                  : "No requiere Cédula/RNC"}
+              </p>
+            </div>
           </div>
 
           {/* Service Details */}

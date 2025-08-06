@@ -22,6 +22,7 @@ export const generateWhatsAppLink = (invoiceData: InvoiceData, invoiceNumber: st
   const message = `🧾 *FACTURA #${invoiceNumber}*
 
 📅 *Fecha:* ${format(invoiceData.date, "dd 'de' MMMM 'de' yyyy", { locale: es })}
+${invoiceData.ncf ? `🔢 *NCF:* ${invoiceData.ncf}` : ''}
 
 👤 *Cliente:* ${invoiceData.clientName}
 ${invoiceData.clientId ? `📋 *Cédula/RNC:* ${invoiceData.clientId}` : ''}
@@ -76,6 +77,7 @@ Adjunto encontrará la factura #${invoiceNumber} correspondiente a los servicios
 
 DETALLES DE LA FACTURA:
 - Fecha: ${format(invoiceData.date, "dd 'de' MMMM 'de' yyyy", { locale: es })}
+${invoiceData.ncf ? `- NCF: ${invoiceData.ncf}` : ''}
 - Cliente: ${invoiceData.clientName}
 ${invoiceData.clientId ? `- Cédula/RNC: ${invoiceData.clientId}` : ''}
 
