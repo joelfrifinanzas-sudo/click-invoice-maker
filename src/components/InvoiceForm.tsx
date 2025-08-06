@@ -14,6 +14,7 @@ import { getCompanyProfile } from '@/utils/companyProfile';
 import { NCFType, NCF_TYPES, ALLOWED_NCF_TYPES, determineNCFType, generateNCF } from '@/utils/ncfGenerator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Edit2, RefreshCw } from 'lucide-react';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 export interface ServiceItem {
   concept: string;
@@ -271,12 +272,10 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
           {/* Client Contact */}
           <div className="space-y-2">
             <Label htmlFor="clientPhone">Teléfono del cliente (opcional)</Label>
-            <Input
-              id="clientPhone"
-              type="tel"
+            <PhoneInput
               value={formData.clientPhone}
-              onChange={(e) => setFormData(prev => ({ ...prev, clientPhone: e.target.value }))}
-              placeholder="Ej: +1 809-123-4567 (para envío por WhatsApp)"
+              onChange={(value) => setFormData(prev => ({ ...prev, clientPhone: value }))}
+              placeholder="809-123-4567"
             />
           </div>
 

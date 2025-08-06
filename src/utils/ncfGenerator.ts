@@ -92,11 +92,10 @@ const getNextNCFSequence = (ncfType: NCFType): string => {
 
 // Función principal para generar NCF
 export const generateNCF = (ncfType: NCFType): string => {
-  const companyRNC = getCompanyRNC();
   const sequence = getNextNCFSequence(ncfType);
   
-  // Formato NCF: E + RNC (9 dígitos) + Tipo (3 dígitos) + Secuencia (8 dígitos)
-  const ncf = `E${companyRNC.padStart(9, '0')}${ncfType}${sequence}`;
+  // Formato NCF simplificado: Tipo (3 caracteres) + Secuencia (8 dígitos)
+  const ncf = `${ncfType}${sequence}`;
   
   return ncf;
 };
@@ -119,18 +118,17 @@ export const determineNCFType = (hasClientId: boolean, amount: number): NCFType 
 
 // Función para validar formato de NCF
 export const validateNCF = (ncf: string): boolean => {
-  // NCF debe tener 23 caracteres: E + 9 dígitos RNC + 3 caracteres tipo + 8 dígitos secuencia
-  const ncfRegex = /^E\d{9}B(01|02|03|04|11|12|13|14|15|16)\d{8}$/;
+  // NCF debe tener 11 caracteres: Tipo (3 caracteres) + Secuencia (8 dígitos)
+  const ncfRegex = /^B(01|02|03|04|11|12|13|14|15|16)\d{8}$/;
   return ncfRegex.test(ncf);
 };
 
 // Función para extraer información del NCF
-export const parseNCF = (ncf: string): { rnc: string; type: NCFType; sequence: string } | null => {
+export const parseNCF = (ncf: string): { type: NCFType; sequence: string } | null => {
   if (!validateNCF(ncf)) return null;
   
-  const rnc = ncf.substring(1, 10);
-  const type = ncf.substring(10, 13) as NCFType;
-  const sequence = ncf.substring(13, 21);
+  const type = ncf.substring(0, 3) as NCFType;
+  const sequence = ncf.substring(3, 11);
   
-  return { rnc, type, sequence };
+  return { type, sequence };
 };
