@@ -11,8 +11,9 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { es } from 'date-fns/locale';
 import { getCompanyProfile } from '@/utils/companyProfile';
-import { NCFType, NCF_TYPES, determineNCFType, generateNCF } from '@/utils/ncfGenerator';
+import { NCFType, NCF_TYPES, ALLOWED_NCF_TYPES, determineNCFType, generateNCF } from '@/utils/ncfGenerator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Edit2, RefreshCw } from 'lucide-react';
 
 export interface ServiceItem {
   concept: string;
@@ -50,6 +51,8 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     ncf: '',
   });
 
+  const [isEditingNCF, setIsEditingNCF] = useState(false);
+
   // Cargar perfil de empresa al montar el componente
   useEffect(() => {
     const companyProfile = getCompanyProfile();
@@ -63,28 +66,38 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
 
   const [dragActive, setDragActive] = useState(false);
 
+  // Generar NCF automáticamente cuando cambie el tipo o los datos del cliente
+  useEffect(() => {
+    if (formData.ncfType && formData.services.length > 0) {
+      const totalAmount = formData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
+      const autoNCFType = determineNCFType(!!formData.clientId.trim(), totalAmount);
+      const generatedNCF = generateNCF(formData.ncfType || autoNCFType);
+      
+      if (!isEditingNCF) {
+        setFormData(prev => ({ ...prev, ncf: generatedNCF }));
+      }
+    }
+  }, [formData.ncfType, formData.clientId, formData.services, isEditingNCF]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const hasValidServices = formData.services.length > 0 && 
       formData.services.every(service => service.concept.trim() && service.amount.trim());
     
-    if (formData.clientName && hasValidServices && formData.businessName && formData.signatureName) {
-      // Generar NCF automáticamente
-      const totalAmount = formData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
-      const autoNCFType = determineNCFType(!!formData.clientId.trim(), totalAmount);
-      const generatedNCF = generateNCF(formData.ncfType || autoNCFType);
-      
-      const finalFormData = {
-        ...formData,
-        ncfType: formData.ncfType || autoNCFType,
-        ncf: generatedNCF
-      };
-      
+    if (formData.clientName && hasValidServices && formData.businessName && formData.signatureName && formData.ncf) {
       // Guardar datos del negocio para futuros usos
       localStorage.setItem('business-name', formData.businessName);
       localStorage.setItem('signature-name', formData.signatureName);
-      onGenerateInvoice(finalFormData);
+      onGenerateInvoice(formData);
     }
+  };
+
+  const regenerateNCF = () => {
+    const totalAmount = formData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
+    const autoNCFType = determineNCFType(!!formData.clientId.trim(), totalAmount);
+    const generatedNCF = generateNCF(formData.ncfType || autoNCFType);
+    setFormData(prev => ({ ...prev, ncf: generatedNCF }));
+    setIsEditingNCF(false);
   };
 
   const addService = () => {
@@ -255,40 +268,96 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
             </div>
           </div>
 
-          {/* Client Contact and NCF */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="clientPhone">Teléfono del cliente (opcional)</Label>
-              <Input
-                id="clientPhone"
-                type="tel"
-                value={formData.clientPhone}
-                onChange={(e) => setFormData(prev => ({ ...prev, clientPhone: e.target.value }))}
-                placeholder="Ej: +1 809-123-4567 (para envío por WhatsApp)"
-              />
+          {/* Client Contact */}
+          <div className="space-y-2">
+            <Label htmlFor="clientPhone">Teléfono del cliente (opcional)</Label>
+            <Input
+              id="clientPhone"
+              type="tel"
+              value={formData.clientPhone}
+              onChange={(e) => setFormData(prev => ({ ...prev, clientPhone: e.target.value }))}
+              placeholder="Ej: +1 809-123-4567 (para envío por WhatsApp)"
+            />
+          </div>
+
+          {/* NCF Section */}
+          <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
+            <div className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" />
+              <Label className="text-base font-semibold">Número de Comprobante Fiscal (NCF)</Label>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="ncfType">Tipo de NCF</Label>
-              <Select
-                value={formData.ncfType}
-                onValueChange={(value: NCFType) => setFormData(prev => ({ ...prev, ncfType: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar tipo de NCF" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(NCF_TYPES).map(([key, config]) => (
-                    <SelectItem key={key} value={key}>
-                      {config.type} - {config.description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {NCF_TYPES[formData.ncfType]?.requiresClientId 
-                  ? "Requiere Cédula/RNC del cliente" 
-                  : "No requiere Cédula/RNC"}
-              </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="ncfType">Tipo de NCF *</Label>
+                <Select
+                  value={formData.ncfType}
+                  onValueChange={(value: NCFType) => {
+                    setFormData(prev => ({ ...prev, ncfType: value }));
+                    setIsEditingNCF(false);
+                  }}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Seleccionar tipo de NCF" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background">
+                    {ALLOWED_NCF_TYPES.map((key) => {
+                      const config = NCF_TYPES[key];
+                      return (
+                        <SelectItem key={key} value={key}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{config.description}</span>
+                            <span className="text-xs text-muted-foreground">{config.type}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {NCF_TYPES[formData.ncfType]?.requiresClientId 
+                    ? "⚠️ Requiere Cédula/RNC del cliente" 
+                    : "✅ No requiere Cédula/RNC"}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ncf">NCF Generado</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="ncf"
+                    value={formData.ncf}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, ncf: e.target.value }));
+                      setIsEditingNCF(true);
+                    }}
+                    placeholder="NCF se generará automáticamente"
+                    className="bg-background font-mono text-sm"
+                    readOnly={!isEditingNCF}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingNCF(!isEditingNCF)}
+                    className="px-3"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={regenerateNCF}
+                    className="px-3"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {isEditingNCF ? "Editando manualmente" : "Generado automáticamente"}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -389,11 +458,11 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
 
           <Button 
             type="submit" 
-            className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
-            disabled={!formData.clientName || !formData.businessName || !formData.signatureName || !formData.services.every(s => s.concept.trim() && s.amount.trim())}
+            className="w-full bg-gradient-primary hover:opacity-90 transition-opacity text-lg py-6"
+            disabled={!formData.clientName || !formData.businessName || !formData.signatureName || !formData.services.every(s => s.concept.trim() && s.amount.trim()) || !formData.ncf}
           >
-            <Receipt className="w-4 h-4 mr-2" />
-            Generar Factura
+            <Receipt className="w-5 h-5 mr-2" />
+            Generar Factura Profesional
           </Button>
         </form>
       </CardContent>

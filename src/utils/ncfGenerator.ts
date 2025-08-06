@@ -18,6 +18,9 @@ export interface NCFConfig {
   requiresClientId: boolean;
 }
 
+// Tipos permitidos para el formulario
+export const ALLOWED_NCF_TYPES: NCFType[] = ['B01', 'B02', 'B04', 'B15'];
+
 export const NCF_TYPES: Record<NCFType, NCFConfig> = {
   'B01': {
     type: 'B01',
