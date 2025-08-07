@@ -34,6 +34,7 @@ import { NCFType, NCF_TYPES, ALLOWED_NCF_TYPES, determineNCFType, generateNCF } 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { validateClientId, autoFormatClientId, ValidationResult } from '@/utils/validationUtils';
+import { DominicanApiService } from '@/utils/dominicanApiService';
 import { useToast } from '@/hooks/use-toast';
 
 export interface ServiceItem {
@@ -75,6 +76,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   const [isEditingNCF, setIsEditingNCF] = useState(false);
   const [clientIdValidation, setClientIdValidation] = useState<ValidationResult>({ isValid: true, message: '' });
   const [dragActive, setDragActive] = useState(false);
+  const [isLookingUpClient, setIsLookingUpClient] = useState(false);
   const { toast } = useToast();
 
   // Cargar perfil de empresa al montar el componente
@@ -102,15 +104,43 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     }
   }, [formData.ncfType, formData.clientId, formData.services, isEditingNCF]);
 
-  // Validar cédula/RNC cuando cambie
+  // Validar cédula/RNC cuando cambie y consultar datos automáticamente
   useEffect(() => {
     if (formData.clientId.trim()) {
       const validation = validateClientId(formData.clientId);
       setClientIdValidation(validation);
+      
+      // Si es válido, intentar consultar datos automáticamente
+      if (validation.isValid) {
+        setIsLookingUpClient(true);
+        DominicanApiService.lookupClientData(
+          formData.clientId,
+          (clientData) => {
+            // Solo actualizar si el campo de nombre está vacío o si coincide con el nombre encontrado
+            if (!formData.clientName.trim() || formData.clientName === clientData.name) {
+              setFormData(prev => ({ ...prev, clientName: clientData.name }));
+            }
+            setIsLookingUpClient(false);
+          },
+          (error) => {
+            // No mostrar errores al usuario, solo fallar silenciosamente
+            console.warn('No se pudo consultar datos del cliente:', error);
+            setIsLookingUpClient(false);
+          }
+        );
+      }
     } else {
       setClientIdValidation({ isValid: true, message: '' });
+      setIsLookingUpClient(false);
     }
   }, [formData.clientId]);
+
+  // Limpiar consultas pendientes al desmontar el componente
+  useEffect(() => {
+    return () => {
+      DominicanApiService.cancelPendingQueries();
+    };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -436,17 +466,27 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="clientName" className="text-sm font-medium">Nombre del cliente *</Label>
-                    <Input
-                      id="clientName"
-                      value={formData.clientName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-                      placeholder="Ej: Juan Pérez Martínez"
-                      className="h-11"
-                      required
-                    />
-                  </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="clientName" className="text-sm font-medium">
+                       Nombre del cliente *
+                       {isLookingUpClient && (
+                         <span className="ml-2 text-xs text-muted-foreground animate-pulse">
+                           Consultando...
+                         </span>
+                       )}
+                     </Label>
+                     <Input
+                       id="clientName"
+                       value={formData.clientName}
+                       onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
+                       placeholder="Ej: Juan Pérez Martínez"
+                       className={cn(
+                         "h-11",
+                         isLookingUpClient && "bg-muted/50"
+                       )}
+                       required
+                     />
+                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="clientId" className="text-sm font-medium">Cédula o RNC del cliente</Label>
                     <Input
