@@ -24,14 +24,17 @@ import {
   CheckCircle,
   AlertCircle,
   User,
-  FileText
+  FileText,
+  Calculator,
+  TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { es } from 'date-fns/locale';
 import { getCompanyProfile } from '@/utils/companyProfile';
-import { NCFType, NCF_TYPES, ALLOWED_NCF_TYPES, determineNCFType, generateNCF } from '@/utils/ncfGenerator';
+import { NCFType, NCF_TYPES, ALLOWED_NCF_TYPES, determineNCFType, generateNCF, calculateITBIS, calculateSubtotal, calculateTotalWithITBIS } from '@/utils/ncfGenerator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { validateClientId, autoFormatClientId, ValidationResult } from '@/utils/validationUtils';
 import { DominicanApiService } from '@/utils/dominicanApiService';
@@ -53,6 +56,10 @@ export interface InvoiceData {
   signatureName: string;
   ncfType: NCFType;
   ncf: string;
+  includeITBIS: boolean;
+  subtotal: number;
+  itbisAmount: number;
+  total: number;
 }
 
 interface InvoiceFormProps {
@@ -71,6 +78,10 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     signatureName: '',
     ncfType: 'B02',
     ncf: '',
+    includeITBIS: true,
+    subtotal: 0,
+    itbisAmount: 0,
+    total: 0,
   });
 
   const [isEditingNCF, setIsEditingNCF] = useState(false);
@@ -306,8 +317,25 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     setFormData(prev => ({ ...prev, clientId: formatted }));
   };
 
-  const calculateTotal = () => {
-    return formData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
+  const calculateTotals = () => {
+    const serviceTotal = formData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
+    
+    if (formData.includeITBIS) {
+      const subtotal = calculateSubtotal(serviceTotal);
+      const itbis = calculateITBIS(subtotal);
+      return {
+        subtotal: subtotal,
+        itbisAmount: itbis,
+        total: serviceTotal
+      };
+    } else {
+      const itbis = calculateITBIS(serviceTotal);
+      return {
+        subtotal: serviceTotal,
+        itbisAmount: itbis,
+        total: calculateTotalWithITBIS(serviceTotal)
+      };
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -353,7 +381,18 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     localStorage.removeItem('invoice-logo');
   };
 
-  const total = calculateTotal();
+  const totals = calculateTotals();
+  
+  // Actualizar totales en formData cuando cambien
+  useEffect(() => {
+    const newTotals = calculateTotals();
+    setFormData(prev => ({
+      ...prev,
+      subtotal: newTotals.subtotal,
+      itbisAmount: newTotals.itbisAmount,
+      total: newTotals.total
+    }));
+  }, [formData.services, formData.includeITBIS]);
 
   return (
     <div className="space-y-6">
@@ -601,24 +640,31 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                         })}
                       </SelectContent>
                     </Select>
-                    <div className={cn(
-                      "flex items-center gap-2 text-xs px-3 py-2 rounded-md",
-                      NCF_TYPES[formData.ncfType]?.requiresClientId 
-                        ? "bg-warning/10 text-warning-foreground border border-warning/20" 
-                        : "bg-success/10 text-success border border-success/20"
-                    )}>
-                      {NCF_TYPES[formData.ncfType]?.requiresClientId ? (
-                        <>
-                          <AlertCircle className="w-3 h-3" />
-                          <span>Requiere Cédula/RNC del cliente</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-3 h-3" />
-                          <span>No requiere Cédula/RNC</span>
-                        </>
-                      )}
-                    </div>
+                     <div className={cn(
+                       "flex items-center gap-2 text-xs px-3 py-2 rounded-md",
+                       !NCF_TYPES[formData.ncfType]?.isFiscal
+                         ? "bg-secondary/10 text-secondary-foreground border border-secondary/20"
+                         : NCF_TYPES[formData.ncfType]?.requiresClientId 
+                         ? "bg-warning/10 text-warning-foreground border border-warning/20" 
+                         : "bg-success/10 text-success border border-success/20"
+                     )}>
+                       {!NCF_TYPES[formData.ncfType]?.isFiscal ? (
+                         <>
+                           <FileText className="w-3 h-3" />
+                           <span>Factura interna (sin validez fiscal)</span>
+                         </>
+                       ) : NCF_TYPES[formData.ncfType]?.requiresClientId ? (
+                         <>
+                           <AlertCircle className="w-3 h-3" />
+                           <span>Requiere Cédula/RNC del cliente</span>
+                         </>
+                       ) : (
+                         <>
+                           <CheckCircle className="w-3 h-3" />
+                           <span>No requiere Cédula/RNC</span>
+                         </>
+                       )}
+                     </div>
                   </div>
 
                   <div className="space-y-3">
@@ -654,9 +700,13 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                         <RefreshCw className="w-4 h-4" />
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {isEditingNCF ? "Editando manualmente" : "Generado automáticamente según DGII"}
-                    </p>
+                     <p className="text-xs text-muted-foreground">
+                       {isEditingNCF 
+                         ? "Editando manualmente" 
+                         : NCF_TYPES[formData.ncfType]?.isFiscal 
+                         ? "Generado automáticamente según DGII" 
+                         : "Número de factura interno generado"}
+                     </p>
                   </div>
                 </div>
               </CardContent>
@@ -733,14 +783,55 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                 ))}
 
                 {/* Total Display */}
-                {total > 0 && (
+                {totals.total > 0 && (
                   <div className="p-6 bg-primary/5 border border-primary/20 rounded-xl">
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-semibold text-foreground">Total a Pagar:</span>
-                      <span className="text-2xl font-bold text-primary">{formatCurrency(total)}</span>
+                    <div className="space-y-3">
+                      {/* ITBIS Control */}
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Calculator className="w-5 h-5 text-primary" />
+                          <div>
+                            <Label className="text-sm font-medium">Incluir ITBIS (18%)</Label>
+                            <p className="text-xs text-muted-foreground">
+                              {formData.includeITBIS ? 'ITBIS incluido en el precio mostrado' : 'ITBIS se agregará al precio base'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Label htmlFor="includeITBIS" className="text-sm">
+                            {formData.includeITBIS ? 'Incluido' : 'Adicional'}
+                          </Label>
+                          <Switch
+                            id="includeITBIS"
+                            checked={formData.includeITBIS}
+                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, includeITBIS: checked }))}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Breakdown */}
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Subtotal:</span>
+                          <span>{formatCurrency(totals.subtotal)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>ITBIS (18%):</span>
+                          <span>{formatCurrency(totals.itbisAmount)}</span>
+                        </div>
+                        <div className="border-t pt-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-lg font-semibold text-foreground">Total a Pagar:</span>
+                            <span className="text-2xl font-bold text-primary">{formatCurrency(totals.total)}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                    
                     <p className="text-sm text-muted-foreground mt-2">
-                      Impuestos incluidos según normativas dominicanas
+                      {NCF_TYPES[formData.ncfType]?.isFiscal 
+                        ? "Comprobante fiscal válido según normativas DGII" 
+                        : "Factura interna para control administrativo"}
                     </p>
                   </div>
                 )}

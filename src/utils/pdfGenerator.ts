@@ -63,14 +63,23 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   const formattedDate = format(invoiceData.date, "dd 'de' MMMM 'de' yyyy", { locale: es });
   pdf.text(formattedDate, pageWidth - 80, yPosition + 8);
   
-  // NCF
+  // NCF o Número de Factura
   if (invoiceData.ncf) {
     pdf.setFontSize(10);
     pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-    pdf.text('NCF:', pageWidth - 80, yPosition + 20);
+    const isNCF = invoiceData.ncf.startsWith('B');
+    pdf.text(isNCF ? 'NCF:' : 'Factura:', pageWidth - 80, yPosition + 20);
     pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
     pdf.setFont('helvetica', 'bold');
     pdf.text(invoiceData.ncf, pageWidth - 80, yPosition + 28);
+    
+    // Agregar nota sobre validez fiscal
+    if (!isNCF) {
+      pdf.setFontSize(8);
+      pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('(Factura interna)', pageWidth - 80, yPosition + 36);
+    }
   }
   
   yPosition += 40;
@@ -162,40 +171,48 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   
   yPosition += 15;
   
-  // Cálculos
-  const subtotal = invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
-  const itbis = subtotal * 0.18;
-  const total = subtotal + itbis;
-  
+  // Cálculos usando los datos del formulario
+  const subtotal = invoiceData.subtotal;
+  const itbis = invoiceData.itbisAmount;
+  const total = invoiceData.total;
+
   // Subtotal
   pdf.setFontSize(11);
   pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
   pdf.text('Subtotal:', pageWidth - 100, yPosition);
   pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
   pdf.text(formatCurrency(subtotal.toString()), pageWidth - 60, yPosition);
-  
+
   yPosition += 12;
-  
+
   // ITBIS
   pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
   pdf.text('ITBIS (18%):', pageWidth - 100, yPosition);
   pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
   pdf.text(formatCurrency(itbis.toString()), pageWidth - 60, yPosition);
-  
+
   yPosition += 15;
-  
+
   // Línea para total
   pdf.setLineWidth(1);
   pdf.line(pageWidth - 100, yPosition, pageWidth - 20, yPosition);
-  
+
   yPosition += 12;
-  
+
   // Total
   pdf.setFontSize(14);
   pdf.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   pdf.setFont('helvetica', 'bold');
   pdf.text('TOTAL:', pageWidth - 100, yPosition);
   pdf.text(formatCurrency(total.toString()), pageWidth - 60, yPosition);
+  
+  // Nota sobre ITBIS
+  yPosition += 20;
+  pdf.setFontSize(8);
+  pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+  pdf.setFont('helvetica', 'normal');
+  const itbisNote = invoiceData.includeITBIS ? 'ITBIS incluido en el precio' : 'ITBIS agregado al precio base';
+  pdf.text(itbisNote, pageWidth - 100, yPosition);
   
   // Firma al pie
   const pageHeight = pdf.internal.pageSize.getHeight();

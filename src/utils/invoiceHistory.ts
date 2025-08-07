@@ -25,7 +25,16 @@ export const saveInvoiceToHistory = (invoiceData: InvoiceData, invoiceNumber: st
 export const getInvoiceHistory = (): HistoryInvoice[] => {
   try {
     const historyData = localStorage.getItem(HISTORY_KEY);
-    return historyData ? JSON.parse(historyData) : [];
+    const history = historyData ? JSON.parse(historyData) : [];
+    
+    // Migrar datos antiguos que no tengan las nuevas propiedades
+    return history.map((invoice: any) => ({
+      ...invoice,
+      includeITBIS: invoice.includeITBIS ?? true,
+      subtotal: invoice.subtotal ?? 0,
+      itbisAmount: invoice.itbisAmount ?? 0,
+      total: invoice.total ?? invoice.services?.reduce((sum: number, service: any) => sum + parseFloat(service.amount || '0'), 0) ?? 0
+    }));
   } catch (error) {
     console.error('Error loading invoice history:', error);
     return [];
