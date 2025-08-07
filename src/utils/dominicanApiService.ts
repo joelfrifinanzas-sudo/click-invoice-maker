@@ -65,11 +65,11 @@ export class DominicanApiService {
   }
 
   /**
-   * Consulta la API de DGII en Vercel
+   * Consulta la API de DGII usando el nuevo endpoint de wrobirson
    */
   private static async fetchFromDgiiVercelApi(clientId: string): Promise<ApiResponse> {
     try {
-      const response = await fetch(`https://dgii-api.vercel.app/consulta/${clientId}`, {
+      const response = await fetch(`https://consultasdgii.wrobirson.workers.dev/rnc/${clientId}`, {
         headers: {
           'Accept': 'application/json',
         },
@@ -88,12 +88,12 @@ export class DominicanApiService {
             name: data.nombre,
             rnc: clientId.length >= 9 ? clientId : undefined,
             cedula: clientId.length === 11 ? clientId : undefined,
-            status: 'active'
+            status: 'Encontrado'
           }
         };
       }
 
-      return { success: false, error: 'No encontrado en DGII' };
+      return { success: false, error: 'No registrado o RNC inválido' };
     } catch (error) {
       return { success: false, error: 'Error en API de DGII' };
     }
