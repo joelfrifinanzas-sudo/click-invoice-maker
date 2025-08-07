@@ -38,30 +38,6 @@ const menuItems = [
     icon: History,
     description: "Ver facturas anteriores"
   },
-  { 
-    title: "Configuración de Impresora", 
-    url: "/printer-config", 
-    icon: Printer,
-    description: "Ajustar opciones de impresión"
-  },
-  { 
-    title: "Diseño del Ticket", 
-    url: "/ticket-design", 
-    icon: Palette,
-    description: "Personalizar apariencia del PDF"
-  },
-  { 
-    title: "Parámetros del Sistema", 
-    url: "/system-settings", 
-    icon: Settings,
-    description: "Configuración general"
-  },
-  { 
-    title: "Respaldo de Datos", 
-    url: "/backup", 
-    icon: Download,
-    description: "Exportar historial"
-  },
 ];
 
 const supportItems = [
