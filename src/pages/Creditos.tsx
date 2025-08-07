@@ -1,16 +1,15 @@
 import { Layout } from "@/components/Layout";
+import { ModuleHeader } from "@/components/ModuleHeader";
 
 export default function Creditos() {
   return (
     <Layout>
       <div className="container-responsive py-8">
         <div className="space-y-6">
-          <div>
-            <h1 className="text-responsive-xl font-bold">Créditos</h1>
-            <p className="text-muted-foreground mt-2">
-              Gestiona facturas a crédito y saldos pendientes
-            </p>
-          </div>
+          <ModuleHeader
+            title="Créditos"
+            description="Gestiona facturas a crédito y saldos pendientes"
+          />
           
           <div className="bg-card border rounded-lg p-6 text-center">
             <p className="text-muted-foreground">

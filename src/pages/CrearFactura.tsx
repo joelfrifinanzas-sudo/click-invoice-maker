@@ -5,6 +5,7 @@ import { saveInvoiceToHistory } from '@/utils/invoiceHistory';
 import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
 import { ArrowLeft, FileText, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { BackButton } from '@/components/BackButton';
 
 export default function CrearFactura() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
@@ -27,6 +28,10 @@ export default function CrearFactura() {
     <>
       {!showPreview ? (
         <div className="min-h-screen bg-white">
+          {/* Back Button */}
+          <div className="px-4 pt-4">
+            <BackButton />
+          </div>
           {/* Form Content */}
           <div className="px-4 py-6">
             {activeTab === 'factura' ? (

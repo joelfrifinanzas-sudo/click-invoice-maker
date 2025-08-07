@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAppConfig } from '@/contexts/AppConfigContext';
+import { ArrowLeft } from 'lucide-react';
 
 const Configuracion = () => {
   const { toast } = useToast();
@@ -25,7 +26,17 @@ const Configuracion = () => {
       <div className="min-h-screen bg-gradient-subtle pt-14">
         <div className="container mx-auto py-8 px-4">
           <div className="max-w-4xl mx-auto space-y-6">
-            <h1 className="text-3xl font-bold text-foreground">{t('config.title')}</h1>
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => window.history.back()}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </Button>
+              <h1 className="text-3xl font-bold text-foreground">{t('config.title')}</h1>
+            </div>
             
             {/* WhatsApp Configuration */}
             <Card>
