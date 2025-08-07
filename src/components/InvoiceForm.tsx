@@ -60,6 +60,7 @@ export interface InvoiceData {
   subtotal: number;
   itbisAmount: number;
   total: number;
+  invoiceType: string;
 }
 
 interface InvoiceFormProps {
@@ -82,6 +83,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     subtotal: 0,
     itbisAmount: 0,
     total: 0,
+    invoiceType: '',
   });
 
   const [isEditingNCF, setIsEditingNCF] = useState(false);
@@ -187,10 +189,13 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     const hasValidServices = formData.services.length > 0 && 
       formData.services.every(service => service.concept.trim() && service.amount.trim());
     
-    if (!formData.clientName.trim()) {
+    // Validación condicional del nombre del cliente
+    const requiresClientInfo = formData.invoiceType === 'fiscal' || formData.invoiceType === 'gubernamental' || formData.invoiceType === 'consumidor-final';
+    
+    if (requiresClientInfo && !formData.clientName.trim()) {
       toast({
         title: "Error de validación",
-        description: "El nombre del cliente es obligatorio",
+        description: "El nombre del cliente es obligatorio para este tipo de factura",
         variant: "destructive",
       });
       return;
@@ -205,10 +210,19 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
       return;
     }
 
-    if (formData.clientId.trim() && !clientIdValidation.isValid) {
+    if (requiresClientInfo && formData.clientId.trim() && !clientIdValidation.isValid) {
       toast({
         title: "Error de validación",
         description: clientIdValidation.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.invoiceType) {
+      toast({
+        title: "Error de validación",
+        description: "Debe seleccionar un tipo de factura",
         variant: "destructive",
       });
       return;
@@ -522,70 +536,108 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
               </CardContent>
             </Card>
 
-            {/* Client Information Card */}
+            {/* Invoice Type and Client Information Card */}
             <Card className="shadow-soft border border-border/50">
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-responsive-lg sm:text-responsive-xl flex items-center gap-2">
-                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  Información del Cliente
+                  <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  Tipo de factura con Número de Comprobante Fiscal (NCF)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 sm:space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                   <div className="space-y-2">
-                     <Label htmlFor="clientName" className="text-responsive-sm font-medium">
-                       Nombre del cliente *
-                       {isLookingUpClient && (
-                         <span className="ml-2 text-responsive-xs text-muted-foreground animate-pulse">
-                           Consultando...
-                         </span>
-                       )}
-                     </Label>
-                     <Input
-                       id="clientName"
-                       value={formData.clientName}
-                       onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-                       placeholder="Ej: Juan Pérez Martínez"
-                       className={cn(isLookingUpClient && "bg-muted/50")}
-                       required
-                     />
-                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="clientId" className="text-responsive-sm font-medium">Cédula o RNC del cliente</Label>
-                     <Input
-                       id="clientId"
-                       value={formData.clientId}
-                       onChange={(e) => handleClientIdChange(e.target.value)}
-                       onBlur={handleClientIdBlur}
-                       onKeyPress={handleClientIdKeyPress}
-                       placeholder="001-1234567-8 o 123456789"
-                       className={cn(
-                         formData.clientId.trim() && !clientIdValidation.isValid && "border-destructive"
-                       )}
-                     />
-                    {formData.clientId.trim() && (
-                      <div className={cn(
-                        "flex items-center gap-2 text-responsive-sm",
-                        clientIdValidation.isValid ? "text-success" : "text-destructive"
-                      )}>
-                        {clientIdValidation.isValid ? (
-                          <CheckCircle className="w-4 h-4" />
-                        ) : (
-                          <AlertCircle className="w-4 h-4" />
-                        )}
-                        <span>{clientIdValidation.message}</span>
-                        {clientIdValidation.type && (
-                          <Badge variant="outline" className="text-responsive-xs">
-                            {clientIdValidation.type === 'cedula' ? 'Cédula' : 'RNC'}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                {/* Invoice Type Selector */}
+                <div className="space-y-2">
+                  <Label htmlFor="invoiceType" className="text-responsive-sm font-medium">Tipo de factura *</Label>
+                  <Select
+                    value={formData.invoiceType}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, invoiceType: value }))}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Seleccionar tipo de factura" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fiscal">Factura con comprobante fiscal (NCF)</SelectItem>
+                      <SelectItem value="gubernamental">Comprobante Gubernamental</SelectItem>
+                      <SelectItem value="consumidor-final">Factura de Consumidor Final</SelectItem>
+                      <SelectItem value="sin-ncf">Factura sin comprobante fiscal</SelectItem>
+                      <SelectItem value="nota-credito">Nota de crédito</SelectItem>
+                      <SelectItem value="nota-debito">Nota de débito</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
+                {/* Client Information - Conditional */}
+                {(formData.invoiceType === 'fiscal' || formData.invoiceType === 'gubernamental' || formData.invoiceType === 'consumidor-final') && (
+                  <>
+                    <div className="space-y-4">
+                      <h3 className="text-responsive-lg font-medium flex items-center gap-2">
+                        <User className="w-4 h-4 text-primary" />
+                        Información del Cliente
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="clientName" className="text-responsive-sm font-medium">
+                            Nombre del cliente *
+                            {isLookingUpClient && (
+                              <span className="ml-2 text-responsive-xs text-muted-foreground animate-pulse">
+                                Consultando...
+                              </span>
+                            )}
+                          </Label>
+                          <Input
+                            id="clientName"
+                            value={formData.clientName}
+                            onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
+                            placeholder="Ej: Juan Pérez Martínez"
+                            className={cn(isLookingUpClient && "bg-muted/50")}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="clientId" className="text-responsive-sm font-medium">Cédula o RNC del cliente</Label>
+                          <Input
+                            id="clientId"
+                            value={formData.clientId}
+                            onChange={(e) => handleClientIdChange(e.target.value)}
+                            onBlur={handleClientIdBlur}
+                            onKeyPress={handleClientIdKeyPress}
+                            placeholder="001-1234567-8 o 123456789"
+                            className={cn(
+                              formData.clientId.trim() && !clientIdValidation.isValid && "border-destructive"
+                            )}
+                          />
+                          {formData.clientId.trim() && (
+                            <div className={cn(
+                              "flex items-center gap-2 text-responsive-sm",
+                              clientIdValidation.isValid ? "text-success" : "text-destructive"
+                            )}>
+                              {clientIdValidation.isValid ? (
+                                <CheckCircle className="w-4 h-4" />
+                              ) : (
+                                <AlertCircle className="w-4 h-4" />
+                              )}
+                              <span>{clientIdValidation.message}</span>
+                              {clientIdValidation.type && (
+                                <Badge variant="outline" className="text-responsive-xs">
+                                  {clientIdValidation.type === 'cedula' ? 'Cédula' : 'RNC'}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Phone Field - Always visible but not required when client info is hidden */}
                 <div className="space-y-2">
-                  <Label htmlFor="clientPhone" className="text-responsive-sm font-medium">Teléfono del cliente (opcional)</Label>
+                  <Label htmlFor="clientPhone" className="text-responsive-sm font-medium">
+                    {(formData.invoiceType === 'fiscal' || formData.invoiceType === 'gubernamental' || formData.invoiceType === 'consumidor-final') 
+                      ? 'Teléfono del cliente (opcional)' 
+                      : 'Teléfono de contacto (opcional)'}
+                  </Label>
                   <PhoneInput
                     value={formData.clientPhone}
                     onChange={(value) => setFormData(prev => ({ ...prev, clientPhone: value }))}
@@ -594,6 +646,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                 </div>
               </CardContent>
             </Card>
+
 
             {/* NCF Section Card */}
             <Card className="shadow-soft border border-border/50">
