@@ -2,12 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Responsive Design System - Mobile First Approach */
 
 @layer base {
   :root {
+    /* Color System - HSL Values Only */
     --background: 0 0% 100%;
     --foreground: 222 84% 5%;
 
@@ -17,43 +16,62 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 84% 5%;
 
-    /* Dominican blue and professional colors */
+    /* Primary Colors - Dominican Professional Blue */
     --primary: 214 100% 50%;
     --primary-foreground: 0 0% 100%;
+    --primary-light: 214 100% 60%;
+    --primary-dark: 214 100% 40%;
 
+    /* Secondary Colors */
     --secondary: 210 40% 98%;
     --secondary-foreground: 222 47% 11%;
 
+    /* Neutral Colors */
     --muted: 210 40% 96%;
     --muted-foreground: 215 13% 65%;
 
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
 
+    /* Status Colors */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 43 96% 56%;
+    --warning-foreground: 222 84% 5%;
 
+    /* UI Elements */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 214 100% 50%;
 
-    /* Dominican corporate colors */
-    --dominican-blue: 214 100% 50%;
-    --dominican-blue-light: 214 100% 96%;
-    --dominican-blue-dark: 214 100% 40%;
-    --dominican-red: 0 84% 60%;
-    --success-green: 142 76% 36%;
-    --warning-amber: 43 96% 56%;
-    
-    /* Invoice colors matching Bootis design */
-    --invoice-text-primary: 222 84% 15%;
-    --invoice-text-secondary: 215 16% 47%;
-    --invoice-header-bg: 220 13% 18%;
-    --invoice-table-header: 210 40% 96%;
-    --invoice-border: 214 32% 91%;
-    --invoice-amount-highlight: 214 100% 50%;
-    --invoice-bg: 0 0% 100%;
-    
+    /* Typography Scale - Mobile First */
+    --text-xs: 0.75rem;     /* 12px */
+    --text-sm: 0.875rem;    /* 14px */
+    --text-base: 1rem;      /* 16px */
+    --text-lg: 1.125rem;    /* 18px */
+    --text-xl: 1.25rem;     /* 20px */
+    --text-2xl: 1.5rem;     /* 24px */
+    --text-3xl: 1.875rem;   /* 30px */
+    --text-4xl: 2.25rem;    /* 36px */
+
+    /* Spacing Scale - 8px based */
+    --space-1: 0.25rem;     /* 4px */
+    --space-2: 0.5rem;      /* 8px */
+    --space-3: 0.75rem;     /* 12px */
+    --space-4: 1rem;        /* 16px */
+    --space-5: 1.25rem;     /* 20px */
+    --space-6: 1.5rem;      /* 24px */
+    --space-8: 2rem;        /* 32px */
+    --space-10: 2.5rem;     /* 40px */
+    --space-12: 3rem;       /* 48px */
+    --space-16: 4rem;       /* 64px */
+
+    /* Touch Targets - Minimum 44px for accessibility */
+    --touch-target-min: 2.75rem; /* 44px */
+    --touch-target-comfortable: 3rem; /* 48px */
+
     /* Professional gradients */
     --gradient-primary: linear-gradient(135deg, hsl(214 100% 50%), hsl(214 100% 40%));
     --gradient-hero: linear-gradient(135deg, hsl(214 100% 50%) 0%, hsl(220 100% 45%) 50%, hsl(226 100% 40%) 100%);
@@ -61,30 +79,34 @@ All colors MUST be HSL.
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
     
     /* Professional shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(214 100% 50% / 0.05);
     --shadow-card: 0 4px 6px -1px hsl(214 100% 50% / 0.1), 0 2px 4px -1px hsl(214 100% 50% / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(214 100% 50% / 0.1), 0 4px 6px -2px hsl(214 100% 50% / 0.05);
     --shadow-invoice: 0 10px 25px -3px hsl(214 100% 50% / 0.15);
     --shadow-soft: 0 1px 3px 0 hsl(214 100% 50% / 0.1), 0 1px 2px 0 hsl(214 100% 50% / 0.06);
     
-    /* Smooth animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Animation System */
     --transition-fast: all 0.15s ease-out;
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Layout constraints */
+    --max-width-sm: 640px;
+    --max-width-md: 768px;
+    --max-width-lg: 1024px;
+    --max-width-xl: 1280px;
+    --max-width-content: 1200px;
 
     --radius: 0.75rem;
 
+    /* Sidebar System */
     --sidebar-background: 0 0% 100%;
-
     --sidebar-foreground: 222 84% 5%;
-
     --sidebar-primary: 214 100% 50%;
-
     --sidebar-primary-foreground: 0 0% 100%;
-
     --sidebar-accent: 210 40% 96%;
-
     --sidebar-accent-foreground: 222 84% 5%;
-
     --sidebar-border: 214 32% 91%;
-
     --sidebar-ring: 214 100% 50%;
   }
 
@@ -100,6 +122,8 @@ All colors MUST be HSL.
 
     --primary: 220 90% 56%;
     --primary-foreground: 224 71% 4%;
+    --primary-light: 220 90% 66%;
+    --primary-dark: 220 90% 46%;
 
     --secondary: 215 25% 15%;
     --secondary-foreground: 220 90% 98%;
@@ -117,12 +141,6 @@ All colors MUST be HSL.
     --input: 215 25% 15%;
     --ring: 220 90% 56%;
 
-    /* Dark mode invoice colors */
-    --invoice-blue: 220 90% 56%;
-    --invoice-blue-light: 220 85% 15%;
-    --invoice-blue-dark: 220 85% 65%;
-    --invoice-gray: 220 9% 65%;
-    --invoice-gray-light: 215 25% 15%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -137,10 +155,106 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Improve font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    
+    /* Enable smooth scrolling */
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-background text-foreground font-inter antialiased;
+    @apply bg-background text-foreground font-inter;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    
+    /* Ensure proper line height for readability */
+    line-height: 1.6;
+    
+    /* Prevent horizontal scrolling */
+    overflow-x: hidden;
+    
+    /* Minimum font size for mobile readability */
+    font-size: 16px;
+  }
+
+  /* Mobile-first responsive typography */
+  .text-responsive-xs { font-size: var(--text-xs); line-height: 1.4; }
+  .text-responsive-sm { font-size: var(--text-sm); line-height: 1.5; }
+  .text-responsive-base { font-size: var(--text-base); line-height: 1.6; }
+  .text-responsive-lg { font-size: var(--text-lg); line-height: 1.6; }
+  .text-responsive-xl { font-size: var(--text-xl); line-height: 1.5; }
+  .text-responsive-2xl { font-size: var(--text-2xl); line-height: 1.4; }
+  .text-responsive-3xl { font-size: var(--text-3xl); line-height: 1.3; }
+  .text-responsive-4xl { font-size: var(--text-4xl); line-height: 1.2; }
+
+  /* Touch-friendly interactive elements */
+  .touch-target {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  .touch-target-comfortable {
+    min-height: var(--touch-target-comfortable);
+    min-width: var(--touch-target-comfortable);
+  }
+
+  /* Scrollable containers */
+  .scrollable {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+  }
+
+  .scrollable-x {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Focus styles for accessibility */
+  .focus-visible {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* Container system for consistent layouts */
+  .container-responsive {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  @media (min-width: 640px) {
+    .container-responsive {
+      max-width: var(--max-width-sm);
+      padding-left: var(--space-6);
+      padding-right: var(--space-6);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .container-responsive {
+      max-width: var(--max-width-md);
+      padding-left: var(--space-8);
+      padding-right: var(--space-8);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-responsive {
+      max-width: var(--max-width-lg);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .container-responsive {
+      max-width: var(--max-width-xl);
+    }
   }
 }

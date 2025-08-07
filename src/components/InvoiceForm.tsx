@@ -395,61 +395,63 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   }, [formData.services, formData.includeITBIS]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Header Card */}
       <Card className="w-full max-w-4xl mx-auto shadow-card border-0">
-        <CardHeader className="text-center bg-gradient-primary text-white rounded-t-xl pb-8">
-          <CardTitle className="flex items-center justify-center gap-3 text-3xl font-bold">
-            <Receipt className="w-10 h-10" />
+        <CardHeader className="text-center bg-gradient-primary text-white rounded-t-xl pb-6 sm:pb-8">
+          <CardTitle className="flex items-center justify-center gap-2 sm:gap-3 text-responsive-2xl sm:text-responsive-3xl font-bold">
+            <Receipt className="w-8 h-8 sm:w-10 sm:h-10" />
             Nueva Factura
           </CardTitle>
-          <p className="text-white/90 text-lg">
+          <p className="text-white/90 text-responsive-base sm:text-responsive-lg">
             Sistema de facturación electrónica para República Dominicana
           </p>
           <div className="flex items-center justify-center gap-2 mt-4">
-            <Badge variant="secondary" className="bg-white/20 text-white border-0">
+            <Badge variant="secondary" className="bg-white/20 text-white border-0 text-responsive-xs sm:text-responsive-sm">
               <CheckCircle className="w-3 h-3 mr-1" />
               NCF Automático DGII
             </Badge>
           </div>
         </CardHeader>
       
-        <CardContent className="p-8">
+        <CardContent className="p-4 sm:p-6 lg:p-8">
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3 mb-8">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6 sm:mb-8">
             <Button
               type="button"
               variant="outline"
               onClick={duplicateInvoice}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 min-h-touch"
+              size="default"
             >
               <Copy className="w-4 h-4" />
-              Duplicar Factura
+              <span className="text-responsive-sm">Duplicar Factura</span>
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={saveAsDraft}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 min-h-touch"
+              size="default"
             >
               <Save className="w-4 h-4" />
-              Guardar Borrador
+              <span className="text-responsive-sm">Guardar Borrador</span>
             </Button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Business Information Card */}
             <Card className="shadow-soft border border-border/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Receipt className="w-5 h-5 text-primary" />
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-responsive-lg sm:text-responsive-xl flex items-center gap-2">
+                  <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   Información del Negocio
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6">
                 {/* Logo Upload */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Logo de tu negocio (opcional)</Label>
+                <div className="space-y-2 sm:space-y-3">
+                  <Label className="text-responsive-sm font-medium">Logo de tu negocio (opcional)</Label>
                   {formData.logo ? (
                     <div className="relative w-24 h-24 mx-auto">
                       <img
@@ -495,26 +497,24 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
           </div>
 
                 {/* Business Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="businessName" className="text-sm font-medium">Nombre de tu negocio *</Label>
+                    <Label htmlFor="businessName" className="text-responsive-sm font-medium">Nombre de tu negocio *</Label>
                     <Input
                       id="businessName"
                       value={formData.businessName}
                       onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
                       placeholder="Ej: Mi Empresa S.R.L."
-                      className="h-11"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signatureName" className="text-sm font-medium">Nombre para firma *</Label>
+                    <Label htmlFor="signatureName" className="text-responsive-sm font-medium">Nombre para firma *</Label>
                     <Input
                       id="signatureName"
                       value={formData.signatureName}
                       onChange={(e) => setFormData(prev => ({ ...prev, signatureName: e.target.value }))}
                       placeholder="Ej: Juan Rodríguez"
-                      className="h-11"
                       required
                     />
                   </div>
@@ -524,19 +524,19 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
 
             {/* Client Information Card */}
             <Card className="shadow-soft border border-border/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <User className="w-5 h-5 text-primary" />
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-responsive-lg sm:text-responsive-xl flex items-center gap-2">
+                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   Información del Cliente
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                    <div className="space-y-2">
-                     <Label htmlFor="clientName" className="text-sm font-medium">
+                     <Label htmlFor="clientName" className="text-responsive-sm font-medium">
                        Nombre del cliente *
                        {isLookingUpClient && (
-                         <span className="ml-2 text-xs text-muted-foreground animate-pulse">
+                         <span className="ml-2 text-responsive-xs text-muted-foreground animate-pulse">
                            Consultando...
                          </span>
                        )}
@@ -546,15 +546,12 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                        value={formData.clientName}
                        onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
                        placeholder="Ej: Juan Pérez Martínez"
-                       className={cn(
-                         "h-11",
-                         isLookingUpClient && "bg-muted/50"
-                       )}
+                       className={cn(isLookingUpClient && "bg-muted/50")}
                        required
                      />
                    </div>
                   <div className="space-y-2">
-                    <Label htmlFor="clientId" className="text-sm font-medium">Cédula o RNC del cliente</Label>
+                    <Label htmlFor="clientId" className="text-responsive-sm font-medium">Cédula o RNC del cliente</Label>
                      <Input
                        id="clientId"
                        value={formData.clientId}
@@ -563,13 +560,12 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                        onKeyPress={handleClientIdKeyPress}
                        placeholder="001-1234567-8 o 123456789"
                        className={cn(
-                         "h-11",
                          formData.clientId.trim() && !clientIdValidation.isValid && "border-destructive"
                        )}
                      />
                     {formData.clientId.trim() && (
                       <div className={cn(
-                        "flex items-center gap-2 text-sm",
+                        "flex items-center gap-2 text-responsive-sm",
                         clientIdValidation.isValid ? "text-success" : "text-destructive"
                       )}>
                         {clientIdValidation.isValid ? (
@@ -579,7 +575,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                         )}
                         <span>{clientIdValidation.message}</span>
                         {clientIdValidation.type && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-responsive-xs">
                             {clientIdValidation.type === 'cedula' ? 'Cédula' : 'RNC'}
                           </Badge>
                         )}
@@ -589,12 +585,11 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="clientPhone" className="text-sm font-medium">Teléfono del cliente (opcional)</Label>
+                  <Label htmlFor="clientPhone" className="text-responsive-sm font-medium">Teléfono del cliente (opcional)</Label>
                   <PhoneInput
                     value={formData.clientPhone}
                     onChange={(value) => setFormData(prev => ({ ...prev, clientPhone: value }))}
                     placeholder="809-123-4567"
-                    className="h-11"
                   />
                 </div>
               </CardContent>

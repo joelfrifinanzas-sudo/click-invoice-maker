@@ -30,54 +30,54 @@ const Index = () => {
   return (
     <>
       {!showForm && !showPreview ? (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950 flex flex-col relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-hero flex flex-col relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-20">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent"></div>
           </div>
           
           {/* Hero Section */}
-          <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12 relative z-10">
-            <div className="text-center space-y-8 sm:space-y-10 max-w-4xl mx-auto">
+          <div className="flex-1 flex items-center justify-center container-responsive py-8 sm:py-12 relative z-10">
+            <div className="text-center space-y-6 sm:space-y-8 max-w-4xl mx-auto">
               {/* Logo */}
               <div className="animate-fade-in">
-                <div className="flex justify-center mb-8 animate-fade-in">
+                <div className="flex justify-center mb-6 sm:mb-8 animate-fade-in">
                   <img 
                     src="/lovable-uploads/32d136ce-f8f7-4b61-bc12-c81b4f95afda.png" 
                     alt="Factura 1Click Logo" 
-                    className="w-80 sm:w-96 md:w-[28rem] lg:w-[36rem] h-auto max-w-full animate-scale-in hover:scale-105 transition-transform duration-300"
+                    className="w-72 sm:w-80 md:w-96 lg:w-[28rem] xl:w-[36rem] h-auto max-w-full animate-scale-in hover:scale-105 transition-transform duration-300"
                   />
                 </div>
                 
                 <div className="space-y-3 sm:space-y-4">
-                  <p className="text-lg sm:text-xl md:text-2xl text-blue-100 font-medium">
+                  <p className="text-responsive-lg sm:text-responsive-xl md:text-responsive-2xl text-blue-100 font-medium">
                     Sistema de facturación electrónica
                   </p>
-                  <p className="text-base sm:text-lg md:text-xl text-blue-200/80">
+                  <p className="text-responsive-base sm:text-responsive-lg md:text-responsive-xl text-blue-200/80">
                     República Dominicana
                   </p>
                 </div>
               </div>
 
               {/* Features */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 animate-slide-up">
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                  <div className="text-blue-100 text-sm font-semibold">NCF Automático</div>
-                  <div className="text-blue-200/80 text-xs mt-1">Numeración fiscal</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 animate-slide-up">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 touch-target-comfortable">
+                  <div className="text-blue-100 text-responsive-sm font-semibold">NCF Automático</div>
+                  <div className="text-blue-200/80 text-responsive-xs mt-1">Numeración fiscal</div>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                  <div className="text-blue-100 text-sm font-semibold">DGII Compatible</div>
-                  <div className="text-blue-200/80 text-xs mt-1">Formato permitido</div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 touch-target-comfortable">
+                  <div className="text-blue-100 text-responsive-sm font-semibold">DGII Compatible</div>
+                  <div className="text-blue-200/80 text-responsive-xs mt-1">Formato permitido</div>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 flex items-center justify-center">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 touch-target-comfortable flex items-center justify-center">
                   <div className="text-center">
                     <div className="flex justify-center mb-2">
-                      <svg className="w-8 h-8 text-green-400" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-6 h-6 sm:w-8 sm:h-8 text-green-400" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.570-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.787"/>
                       </svg>
                     </div>
-                    <div className="text-blue-100 text-sm font-semibold">Exportar PDF o WhatsApp</div>
-                    <div className="text-blue-200/80 text-xs mt-1">Listo y Gratis</div>
+                    <div className="text-blue-100 text-responsive-sm font-semibold">Exportar PDF o WhatsApp</div>
+                    <div className="text-blue-200/80 text-responsive-xs mt-1">Listo y Gratis</div>
                   </div>
                 </div>
               </div>
@@ -86,9 +86,9 @@ const Index = () => {
               <div className="animate-slide-up pt-2">
                 <button
                   onClick={() => setShowForm(true)}
-                  className="inline-flex items-center gap-3 bg-white hover:bg-blue-50 text-primary px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-lg sm:text-xl font-bold transition-all duration-300 shadow-2xl hover:shadow-3xl hover:scale-105 border border-white/20"
+                  className="inline-flex items-center gap-3 bg-white hover:bg-blue-50 text-primary px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl text-responsive-lg sm:text-responsive-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 border border-white/20 touch-target-comfortable min-w-[200px]"
                 >
-                  <Plus className="w-6 h-6" />
+                  <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
                   Nueva Factura
                 </button>
               </div>
@@ -98,8 +98,8 @@ const Index = () => {
       ) : (
         <Layout>
           {showForm && !showPreview ? (
-            <div className="min-h-screen bg-gradient-subtle pt-14">
-              <div className="container mx-auto py-8 px-4">
+            <div className="min-h-screen bg-gradient-subtle scrollable">
+              <div className="container-responsive py-6 sm:py-8">
                 <div className="animate-fade-in">
                   <InvoiceForm onGenerateInvoice={handleGenerateInvoice} />
                 </div>
@@ -107,15 +107,17 @@ const Index = () => {
             </div>
           ) : (
             invoiceData && (
-              <div className="animate-slide-up">
-                <InvoicePreview 
-                  invoiceData={invoiceData} 
-                  onBack={() => {
-                    setShowPreview(false);
-                    setShowForm(false);
-                  }}
-                  invoiceNumber={invoiceNumber}
-                />
+              <div className="animate-slide-up scrollable min-h-screen">
+                <div className="container-responsive py-6">
+                  <InvoicePreview 
+                    invoiceData={invoiceData} 
+                    onBack={() => {
+                      setShowPreview(false);
+                      setShowForm(false);
+                    }}
+                    invoiceNumber={invoiceNumber}
+                  />
+                </div>
               </div>
             )
           )}
