@@ -28,7 +28,7 @@ const Index = () => {
   };
 
   return (
-    <Layout>
+    <>
       {!showForm && !showPreview ? (
         <div className="min-h-screen bg-primary flex flex-col relative overflow-hidden">
           {/* Background Pattern */}
@@ -95,29 +95,33 @@ const Index = () => {
             </div>
           </div>
         </div>
-      ) : showForm && !showPreview ? (
-        <div className="min-h-screen bg-gradient-subtle pt-14">
-          <div className="container mx-auto py-8 px-4">
-            <div className="animate-fade-in">
-              <InvoiceForm onGenerateInvoice={handleGenerateInvoice} />
-            </div>
-          </div>
-        </div>
       ) : (
-        invoiceData && (
-          <div className="animate-slide-up">
-            <InvoicePreview 
-              invoiceData={invoiceData} 
-              onBack={() => {
-                setShowPreview(false);
-                setShowForm(false);
-              }}
-              invoiceNumber={invoiceNumber}
-            />
-          </div>
-        )
+        <Layout>
+          {showForm && !showPreview ? (
+            <div className="min-h-screen bg-gradient-subtle pt-14">
+              <div className="container mx-auto py-8 px-4">
+                <div className="animate-fade-in">
+                  <InvoiceForm onGenerateInvoice={handleGenerateInvoice} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            invoiceData && (
+              <div className="animate-slide-up">
+                <InvoicePreview 
+                  invoiceData={invoiceData} 
+                  onBack={() => {
+                    setShowPreview(false);
+                    setShowForm(false);
+                  }}
+                  invoiceNumber={invoiceNumber}
+                />
+              </div>
+            )
+          )}
+        </Layout>
       )}
-    </Layout>
+    </>
   );
 };
 
