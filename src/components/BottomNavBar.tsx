@@ -5,7 +5,7 @@ export function BottomNavBar() {
   const navItems = [
     {
       label: "Inicio",
-      to: "/",
+      to: "/inicio",
       icon: Home,
       isCenter: false,
     },
