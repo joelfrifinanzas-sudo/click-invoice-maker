@@ -30,7 +30,7 @@ const Index = () => {
   return (
     <>
       {!showForm && !showPreview ? (
-        <div className="min-h-screen bg-primary flex flex-col relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950 flex flex-col relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-20">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent"></div>
