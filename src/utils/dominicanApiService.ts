@@ -177,15 +177,31 @@ export class DominicanApiService {
    */
   private static async tryPublicRegistry(clientId: string): Promise<ApiResponse> {
     try {
-      // Por ahora devolvemos datos simulados para testing
-      // En la implementación real, esta función consultaría un registro público real
-      
-      // Simular algunos datos de prueba
+      // Datos de prueba más realistas para demostrar la funcionalidad
       const testData: Record<string, string> = {
+        // Cédulas de prueba (formato: 001-1234567-8)
         '00112345678': 'Juan Carlos Pérez Martínez',
-        '12345678901': 'María Elena Santos Rodríguez',
+        '00123456789': 'María Elena Santos Rodríguez', 
+        '00198765432': 'Pedro Antonio García López',
+        '00187654321': 'Ana Lucía Jiménez Herrera',
+        '00156789012': 'Roberto Carlos Medina Torres',
+        '00145678901': 'Carmen Rosa Valdez Núñez',
+        '00134567890': 'José Miguel Ramírez Castro',
+        '00167890123': 'Luisa Fernanda Morales Díaz',
+        
+        // RNC de prueba (formato: 123456789)
         '123456789': 'Empresas del Caribe S.R.L.',
-        '987654321': 'Comercial Dominicana S.A.S.'
+        '987654321': 'Comercial Dominicana S.A.S.',
+        '456789123': 'Importadora Santo Domingo S.A.',
+        '789123456': 'Distribuidora Nacional EIRL',
+        '321654987': 'Servicios Técnicos del Este S.R.L.',
+        '654987321': 'Constructora Metropolitana S.A.',
+        '147258369': 'Soluciones Integrales RD S.R.L.',
+        '258369147': 'Tecnología y Desarrollo S.A.S.',
+        
+        // Versiones sin formato
+        '1234567890123': 'José Luis Fernández Castillo',
+        '9876543210987': 'Isabella María Cordero Vásquez'
       };
 
       const name = testData[clientId];
@@ -195,7 +211,7 @@ export class DominicanApiService {
           success: true,
           data: {
             name,
-            rnc: clientId.length >= 9 ? clientId : undefined,
+            rnc: clientId.length >= 9 && clientId.length <= 11 ? clientId : undefined,
             cedula: clientId.length === 11 ? clientId : undefined,
             status: 'active'
           }

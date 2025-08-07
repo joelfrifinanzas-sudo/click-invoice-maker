@@ -116,15 +116,19 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
         DominicanApiService.lookupClientData(
           formData.clientId,
           (clientData) => {
-            // Solo actualizar si el campo de nombre está vacío o si coincide con el nombre encontrado
-            if (!formData.clientName.trim() || formData.clientName === clientData.name) {
-              setFormData(prev => ({ ...prev, clientName: clientData.name }));
-            }
+            // Actualizar el nombre automáticamente
+            setFormData(prev => ({ ...prev, clientName: clientData.name }));
             setIsLookingUpClient(false);
+            
+            // Mostrar notificación de éxito
+            toast({
+              title: "✓ Datos encontrados",
+              description: `Nombre completado automáticamente: ${clientData.name}`,
+              duration: 2000,
+            });
           },
           (error) => {
-            // No mostrar errores al usuario, solo fallar silenciosamente
-            console.warn('No se pudo consultar datos del cliente:', error);
+            // Fallar silenciosamente sin mostrar errores
             setIsLookingUpClient(false);
           }
         );
