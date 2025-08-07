@@ -74,8 +74,8 @@ const Index = () => {
                   <div className="text-blue-200/80 text-xs mt-1">Formato oficial</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                  <div className="text-blue-100 text-sm font-semibold">Exportar PDF</div>
-                  <div className="text-blue-200/80 text-xs mt-1">Listo para imprimir</div>
+                  <div className="text-blue-100 text-sm font-semibold">Exportar PDF o Whatsapp</div>
+                  <div className="text-blue-200/80 text-xs mt-1">Listo y Gratis</div>
                 </div>
               </div>
 
