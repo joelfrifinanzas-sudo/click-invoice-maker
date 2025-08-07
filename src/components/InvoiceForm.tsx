@@ -106,12 +106,15 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
 
   // Validar cédula/RNC cuando cambie y consultar datos automáticamente
   useEffect(() => {
+    console.log('🔄 ClientID cambió:', formData.clientId);
     if (formData.clientId.trim()) {
       const validation = validateClientId(formData.clientId);
       setClientIdValidation(validation);
+      console.log('✅ Validación:', validation);
       
       // Si es válido, intentar consultar datos automáticamente
       if (validation.isValid) {
+        console.log('🚀 Iniciando consulta automática...');
         setIsLookingUpClient(true);
         DominicanApiService.lookupClientData(
           formData.clientId,

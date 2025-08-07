@@ -12,7 +12,7 @@ interface ApiResponse {
 }
 
 export class DominicanApiService {
-  private static readonly DEBOUNCE_DELAY = 800; // 800ms de delay para evitar muchas consultas
+  private static readonly DEBOUNCE_DELAY = 500; // Reducido a 500ms para ser más rápido
   private static cache = new Map<string, ClientData>();
   private static debounceTimers = new Map<string, NodeJS.Timeout>();
 
@@ -39,25 +39,33 @@ export class DominicanApiService {
     // Crear nuevo timer con debounce
     const timer = setTimeout(async () => {
       try {
+        console.log('🔍 Consultando datos para:', cleanId);
+        
         // Verificar cache primero
         const cachedData = this.cache.get(cleanId);
         if (cachedData) {
+          console.log('✅ Datos encontrados en cache:', cachedData);
           onSuccess(cachedData);
           return;
         }
 
         // Hacer consulta a las APIs
+        console.log('🌐 Consultando APIs públicas...');
         const result = await this.fetchFromApis(cleanId);
         
         if (result.success && result.data) {
+          console.log('✅ Datos encontrados:', result.data);
           // Guardar en cache
           this.cache.set(cleanId, result.data);
           onSuccess(result.data);
-        } else if (onError) {
-          onError(result.error || 'No se encontraron datos');
+        } else {
+          console.log('❌ No se encontraron datos:', result.error);
+          if (onError) {
+            onError(result.error || 'No se encontraron datos');
+          }
         }
       } catch (error) {
-        console.warn('Error en consulta de API dominicana:', error);
+        console.error('❌ Error en consulta de API dominicana:', error);
         if (onError) {
           onError('Error de conexión');
         }
@@ -177,6 +185,8 @@ export class DominicanApiService {
    */
   private static async tryPublicRegistry(clientId: string): Promise<ApiResponse> {
     try {
+      console.log('📋 Buscando en registro público para:', clientId);
+      
       // Datos de prueba más realistas para demostrar la funcionalidad
       const testData: Record<string, string> = {
         // Cédulas de prueba (formato: 001-1234567-8)
@@ -205,6 +215,8 @@ export class DominicanApiService {
       };
 
       const name = testData[clientId];
+      
+      console.log('📋 Resultado de búsqueda:', { clientId, name: name || 'No encontrado' });
       
       if (name) {
         return {
