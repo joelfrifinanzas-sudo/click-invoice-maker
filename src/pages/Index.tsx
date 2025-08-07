@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { InvoiceForm, InvoiceData } from '@/components/InvoiceForm';
 import { InvoicePreview } from '@/components/InvoicePreview';
-import { Button } from '@/components/ui/button';
-import { History, Settings } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Layout } from '@/components/Layout';
 import { saveInvoiceToHistory } from '@/utils/invoiceHistory';
 import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
 
@@ -27,39 +25,27 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle p-4">
-      <div className="container mx-auto py-8">
-        {!showPreview ? (
-          <div className="animate-fade-in">
-            <div className="flex justify-end gap-2 mb-4">
-              <Link to="/perfil-empresa">
-                <Button variant="outline" size="sm">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Perfil Empresa
-                </Button>
-              </Link>
-              <Link to="/history">
-                <Button variant="outline" size="sm">
-                  <History className="w-4 h-4 mr-2" />
-                  Ver Historial
-                </Button>
-              </Link>
+    <Layout>
+      <div className="min-h-screen bg-gradient-subtle">
+        <div className="container mx-auto py-8 px-4">
+          {!showPreview ? (
+            <div className="animate-fade-in">
+              <InvoiceForm onGenerateInvoice={handleGenerateInvoice} />
             </div>
-            <InvoiceForm onGenerateInvoice={handleGenerateInvoice} />
-          </div>
-        ) : (
-          invoiceData && (
-            <div className="animate-slide-up">
-              <InvoicePreview 
-                invoiceData={invoiceData} 
-                onBack={handleBackToForm}
-                invoiceNumber={invoiceNumber}
-              />
-            </div>
-          )
-        )}
+          ) : (
+            invoiceData && (
+              <div className="animate-slide-up">
+                <InvoicePreview 
+                  invoiceData={invoiceData} 
+                  onBack={handleBackToForm}
+                  invoiceNumber={invoiceNumber}
+                />
+              </div>
+            )
+          )}
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

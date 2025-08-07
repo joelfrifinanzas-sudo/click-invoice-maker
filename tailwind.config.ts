@@ -18,6 +18,10 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				inter: ['Inter', 'sans-serif'],
+				sans: ['Inter', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -52,13 +56,14 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				invoice: {
-					blue: 'hsl(var(--invoice-blue))',
-					'blue-light': 'hsl(var(--invoice-blue-light))',
-					'blue-dark': 'hsl(var(--invoice-blue-dark))',
-					gray: 'hsl(var(--invoice-gray))',
-					'gray-light': 'hsl(var(--invoice-gray-light))',
+				dominican: {
+					blue: 'hsl(var(--dominican-blue))',
+					'blue-light': 'hsl(var(--dominican-blue-light))',
+					'blue-dark': 'hsl(var(--dominican-blue-dark))',
+					red: 'hsl(var(--dominican-red))',
 				},
+				success: 'hsl(var(--success-green))',
+				warning: 'hsl(var(--warning-amber))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -109,11 +114,17 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-secondary': 'var(--gradient-secondary)',
 				'gradient-subtle': 'var(--gradient-subtle)'
 			},
 			boxShadow: {
+				'card': 'var(--shadow-card)',
 				'invoice': 'var(--shadow-invoice)',
 				'soft': 'var(--shadow-soft)'
+			},
+			spacing: {
+				'18': '4.5rem',
+				'88': '22rem',
 			}
 		}
 	},
