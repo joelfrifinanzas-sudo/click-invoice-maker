@@ -1,9 +1,15 @@
 import { Layout } from "@/components/Layout";
 import { ModuleHeader } from "@/components/ModuleHeader";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { useEffect } from "react";
 
 export default function Pagos() {
   useScrollToTop();
+  
+  // Always scroll to top when this module loads
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
   
   return (
     <Layout>

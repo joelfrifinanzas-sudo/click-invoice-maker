@@ -68,12 +68,15 @@ const HistoryPage = () => {
         <Card className="w-full max-w-4xl mx-auto shadow-invoice">
           <CardHeader className="text-center bg-gradient-primary text-white rounded-t-lg">
             <div className="flex items-center justify-between">
-              <Link to="/">
-                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver
-                </Button>
-              </Link>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-white hover:bg-white/20"
+                onClick={() => window.history.back()}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver
+              </Button>
               <CardTitle className="flex items-center gap-2 text-2xl">
                 <History className="w-8 h-8" />
                 Historial de Facturas
