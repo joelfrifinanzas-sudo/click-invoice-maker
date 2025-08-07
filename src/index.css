@@ -258,3 +258,54 @@
     }
   }
 }
+
+/* Z-index hierarchy for proper layering */
+.z-header { z-index: 1000; }
+.z-sidebar { z-index: 999; }
+.z-dropdown { z-index: 1100; }
+.z-modal { z-index: 1200; }
+.z-tooltip { z-index: 1300; }
+.z-toast { z-index: 1400; }
+
+/* Ensure dropdowns and popovers have proper backgrounds and positioning */
+[data-radix-popper-content-wrapper] {
+  z-index: 1100 !important;
+}
+
+[data-radix-select-content] {
+  z-index: 1100 !important;
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+[data-radix-dropdown-menu-content] {
+  z-index: 1100 !important;
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+/* Fix overlay issues */
+.radix-state-open > [data-radix-collection-item] {
+  z-index: 1100;
+}
+
+/* Prevent overflow hidden on main containers */
+.main-layout {
+  overflow: visible !important;
+}
+
+.header-container {
+  overflow: visible !important;
+}
+
+/* Mobile-specific fixes for dropdowns */
+@media (max-width: 768px) {
+  [data-radix-popper-content-wrapper],
+  [data-radix-select-content],
+  [data-radix-dropdown-menu-content] {
+    max-width: calc(100vw - 2rem);
+    left: 1rem !important;
+    right: 1rem !important;
+    transform: none !important;
+  }
+}

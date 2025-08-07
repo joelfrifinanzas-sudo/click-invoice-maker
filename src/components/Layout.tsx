@@ -15,13 +15,13 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen w-full flex">
+      <div className="min-h-screen w-full flex main-layout">
         <AppSidebar />
         <Header />
         
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-visible">
           {/* Main Content */}
-          <main className="flex-1 overflow-auto pt-14">
+          <main className="flex-1 overflow-auto pt-14 relative">
             {children}
           </main>
         </div>

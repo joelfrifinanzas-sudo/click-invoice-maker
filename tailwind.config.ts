@@ -163,6 +163,14 @@ export default {
 				'smooth': 'var(--transition-smooth)',
 				'fast': 'var(--transition-fast)',
 				'slow': 'var(--transition-slow)'
+			},
+			zIndex: {
+				'header': '1000',
+				'sidebar': '999',
+				'dropdown': '1100',
+				'modal': '1200',
+				'tooltip': '1300',
+				'toast': '1400'
 			}
 		}
 	},
