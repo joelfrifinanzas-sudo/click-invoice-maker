@@ -18,6 +18,8 @@ import CrearFactura from "./pages/CrearFactura";
 import Clientes from "./pages/Clientes";
 import Inventario from "./pages/Inventario";
 import Articulos from "./pages/Articulos";
+import Creditos from "./pages/Creditos";
+import Pagos from "./pages/Pagos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="/clientes" element={<Clientes />} />
             <Route path="/inventario" element={<Inventario />} />
             <Route path="/articulos" element={<Articulos />} />
+            <Route path="/creditos" element={<Creditos />} />
+            <Route path="/pagos" element={<Pagos />} />
             <Route path="/plan-pro" element={<PlanPro />} />
             <Route path="/contactos" element={<Contactos />} />
             <Route path="/perfil-empresa" element={<CompanyProfilePage />} />
