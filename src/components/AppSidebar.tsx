@@ -120,24 +120,22 @@ export function AppSidebar() {
             <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className={`${getNavClassName(item.url)} flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200`}
-                    >
-                      <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {state !== "collapsed" && (
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">
-                            {item.title}
-                          </div>
-                          <div className="text-xs opacity-60 truncate">
-                            {item.description}
-                          </div>
+                  <NavLink 
+                    to={item.url} 
+                    className={`${getNavClassName(item.url)} flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200`}
+                  >
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    {state !== "collapsed" && (
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          {item.title}
                         </div>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
+                        <div className="text-xs opacity-60 truncate">
+                          {item.description}
+                        </div>
+                      </div>
+                    )}
+                  </NavLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -152,26 +150,24 @@ export function AppSidebar() {
             <SidebarMenu className="space-y-1">
               {supportItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a 
-                      href={item.url}
-                      className="flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {state !== "collapsed" && (
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">
-                            {item.title}
-                          </div>
-                          <div className="text-xs opacity-60 truncate">
-                            {item.description}
-                          </div>
+                  <a 
+                    href={item.url}
+                    className="flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    {state !== "collapsed" && (
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          {item.title}
                         </div>
-                      )}
-                    </a>
-                  </SidebarMenuButton>
+                        <div className="text-xs opacity-60 truncate">
+                          {item.description}
+                        </div>
+                      </div>
+                    )}
+                  </a>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
