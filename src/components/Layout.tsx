@@ -35,7 +35,7 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
                 </div>
                 <div className="hidden sm:block">
                   <h1 className="text-xl font-bold text-foreground">
-                    Click Invoice Maker
+                    Generador de Facturas
                   </h1>
                   <p className="text-sm text-muted-foreground font-medium">
                     Facturas Digitales República Dominicana
