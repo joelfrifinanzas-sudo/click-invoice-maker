@@ -11,6 +11,10 @@ import PlanPro from "./pages/PlanPro";
 import Contactos from "./pages/Contactos";
 import Configuracion from "./pages/Configuracion";
 import Perfil from "./pages/Perfil";
+import Cotizaciones from "./pages/Cotizaciones";
+import Facturas from "./pages/Facturas";
+import Clientes from "./pages/Clientes";
+import Inventario from "./pages/Inventario";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +28,10 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/cotizaciones" element={<Cotizaciones />} />
+            <Route path="/facturas" element={<Facturas />} />
+            <Route path="/clientes" element={<Clientes />} />
+            <Route path="/inventario" element={<Inventario />} />
             <Route path="/plan-pro" element={<PlanPro />} />
             <Route path="/contactos" element={<Contactos />} />
             <Route path="/perfil-empresa" element={<CompanyProfilePage />} />

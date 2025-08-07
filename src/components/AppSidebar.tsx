@@ -9,19 +9,28 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { FileText, Receipt, Users, Package } from "lucide-react";
 
 const menuItems = [
   {
-    title: "Plan Pro",
-    url: "/plan-pro",
+    title: "Cotizaciones",
+    url: "/cotizaciones",
+    icon: FileText,
   },
   {
-    title: "Contactos", 
-    url: "/contactos",
+    title: "Facturas",
+    url: "/facturas", 
+    icon: Receipt,
   },
   {
-    title: "Perfiles de la empresa",
-    url: "/perfil-empresa",
+    title: "Clientes",
+    url: "/clientes",
+    icon: Users,
+  },
+  {
+    title: "Inventario",
+    url: "/inventario",
+    icon: Package,
   },
 ];
 
@@ -34,24 +43,25 @@ export function AppSidebar() {
   
   const getNavClassName = (path: string) => {
     return isActive(path) 
-      ? "bg-muted text-primary font-medium" 
-      : "hover:bg-muted/50";
+      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium shadow-lg" 
+      : "text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200";
   };
 
   return (
-    <Sidebar className={state === "collapsed" ? "w-14" : "w-60"}>
-      <SidebarContent>
-        <SidebarGroup>
+    <Sidebar className={`${state === "collapsed" ? "w-16" : "w-64"} bg-slate-800 border-r-0`}>
+      <SidebarContent className="bg-slate-800">
+        <SidebarGroup className="px-2 py-4">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-2">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="h-12">
                     <NavLink 
                       to={item.url} 
-                      className={getNavClassName(item.url)}
+                      className={`${getNavClassName(item.url)} flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200`}
                     >
-                      {state !== "collapsed" && <span>{item.title}</span>}
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      {state !== "collapsed" && <span className="font-medium">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
