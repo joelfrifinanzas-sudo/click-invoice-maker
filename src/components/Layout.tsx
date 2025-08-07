@@ -24,9 +24,9 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
           <header className="h-16 bg-gradient-hero border-b border-blue-400/20 flex items-center justify-between px-6 shadow-soft backdrop-blur-sm relative z-50">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="h-10 w-10 p-0 flex flex-col items-center justify-center gap-1 hover:bg-white/10 rounded-lg transition-colors group">
-                <div className="w-5 h-0.5 bg-white rounded-full transition-all group-hover:w-4"></div>
-                <div className="w-5 h-0.5 bg-white rounded-full transition-all"></div>
-                <div className="w-5 h-0.5 bg-white rounded-full transition-all group-hover:w-4"></div>
+                <div className="w-5 h-0.5 bg-white rounded-full"></div>
+                <div className="w-5 h-0.5 bg-white rounded-full"></div>
+                <div className="w-5 h-0.5 bg-white rounded-full"></div>
               </SidebarTrigger>
             </div>
             
