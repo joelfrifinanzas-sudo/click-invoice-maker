@@ -68,6 +68,7 @@ interface InvoiceFormProps {
 }
 
 export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
+  const [documentType, setDocumentType] = useState<'cotizacion' | 'factura'>('factura');
   const [formData, setFormData] = useState<InvoiceData>({
     clientName: '',
     clientId: '',
@@ -426,10 +427,10 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     setFormData(prev => ({
       ...prev,
       subtotal: newTotals.subtotal,
-      itbisAmount: newTotals.itbisAmount,
-      total: newTotals.total
+      itbisAmount: documentType === 'factura' ? newTotals.itbisAmount : 0,
+      total: documentType === 'factura' ? newTotals.total : newTotals.subtotal
     }));
-  }, [formData.services, formData.includeITBIS]);
+  }, [formData.services, formData.includeITBIS, documentType]);
 
   return (
     <div className="space-y-6 w-full">
@@ -453,27 +454,32 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
       
         <CardContent className="p-4 sm:p-6 lg:p-8">
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6 sm:mb-8">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={duplicateInvoice}
-              className="flex items-center justify-center gap-2 min-h-touch"
-              size="default"
-            >
-              <Copy className="w-4 h-4" />
-              <span className="text-responsive-sm">Duplicar Factura</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={saveAsDraft}
-              className="flex items-center justify-center gap-2 min-h-touch"
-              size="default"
-            >
-              <Save className="w-4 h-4" />
-              <span className="text-responsive-sm">Guardar Borrador</span>
-            </Button>
+          {/* Document Type Toggle */}
+          <div className="flex justify-center mb-6 sm:mb-8">
+            <div className="flex rounded-lg border border-border bg-background p-1">
+              <button
+                type="button"
+                onClick={() => setDocumentType('cotizacion')}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                  documentType === 'cotizacion' 
+                    ? 'bg-primary text-primary-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                Cotización
+              </button>
+              <button
+                type="button"
+                onClick={() => setDocumentType('factura')}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                  documentType === 'factura' 
+                    ? 'bg-primary text-primary-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                Factura
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
@@ -482,7 +488,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-responsive-lg sm:text-responsive-xl flex items-center gap-2">
                   <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  Información del Negocio
+                  {documentType === 'cotizacion' ? 'Nueva Cotización' : 'Nueva Factura'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 sm:space-y-6">
@@ -559,15 +565,16 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
               </CardContent>
             </Card>
 
-            {/* Invoice Type and Client Information Card */}
-            <Card className="shadow-soft border border-border/50">
-              <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="text-responsive-lg sm:text-responsive-xl flex items-center gap-2">
-                  <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  Tipo de factura con Número de Comprobante Fiscal (NCF)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 sm:space-y-6">
+            {/* Invoice Type and Client Information Card - Only for invoices */}
+            {documentType === 'factura' && (
+              <Card className="shadow-soft border border-border/50">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-responsive-lg sm:text-responsive-xl flex items-center gap-2">
+                    <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    Tipo de factura con Número de Comprobante Fiscal (NCF)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
                 {/* Invoice Type Selector */}
                 <div className="space-y-2">
                   <Label htmlFor="invoiceType" className="text-responsive-sm font-medium">Tipo de factura *</Label>
@@ -692,11 +699,50 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                   />
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            )}
 
+            {/* Client Information Card - For Quotations */}
+            {documentType === 'cotizacion' && (
+              <Card className="shadow-soft border border-border/50">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-responsive-base sm:text-responsive-lg flex items-center gap-2">
+                    <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    Información del Cliente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="clientName" className="text-responsive-sm font-medium">
+                        Nombre del cliente *
+                      </Label>
+                      <Input
+                        id="clientName"
+                        value={formData.clientName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
+                        placeholder="Ej: Juan Pérez Martínez"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="clientPhone" className="text-responsive-sm font-medium">
+                        Teléfono de contacto (opcional)
+                      </Label>
+                      <PhoneInput
+                        value={formData.clientPhone}
+                        onChange={(value) => setFormData(prev => ({ ...prev, clientPhone: value }))}
+                        placeholder="809-123-4567"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* NCF Section Card */}
-            <Card className="shadow-soft border border-border/50">
+            {/* NCF Section Card - Only show for invoices */}
+            {documentType === 'factura' && (
+              <Card className="shadow-soft border border-border/50">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Receipt className="w-5 h-5 text-primary" />
@@ -805,7 +851,8 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            )}
 
             {/* Services Card */}
             <Card className="shadow-soft border border-border/50">
@@ -881,39 +928,43 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                 {totals.total > 0 && (
                   <div className="p-6 bg-primary/5 border border-primary/20 rounded-xl">
                     <div className="space-y-3">
-                      {/* ITBIS Control */}
-                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Calculator className="w-5 h-5 text-primary" />
-                          <div>
-                            <Label className="text-sm font-medium">Incluir ITBIS (18%)</Label>
-                            <p className="text-xs text-muted-foreground">
-                              {formData.includeITBIS ? 'ITBIS incluido en el precio mostrado' : 'ITBIS se agregará al precio base'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Label htmlFor="includeITBIS" className="text-sm">
-                            {formData.includeITBIS ? 'Incluido' : 'Adicional'}
-                          </Label>
-                          <Switch
-                            id="includeITBIS"
-                            checked={formData.includeITBIS}
-                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, includeITBIS: checked }))}
-                          />
-                        </div>
+                {/* ITBIS Control - Only show for invoices */}
+                {documentType === 'factura' && (
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Calculator className="w-5 h-5 text-primary" />
+                      <div>
+                        <Label className="text-sm font-medium">Incluir ITBIS (18%)</Label>
+                        <p className="text-xs text-muted-foreground">
+                          {formData.includeITBIS ? 'ITBIS incluido en el precio mostrado' : 'ITBIS se agregará al precio base'}
+                        </p>
                       </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="includeITBIS" className="text-sm">
+                        {formData.includeITBIS ? 'Incluido' : 'Adicional'}
+                      </Label>
+                      <Switch
+                        id="includeITBIS"
+                        checked={formData.includeITBIS}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, includeITBIS: checked }))}
+                      />
+                    </div>
+                  </div>
+                )}
                       
                       {/* Breakdown */}
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Subtotal:</span>
-                          <span>{formatCurrency(totals.subtotal)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>ITBIS (18%):</span>
-                          <span>{formatCurrency(totals.itbisAmount)}</span>
-                        </div>
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(totals.subtotal)}</span>
+                </div>
+                {documentType === 'factura' && (
+                  <div className="flex justify-between">
+                    <span>ITBIS (18%):</span>
+                    <span>{formatCurrency(totals.itbisAmount)}</span>
+                  </div>
+                )}
                         <div className="border-t pt-2">
                           <div className="flex items-center justify-between">
                             <span className="text-lg font-semibold text-foreground">Total a Pagar:</span>
@@ -973,13 +1024,13 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-8">
-              <Button 
+                <Button 
                 type="submit" 
                 className="flex-1 bg-gradient-primary hover:opacity-90 transition-all text-lg py-6 shadow-invoice"
-                disabled={!formData.clientName || !formData.businessName || !formData.signatureName || !formData.services.every(s => s.concept.trim() && s.amount.trim()) || !formData.ncf}
+                disabled={!formData.businessName || !formData.signatureName || !formData.services.every(s => s.concept.trim() && s.amount.trim()) || (documentType === 'factura' && !formData.ncf)}
               >
                 <Receipt className="w-5 h-5 mr-2" />
-                Generar Factura Profesional
+                {documentType === 'cotizacion' ? 'Generar Cotización Profesional' : 'Generar Factura Profesional'}
               </Button>
             </div>
           </form>
