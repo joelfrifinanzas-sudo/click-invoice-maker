@@ -11,13 +11,7 @@ export function BackButton({ className = '', fallbackRoute = '/inicio' }: BackBu
   const navigate = useNavigate();
 
   const handleBack = () => {
-    // Try to go back in history first
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      // Fallback to specified route if no history
-      navigate(fallbackRoute);
-    }
+    navigate(-1);
   };
 
   return (

@@ -4,9 +4,10 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { InvoicePreview } from '@/components/InvoicePreview';
 import { saveInvoiceToHistory } from '@/utils/invoiceHistory';
 import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
-import { ArrowLeft, FileText, ClipboardList } from 'lucide-react';
+import { ArrowLeft, FileText, ClipboardList, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '@/components/BackButton';
+import { Button } from '@/components/ui/button';
 
 export default function CrearFactura() {
   useScrollToTop();
@@ -52,6 +53,15 @@ export default function CrearFactura() {
               </div>
             )}
           </div>
+          
+          {/* Floating Home Button */}
+          <Button
+            onClick={() => navigate('/inicio')}
+            className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 z-50"
+            size="sm"
+          >
+            <Home className="w-6 h-6" />
+          </Button>
         </div>
       ) : (
         invoiceData && (
@@ -63,6 +73,15 @@ export default function CrearFactura() {
                 invoiceNumber={invoiceNumber}
               />
             </div>
+            
+            {/* Floating Home Button */}
+            <Button
+              onClick={() => navigate('/inicio')}
+              className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 z-50"
+              size="sm"
+            >
+              <Home className="w-6 h-6" />
+            </Button>
           </div>
         )
       )}
