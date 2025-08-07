@@ -21,7 +21,7 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
         
         <div className="flex-1 flex flex-col overflow-visible">
           {/* Main Content */}
-          <main className="flex-1 overflow-auto pt-14 relative">
+          <main className="flex-1 overflow-auto transition-[padding] duration-300 pt-14 relative sidebar-content">
             {children}
           </main>
         </div>
