@@ -41,11 +41,11 @@ const Index = () => {
             <div className="text-center space-y-8 sm:space-y-10 max-w-4xl mx-auto">
               {/* Logo */}
               <div className="animate-fade-in">
-                <div className="flex justify-center mb-8">
+                <div className="flex justify-center mb-8 animate-fade-in">
                   <img 
                     src="/lovable-uploads/45702aae-7ca1-489a-8abd-915f6e46a754.png" 
                     alt="Factura 1Click Logo" 
-                    className="w-48 sm:w-64 md:w-80 h-auto max-w-full"
+                    className="w-64 sm:w-80 md:w-96 lg:w-[32rem] h-auto max-w-full animate-scale-in hover:scale-105 transition-transform duration-300"
                   />
                 </div>
                 
