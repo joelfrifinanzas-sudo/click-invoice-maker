@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { InvoiceForm, InvoiceData } from '@/components/InvoiceForm';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { InvoicePreview } from '@/components/InvoicePreview';
 import { saveInvoiceToHistory } from '@/utils/invoiceHistory';
 import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
@@ -8,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { BackButton } from '@/components/BackButton';
 
 export default function CrearFactura() {
+  useScrollToTop();
+  
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);

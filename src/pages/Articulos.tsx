@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,8 @@ interface Articulo {
 }
 
 export default function Articulos() {
+  useScrollToTop();
+  
   const [articulos, setArticulos] = useState<Articulo[]>([
     { id: 1, nombre: "Consultoría", precio: 100.00, categoria: "Servicio", stock: 999 },
     { id: 2, nombre: "Desarrollo Web", precio: 500.00, categoria: "Servicio", stock: 999 },

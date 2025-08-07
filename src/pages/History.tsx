@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { History, Download, Eye, ArrowLeft, Trash2 } from 'lucide-react';
@@ -11,6 +12,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const HistoryPage = () => {
+  useScrollToTop();
+  
   const [invoices, setInvoices] = useState<HistoryInvoice[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<HistoryInvoice | null>(null);
   const [showPreview, setShowPreview] = useState(false);

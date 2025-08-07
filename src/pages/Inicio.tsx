@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useNavigation } from '@/contexts/NavigationContext';
 import { 
   FileText, 
   Users, 
@@ -19,6 +20,7 @@ import { Layout } from '@/components/Layout';
 
 export default function Inicio() {
   const navigate = useNavigate();
+  const { markDashboardNavigation } = useNavigation();
 
   const modules = [
     {
@@ -122,7 +124,10 @@ export default function Inicio() {
             {modules.map((module, index) => (
               <button
                 key={index}
-                onClick={() => navigate(module.path)}
+                onClick={() => {
+                  markDashboardNavigation();
+                  navigate(module.path);
+                }}
                 className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 flex flex-col items-center text-center space-y-3"
               >
                 <div className={`w-16 h-16 ${module.bgColor} rounded-2xl flex items-center justify-center`}>

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppConfigProvider } from "./contexts/AppConfigContext";
+import { NavigationProvider } from "./contexts/NavigationContext";
 import { useRoutePersistence } from "./hooks/useRoutePersistence";
 import { useEffect } from "react";
 import Index from "./pages/Index";
@@ -62,13 +63,15 @@ function AppRoutes() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppConfigProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
+      <NavigationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </NavigationProvider>
     </AppConfigProvider>
   </QueryClientProvider>
 );

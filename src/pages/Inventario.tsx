@@ -1,7 +1,10 @@
 import { Layout } from "@/components/Layout";
 import { ModuleHeader } from "@/components/ModuleHeader";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 export default function Inventario() {
+  useScrollToTop();
+  
   return (
     <Layout>
       <div className="container-responsive py-8">
