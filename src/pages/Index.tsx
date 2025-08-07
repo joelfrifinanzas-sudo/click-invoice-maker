@@ -89,7 +89,7 @@ const Index = () => {
           </div>
         </div>
       ) : showForm && !showPreview ? (
-        <div className="min-h-screen bg-gradient-subtle">
+        <div className="min-h-screen bg-gradient-subtle pt-14">
           <div className="container mx-auto py-8 px-4">
             <div className="animate-fade-in">
               <InvoiceForm onGenerateInvoice={handleGenerateInvoice} />
