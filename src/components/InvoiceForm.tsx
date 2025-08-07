@@ -117,6 +117,29 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     }
   }, [formData.ncfType, formData.clientId, formData.services, isEditingNCF]);
 
+  // Sincronizar tipo de factura inicial con NCF
+  useEffect(() => {
+    if (!formData.invoiceType && formData.ncfType) {
+      // Mapeo inverso de NCF a tipo de factura
+      const ncfToInvoiceType: Record<NCFType, string> = {
+        'B01': 'fiscal',
+        'B15': 'gubernamental', 
+        'B02': 'consumidor-final',
+        'NONE': 'sin-ncf',
+        'B04': 'nota-credito',
+        'B03': 'nota-debito',
+        'B11': 'fiscal',
+        'B12': 'fiscal',
+        'B13': 'fiscal',
+        'B14': 'fiscal',
+        'B16': 'fiscal'
+      };
+      
+      const invoiceType = ncfToInvoiceType[formData.ncfType] || 'fiscal';
+      setFormData(prev => ({ ...prev, invoiceType }));
+    }
+  }, [formData.ncfType, formData.invoiceType]);
+
   // Función para consultar datos del cliente
   const lookupClientData = () => {
     const clientId = formData.clientId.trim();
@@ -550,7 +573,26 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                   <Label htmlFor="invoiceType" className="text-responsive-sm font-medium">Tipo de factura *</Label>
                   <Select
                     value={formData.invoiceType}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, invoiceType: value }))}
+                    onValueChange={(value) => {
+                      // Mapeo de tipos de factura a NCF
+                      const invoiceTypeToNCF: Record<string, NCFType> = {
+                        'fiscal': 'B01',
+                        'gubernamental': 'B15',
+                        'consumidor-final': 'B02',
+                        'sin-ncf': 'NONE',
+                        'nota-credito': 'B04',
+                        'nota-debito': 'B03'
+                      };
+                      
+                      const selectedNCF = invoiceTypeToNCF[value] || 'B02';
+                      
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        invoiceType: value,
+                        ncfType: selectedNCF 
+                      }));
+                      setIsEditingNCF(false);
+                    }}
                   >
                     <SelectTrigger className="h-11">
                       <SelectValue placeholder="Seleccionar tipo de factura" />
@@ -564,6 +606,11 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                       <SelectItem value="nota-debito">Nota de débito</SelectItem>
                     </SelectContent>
                   </Select>
+                  {formData.invoiceType && (
+                    <div className="text-xs text-muted-foreground p-2 bg-muted/30 rounded-md">
+                      ✓ NCF sincronizado automáticamente: <strong>{NCF_TYPES[formData.ncfType]?.description}</strong>
+                    </div>
+                  )}
                 </div>
 
                 {/* Client Information - Conditional */}
