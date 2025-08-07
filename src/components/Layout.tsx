@@ -23,8 +23,10 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
           {/* Header */}
           <header className="h-16 bg-white border-b border-border flex items-center justify-between px-6 shadow-soft">
             <div className="flex items-center gap-4">
-              <SidebarTrigger className="h-9 w-9 p-0">
-                <Menu className="w-4 h-4" />
+              <SidebarTrigger className="h-9 w-9 p-0 flex flex-col items-center justify-center gap-1">
+                <div className="w-4 h-0.5 bg-current rounded-full"></div>
+                <div className="w-4 h-0.5 bg-current rounded-full"></div>
+                <div className="w-4 h-0.5 bg-current rounded-full"></div>
               </SidebarTrigger>
               
               <div className="flex items-center gap-3">
