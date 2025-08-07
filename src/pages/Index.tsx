@@ -43,13 +43,11 @@ const Index = () => {
               <div className="animate-fade-in">
                 <div className="flex justify-center mb-8">
                   <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20">
-                    <div className="flex items-center justify-center">
-                      <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white">
-                        FACTURA
-                        <span className="block text-4xl sm:text-5xl md:text-6xl text-blue-300">1CLICK</span>
-                      </h1>
-                      <div className="ml-4 text-6xl sm:text-7xl md:text-8xl font-black text-blue-400">1</div>
-                    </div>
+                    <img 
+                      src="/lovable-uploads/45702aae-7ca1-489a-8abd-915f6e46a754.png" 
+                      alt="Factura 1Click Logo" 
+                      className="w-48 sm:w-64 md:w-80 h-auto max-w-full"
+                    />
                   </div>
                 </div>
                 
