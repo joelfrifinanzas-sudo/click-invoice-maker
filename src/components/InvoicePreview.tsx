@@ -1,14 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Download, Printer, ArrowLeft, MessageCircle, Mail } from 'lucide-react';
 import { InvoiceData, ServiceItem } from './InvoiceForm';
-import { generateInvoicePDF, getNextInvoiceNumber } from '@/utils/pdfGenerator';
-import { generateWhatsAppLink, generateEmailLink } from '@/utils/shareUtils';
-import { shareInvoiceViaWhatsApp } from '@/utils/whatsappUtils';
-import { useState, useEffect } from 'react';
+import { InvoiceActions } from './InvoiceActions';
+import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
 
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
@@ -17,44 +13,11 @@ interface InvoicePreviewProps {
 }
 
 export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePreviewProps) => {
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  
   // Usar el número de factura pasado como prop o generar uno nuevo
   const currentInvoiceNumber = invoiceNumber || getNextInvoiceNumber();
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDownloadPDF = async () => {
-    setIsGeneratingPDF(true);
-    try {
-      await generateInvoicePDF(invoiceData, currentInvoiceNumber);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
-
-  const handleWhatsAppShare = async () => {
-    try {
-      await shareInvoiceViaWhatsApp(invoiceData, currentInvoiceNumber);
-    } catch (error) {
-      console.error('Error sharing via WhatsApp:', error);
-      // Fallback al método anterior
-      const whatsappLink = generateWhatsAppLink(invoiceData, currentInvoiceNumber);
-      window.open(whatsappLink, '_blank');
-    }
-  };
-
-  const handleEmailShare = () => {
-    const emailLink = generateEmailLink(invoiceData, currentInvoiceNumber);
-    window.location.href = emailLink;
-  };
-
-  const formatCurrency = (amount: string) => {
-    const num = parseFloat(amount);
+  const formatCurrency = (amount: string | number) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
     return new Intl.NumberFormat('es-DO', {
       style: 'currency',
       currency: 'DOP'
@@ -64,30 +27,11 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
       {/* Action Buttons */}
-      <div className="flex justify-between items-center print:hidden">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Volver al formulario
-        </Button>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />
-            Imprimir
-          </Button>
-          <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF}>
-            <Download className="w-4 h-4 mr-2" />
-            {isGeneratingPDF ? 'Generando PDF...' : 'Descargar PDF'}
-          </Button>
-          <Button variant="outline" onClick={handleWhatsAppShare} className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100">
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Enviar por WhatsApp
-          </Button>
-          <Button variant="outline" onClick={handleEmailShare} className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
-            <Mail className="w-4 h-4 mr-2" />
-            Enviar por Correo
-          </Button>
-        </div>
-      </div>
+      <InvoiceActions
+        invoiceData={invoiceData}
+        invoiceNumber={currentInvoiceNumber}
+        onBack={onBack}
+      />
 
       {/* Invoice */}
       <Card className="invoice-content bg-white shadow-soft">
@@ -160,21 +104,22 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
             <div className="text-right space-y-2">
               <div className="flex justify-between items-center min-w-[250px]">
                 <span className="text-invoice-gray">Subtotal:</span>
-                <span className="font-medium">{formatCurrency(invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0).toString())}</span>
+                <span className="font-medium">{formatCurrency(invoiceData.subtotal)}</span>
               </div>
               <div className="flex justify-between items-center min-w-[250px]">
                 <span className="text-invoice-gray">ITBIS (18%):</span>
-                <span className="font-medium">
-                  {formatCurrency((invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0) * 0.18).toString())}
-                </span>
+                <span className="font-medium">{formatCurrency(invoiceData.itbisAmount)}</span>
               </div>
               <Separator />
               <div className="flex justify-between items-center min-w-[250px] text-lg">
                 <span className="font-bold text-invoice-blue">TOTAL:</span>
                 <span className="font-bold text-invoice-blue text-xl">
-                  {formatCurrency((invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0) * 1.18).toString())}
+                  {formatCurrency(invoiceData.total)}
                 </span>
               </div>
+              <p className="text-xs text-invoice-gray mt-2">
+                {invoiceData.includeITBIS ? 'ITBIS incluido en el precio' : 'ITBIS agregado al precio base'}
+              </p>
             </div>
           </div>
 
