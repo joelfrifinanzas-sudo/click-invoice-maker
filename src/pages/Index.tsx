@@ -43,9 +43,9 @@ const Index = () => {
               <div className="animate-fade-in">
                 <div className="flex justify-center mb-8 animate-fade-in">
                   <img 
-                    src="/lovable-uploads/45702aae-7ca1-489a-8abd-915f6e46a754.png" 
+                    src="/lovable-uploads/32d136ce-f8f7-4b61-bc12-c81b4f95afda.png" 
                     alt="Factura 1Click Logo" 
-                    className="w-64 sm:w-80 md:w-96 lg:w-[32rem] h-auto max-w-full animate-scale-in hover:scale-105 transition-transform duration-300"
+                    className="w-80 sm:w-96 md:w-[28rem] lg:w-[36rem] h-auto max-w-full animate-scale-in hover:scale-105 transition-transform duration-300"
                   />
                 </div>
                 
