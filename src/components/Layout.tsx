@@ -33,10 +33,10 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm font-semibold text-white">Sistema DGII</p>
+                  <p className="text-xs sm:text-sm font-semibold text-white">Sistema DGII</p>
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
                 </div>
-                <p className="text-xs text-blue-100">NCF Automático</p>
+                <p className="text-xs text-white/80 hidden sm:block">NCF Automático</p>
               </div>
             </div>
           </header>
