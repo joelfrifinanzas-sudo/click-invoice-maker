@@ -96,7 +96,7 @@ const Index = () => {
           </div>
         </div>
       ) : (
-        <Layout>
+        <Layout onCreateInvoice={() => setShowForm(true)}>
           {showForm && !showPreview ? (
             <div className="min-h-screen bg-gradient-subtle scrollable">
               <div className="container-responsive py-6 sm:py-8">

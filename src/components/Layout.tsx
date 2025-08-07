@@ -7,14 +7,15 @@ import { BottomNavBar } from "@/components/BottomNavBar";
 interface LayoutProps {
   children: ReactNode;
   showSidebar?: boolean;
+  onCreateInvoice?: () => void;
 }
 
-export function Layout({ children, showSidebar = true }: LayoutProps) {
+export function Layout({ children, showSidebar = true, onCreateInvoice }: LayoutProps) {
   if (!showSidebar) {
     return (
       <>
         {children}
-        <BottomNavBar />
+        <BottomNavBar onCreateInvoice={onCreateInvoice} />
       </>
     );
   }
@@ -31,7 +32,7 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
             {children}
           </main>
         </div>
-        <BottomNavBar />
+        <BottomNavBar onCreateInvoice={onCreateInvoice} />
       </div>
     </SidebarProvider>
   );
