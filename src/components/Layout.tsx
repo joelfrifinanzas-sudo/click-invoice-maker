@@ -15,7 +15,7 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
   }
 
   return (
-    <SidebarProvider defaultOpen={false} collapsedWidth={64}>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen w-full flex">
         <AppSidebar />
         

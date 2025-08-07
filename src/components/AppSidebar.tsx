@@ -74,7 +74,7 @@ const supportItems = [
 ];
 
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -87,9 +87,9 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-80"} collapsible>
+    <Sidebar className={state === "collapsed" ? "w-16" : "w-80"}>
       <SidebarHeader className="p-6 border-b border-sidebar-border">
-        {!collapsed && (
+        {state !== "collapsed" && (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
@@ -104,7 +104,7 @@ export function AppSidebar() {
             </div>
           </div>
         )}
-        {collapsed && (
+        {state === "collapsed" && (
           <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto">
             <FileText className="w-5 h-5 text-white" />
           </div>
@@ -114,7 +114,7 @@ export function AppSidebar() {
       <SidebarContent className="px-4 py-6">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/80 font-medium mb-2">
-            {!collapsed ? "Gestión" : ""}
+            {state !== "collapsed" ? "Gestión" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
@@ -126,7 +126,7 @@ export function AppSidebar() {
                       className={`${getNavClassName(item.url)} flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200`}
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {!collapsed && (
+                      {state !== "collapsed" && (
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate">
                             {item.title}
@@ -146,7 +146,7 @@ export function AppSidebar() {
 
         <SidebarGroup className="mt-8">
           <SidebarGroupLabel className="text-sidebar-foreground/80 font-medium mb-2">
-            {!collapsed ? "Soporte" : ""}
+            {state !== "collapsed" ? "Soporte" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
@@ -160,7 +160,7 @@ export function AppSidebar() {
                       rel="noopener noreferrer"
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {!collapsed && (
+                      {state !== "collapsed" && (
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate">
                             {item.title}
