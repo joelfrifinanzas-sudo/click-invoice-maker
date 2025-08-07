@@ -18,225 +18,252 @@ export const getNextInvoiceNumber = (): string => {
 export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber: string) => {
   const pdf = new jsPDF();
   
-  // Configuración de colores
-  const primaryBlue = [34, 64, 170]; // RGB for hsl(220 90% 56%)
-  const lightGray = [107, 114, 128]; // RGB for text-gray-500
-  const darkText = [17, 24, 39]; // RGB for text-gray-900
+  // Configuración de colores siguiendo el diseño de Bootis
+  const blueColor = [37, 99, 235]; // Blue-600
+  const grayDark = [55, 65, 81]; // Gray-700
+  const grayMedium = [107, 114, 128]; // Gray-500
+  const grayLight = [243, 244, 246]; // Gray-100
+  const darkTableHeader = [55, 65, 81]; // Dark gray for table header
   
-  // Configuración de fuentes
   pdf.setFont('helvetica');
-  
-  let yPosition = 30;
-  
-  // Logo (si existe)
+  let yPosition = 20;
+  const pageWidth = pdf.internal.pageSize.getWidth();
+
+  // Header Section - Logo y Company Info (lado izquierdo)
   if (invoiceData.logo) {
     try {
-      // Convertir base64 a imagen
-      const logoSize = 25;
-      pdf.addImage(invoiceData.logo, 'JPEG', 20, yPosition - 5, logoSize, logoSize);
-      yPosition += logoSize + 10;
+      pdf.addImage(invoiceData.logo, 'PNG', 20, yPosition, 25, 25);
     } catch (error) {
-      console.log('Error adding logo:', error);
-      yPosition += 10;
+      console.warn('Error adding logo to PDF:', error);
     }
   }
-  
-  // Título FACTURA
-  pdf.setFontSize(28);
-  pdf.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+
+  // Nombre de empresa y subtítulo
+  pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('FACTURA', 20, yPosition);
+  pdf.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
+  pdf.text(invoiceData.businessName, invoiceData.logo ? 50 : 20, yPosition + 10);
+  
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+  pdf.text('Technology', invoiceData.logo ? 50 : 20, yPosition + 18);
+
+  // Título FACTURA (lado derecho)
+  pdf.setFontSize(28);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text('FACTURA', 140, yPosition + 15);
   
   // Número de factura
+  pdf.setFontSize(10);
+  pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+  pdf.text(`# ${invoiceNumber}`, 140, yPosition + 25);
+
+  // Saldo adeudado (caja gris)
+  const totalFormatted = new Intl.NumberFormat('es-DO', {
+    style: 'currency',
+    currency: 'DOP'
+  }).format(invoiceData.total);
+  
+  pdf.setFillColor(grayLight[0], grayLight[1], grayLight[2]);
+  pdf.rect(140, yPosition + 30, 50, 20, 'F');
+  pdf.setFontSize(9);
+  pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+  pdf.text('Saldo adeudado', 145, yPosition + 38);
   pdf.setFontSize(14);
-  pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text(totalFormatted, 145, yPosition + 46);
+
+  // Información de la empresa (debajo del logo)
+  yPosition += 35;
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`#${invoiceNumber}`, 20, yPosition + 10);
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text(`${invoiceData.businessName} | RNC ${invoiceData.clientId || '000000000'}`, 20, yPosition);
+  yPosition += 6;
+  pdf.text('C | Dirección de la empresa', 20, yPosition);
+  yPosition += 6;
+  pdf.text('Ciudad, País | Código Postal', 20, yPosition);
+  yPosition += 6;
+  pdf.text('República Dominicana', 20, yPosition);
+
+  // Sección de detalles de factura
+  yPosition += 25;
   
-  // Fecha y NCF (alineados a la derecha)
-  const pageWidth = pdf.internal.pageSize.getWidth();
+  // Cliente (lado izquierdo)
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text('Facturar a', 20, yPosition);
+  
+  yPosition += 8;
   pdf.setFontSize(12);
-  pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-  pdf.text('Fecha de emisión:', pageWidth - 80, yPosition);
-  pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
   pdf.setFont('helvetica', 'bold');
-  const formattedDate = format(invoiceData.date, "dd 'de' MMMM 'de' yyyy", { locale: es });
-  pdf.text(formattedDate, pageWidth - 80, yPosition + 8);
-  
-  // NCF o Número de Factura
-  if (invoiceData.ncf) {
-    pdf.setFontSize(10);
-    pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-    const isNCF = invoiceData.ncf.startsWith('B');
-    pdf.text(isNCF ? 'NCF:' : 'Factura:', pageWidth - 80, yPosition + 20);
-    pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(invoiceData.ncf, pageWidth - 80, yPosition + 28);
-    
-    // Agregar nota sobre validez fiscal
-    if (!isNCF) {
-      pdf.setFontSize(8);
-      pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('(Factura interna)', pageWidth - 80, yPosition + 36);
-    }
-  }
-  
-  yPosition += 40;
-  
-  // Información del negocio
-  pdf.setFontSize(14);
-  pdf.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('DE:', 20, yPosition);
-  
-  pdf.setFontSize(12);
-  pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(invoiceData.businessName, 20, yPosition + 10);
-  
-  yPosition += 30;
-  
-  // Información del cliente
-  pdf.setFontSize(14);
-  pdf.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('FACTURAR A:', 20, yPosition);
-  
-  pdf.setFontSize(12);
-  pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(invoiceData.clientName, 20, yPosition + 10);
+  pdf.text(invoiceData.clientName, 20, yPosition);
   
   if (invoiceData.clientId) {
+    yPosition += 8;
+    pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-    pdf.text(`Cédula/RNC: ${invoiceData.clientId}`, 20, yPosition + 20);
-    yPosition += 10;
+    pdf.text(`RNC/Cédula: ${invoiceData.clientId}`, 20, yPosition);
   }
   
-  yPosition += 40;
+  if (invoiceData.clientPhone) {
+    yPosition += 6;
+    pdf.text(`Tel: ${invoiceData.clientPhone}`, 20, yPosition);
+  }
+
+  // Detalles de fecha (lado derecho)
+  const dateFormatted = format(invoiceData.date, "dd MMM yyyy", { locale: es });
   
-  // Tabla de servicios - Encabezado
-  pdf.setFontSize(12);
-  pdf.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+  pdf.setFontSize(9);
+  pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+  pdf.text('Fecha de la factura :', 120, yPosition - 16);
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text(dateFormatted, 160, yPosition - 16);
+  
+  pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+  pdf.text('Términos :', 120, yPosition - 10);
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text('Pagadera a la recepción', 160, yPosition - 10);
+  
+  pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+  pdf.text('Fecha de vencimiento :', 120, yPosition - 4);
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text(dateFormatted, 160, yPosition - 4);
+
+  // Tabla de servicios
+  yPosition += 25;
+  
+  // Header de tabla (fondo gris oscuro)
+  pdf.setFillColor(darkTableHeader[0], darkTableHeader[1], darkTableHeader[2]);
+  pdf.rect(20, yPosition, 170, 10, 'F');
+  
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(255, 255, 255); // White text
+  pdf.text('#', 22, yPosition + 6);
+  pdf.text('Artículo & Descripción', 30, yPosition + 6);
+  pdf.text('Cant.', 130, yPosition + 6);
+  pdf.text('Tarifa', 150, yPosition + 6);
+  pdf.text('Cantidad', 170, yPosition + 6);
   
-  // Fondo del encabezado
-  pdf.setFillColor(220, 235, 255); // Light blue background
-  pdf.rect(20, yPosition - 5, pageWidth - 40, 15, 'F');
+  yPosition += 10;
   
-  pdf.text('DESCRIPCIÓN', 25, yPosition + 5);
-  pdf.text('CANT.', pageWidth - 120, yPosition + 5);
-  pdf.text('MONTO', pageWidth - 60, yPosition + 5);
-  
-  yPosition += 20;
-  
-  // Contenido de la tabla
-  pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
+  // Servicios
   pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
   
-  const formatCurrency = (amount: string) => {
-    const num = parseFloat(amount);
+  const formatCurrency = (amount: string | number) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
     return new Intl.NumberFormat('es-DO', {
       style: 'currency',
       currency: 'DOP'
     }).format(num);
   };
   
-  // Dividir cada concepto en líneas si es muy largo
-  const maxWidth = pageWidth - 140;
-  let maxLines = 0;
-  
   invoiceData.services.forEach((service, index) => {
-    const conceptLines = pdf.splitTextToSize(service.concept, maxWidth);
-    maxLines = Math.max(maxLines, conceptLines.length);
+    yPosition += 8;
     
-    conceptLines.forEach((line: string, lineIndex: number) => {
-      pdf.text(line, 25, yPosition + (lineIndex * 6));
-    });
+    // Línea separadora
+    if (index > 0) {
+      pdf.setDrawColor(229, 231, 235);
+      pdf.line(20, yPosition - 4, 190, yPosition - 4);
+    }
     
-    pdf.text('1', pageWidth - 120, yPosition);
-    pdf.text(formatCurrency(service.amount), pageWidth - 60, yPosition);
+    pdf.setFontSize(9);
+    pdf.text((index + 1).toString(), 22, yPosition);
     
-    yPosition += Math.max(conceptLines.length * 6, 15) + 5;
+    // Descripción (puede ser larga)
+    const description = pdf.splitTextToSize(service.concept, 90);
+    pdf.text(description[0], 30, yPosition);
+    
+    pdf.text('1.00', 130, yPosition);
+    
+    const formattedAmount = formatCurrency(service.amount);
+    
+    pdf.text(formattedAmount, 150, yPosition);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(formattedAmount, 170, yPosition);
+    pdf.setFont('helvetica', 'normal');
   });
-  
-  yPosition += 15;
-  
-  // Línea separadora
-  pdf.setLineWidth(0.5);
-  pdf.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-  pdf.line(20, yPosition, pageWidth - 20, yPosition);
-  
-  yPosition += 15;
-  
-  // Cálculos usando los datos del formulario
-  const subtotal = invoiceData.subtotal;
-  const itbis = invoiceData.itbisAmount;
-  const total = invoiceData.total;
 
-  // Subtotal
-  pdf.setFontSize(11);
-  pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-  pdf.text('Subtotal:', pageWidth - 100, yPosition);
-  pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
-  pdf.text(formatCurrency(subtotal.toString()), pageWidth - 60, yPosition);
-
-  yPosition += 12;
-
-  // ITBIS
-  pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-  pdf.text('ITBIS (18%):', pageWidth - 100, yPosition);
-  pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
-  pdf.text(formatCurrency(itbis.toString()), pageWidth - 60, yPosition);
-
-  yPosition += 15;
-
-  // Línea para total
-  pdf.setLineWidth(1);
-  pdf.line(pageWidth - 100, yPosition, pageWidth - 20, yPosition);
-
-  yPosition += 12;
-
-  // Total
-  pdf.setFontSize(14);
-  pdf.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('TOTAL:', pageWidth - 100, yPosition);
-  pdf.text(formatCurrency(total.toString()), pageWidth - 60, yPosition);
-  
-  // Nota sobre ITBIS
+  // Totales (alineados a la derecha)
   yPosition += 20;
-  pdf.setFontSize(8);
-  pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-  pdf.setFont('helvetica', 'normal');
-  const itbisNote = invoiceData.includeITBIS ? 'ITBIS incluido en el precio' : 'ITBIS agregado al precio base';
-  pdf.text(itbisNote, pageWidth - 100, yPosition);
   
-  // Firma al pie
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const footerY = pageHeight - 60;
-  
-  // Línea para firma
-  pdf.setLineWidth(0.5);
-  pdf.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-  pdf.line(20, footerY, 80, footerY);
-  
-  // Nombre de firma
-  pdf.setFontSize(10);
-  pdf.setTextColor(darkText[0], darkText[1], darkText[2]);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(invoiceData.signatureName, 20, footerY + 8);
-  pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-  pdf.text('Firma autorizada', 20, footerY + 16);
-  
-  // Pie de página
+  const subtotalFormatted = formatCurrency(invoiceData.subtotal);
+
   pdf.setFontSize(9);
-  pdf.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-  pdf.text('Gracias por su preferencia', 20, pageHeight - 25);
-  pdf.text('Generado con Factura en 1 Click', 20, pageHeight - 15);
+  pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+  pdf.text('Subtotal', 150, yPosition);
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text(subtotalFormatted, 170, yPosition);
+
+  yPosition += 8;
+  pdf.setDrawColor(229, 231, 235);
+  pdf.line(150, yPosition, 190, yPosition);
+
+  yPosition += 8;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text('Total', 150, yPosition);
+  pdf.text(totalFormatted, 170, yPosition);
+
+  yPosition += 8;
+  pdf.line(150, yPosition, 190, yPosition);
+
+  yPosition += 8;
+  pdf.text('Saldo adeudado', 150, yPosition);
+  pdf.text(totalFormatted, 170, yPosition);
+
+  // Notas
+  yPosition += 20;
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text('Notas', 20, yPosition);
   
-  // Descargar PDF
-  pdf.save(`Factura-${invoiceNumber}-${invoiceData.clientName.replace(/\s+/g, '-')}.pdf`);
+  yPosition += 8;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+  pdf.text('Gracias por su confianza.', 20, yPosition);
+
+  // Opciones de pago
+  yPosition += 15;
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text('Opciones de pago', 20, yPosition);
+  
+  // Simular badges de PayPal y tarjeta
+  pdf.setFillColor(blueColor[0], blueColor[1], blueColor[2]);
+  pdf.rect(80, yPosition - 4, 20, 8, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(7);
+  pdf.text('PayPal', 82, yPosition);
+  
+  pdf.setFillColor(grayLight[0], grayLight[1], grayLight[2]);
+  pdf.rect(105, yPosition - 4, 15, 8, 'F');
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text('💳', 107, yPosition);
+
+  // NCF si existe
+  if (invoiceData.ncf && !invoiceData.ncf.startsWith('FAC-')) {
+    yPosition += 20;
+    pdf.setFillColor(239, 246, 255); // Light blue background
+    pdf.rect(20, yPosition - 5, 170, 15, 'F');
+    
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(30, 64, 175);
+    pdf.text(`NCF: ${invoiceData.ncf}`, 22, yPosition);
+    
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
+    pdf.text('Comprobante Fiscal válido para fines tributarios - DGII', 22, yPosition + 6);
+  }
+
+  // Guardar el PDF
+  pdf.save(`Factura-${invoiceNumber}.pdf`);
 };

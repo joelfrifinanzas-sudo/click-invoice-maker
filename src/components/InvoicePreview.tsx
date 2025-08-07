@@ -33,112 +33,167 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
         onBack={onBack}
       />
 
-      {/* Invoice */}
-      <Card className="invoice-content bg-white shadow-soft">
+      {/* Invoice - Siguiendo exactamente el diseño de Bootis */}
+      <Card className="invoice-content bg-white shadow-soft border border-gray-200">
         <CardContent className="p-8">
-          {/* Header */}
+          {/* Header Section */}
           <div className="flex justify-between items-start mb-8">
-            <div className="flex items-center gap-4">
-              {invoiceData.logo && (
-                <img
-                  src={invoiceData.logo}
-                  alt="Logo"
-                  className="w-16 h-16 object-contain"
-                />
-              )}
-              <div>
-                <h1 className="text-3xl font-bold text-invoice-blue">FACTURA</h1>
-                <p className="text-invoice-gray">#{currentInvoiceNumber}</p>
+            {/* Left Side - Logo and Company Info */}
+            <div className="flex-1">
+              <div className="flex items-center gap-4 mb-4">
+                {invoiceData.logo && (
+                  <img
+                    src={invoiceData.logo}
+                    alt="Logo"
+                    className="w-20 h-20 object-contain"
+                  />
+                )}
+                <div>
+                  <h2 className="text-2xl font-bold text-blue-600">
+                    {invoiceData.businessName}
+                  </h2>
+                  <p className="text-sm text-gray-600">Technology</p>
+                </div>
+              </div>
+              
+              {/* Company Details */}
+              <div className="text-sm text-gray-700 space-y-1">
+                <p className="font-semibold">{invoiceData.businessName} | RNC {invoiceData.clientId || '000000000'}</p>
+                <p>C | Dirección de la empresa</p>
+                <p>Ciudad, País | Código Postal</p>
+                <p>República Dominicana</p>
               </div>
             </div>
+
+            {/* Right Side - Invoice Title and Details */}
             <div className="text-right">
-              <p className="text-sm text-invoice-gray mb-1">{invoiceData.businessName}</p>
-              <p className="text-sm text-invoice-gray">Fecha de emisión:</p>
-              <p className="font-semibold">
-                {format(invoiceData.date, "dd 'de' MMMM 'de' yyyy", { locale: es })}
-              </p>
-              {invoiceData.ncf && (
-                <div className="mt-3 p-2 bg-invoice-blue-light rounded">
-                  <p className="text-xs text-invoice-gray">NCF:</p>
-                  <p className="font-mono font-semibold text-sm">{invoiceData.ncf}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Client Information */}
-          <div className="mb-8 p-4 bg-invoice-blue-light rounded-lg">
-            <h3 className="font-semibold text-invoice-blue mb-2">FACTURAR A:</h3>
-            <p className="font-medium text-lg">{invoiceData.clientName}</p>
-            {invoiceData.clientId && (
-              <p className="text-invoice-gray">Cédula/RNC: {invoiceData.clientId}</p>
-            )}
-            {invoiceData.clientPhone && (
-              <p className="text-invoice-gray">Teléfono: {invoiceData.clientPhone}</p>
-            )}
-          </div>
-
-          {/* Service Details */}
-          <div className="mb-8">
-            <h3 className="font-semibold text-invoice-blue mb-4">DETALLES DE LOS SERVICIOS</h3>
-            <div className="border border-border rounded-lg overflow-hidden">
-              <div className="bg-invoice-blue-light p-4 font-semibold text-invoice-blue grid grid-cols-3 gap-4">
-                <span>Descripción</span>
-                <span className="text-center">Cantidad</span>
-                <span className="text-right">Monto</span>
-              </div>
-              {invoiceData.services.map((service, index) => (
-                <div key={index} className="p-4 grid grid-cols-3 gap-4 items-start border-b border-border last:border-b-0">
-                  <span className="text-sm leading-relaxed">{service.concept}</span>
-                  <span className="text-center">1</span>
-                  <span className="text-right font-semibold">{formatCurrency(service.amount)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator className="my-6" />
-
-          {/* Total */}
-          <div className="flex justify-end">
-            <div className="text-right space-y-2">
-              <div className="flex justify-between items-center min-w-[250px]">
-                <span className="text-invoice-gray">Subtotal:</span>
-                <span className="font-medium">{formatCurrency(invoiceData.subtotal)}</span>
-              </div>
-              <div className="flex justify-between items-center min-w-[250px]">
-                <span className="text-invoice-gray">ITBIS (18%):</span>
-                <span className="font-medium">{formatCurrency(invoiceData.itbisAmount)}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between items-center min-w-[250px] text-lg">
-                <span className="font-bold text-invoice-blue">TOTAL:</span>
-                <span className="font-bold text-invoice-blue text-xl">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">FACTURA</h1>
+              <p className="text-sm text-gray-600 mb-1"># {currentInvoiceNumber}</p>
+              
+              <div className="bg-gray-100 p-3 rounded mt-4 text-right">
+                <p className="text-sm text-gray-600">Saldo adeudado</p>
+                <p className="text-xl font-bold text-gray-800">
                   {formatCurrency(invoiceData.total)}
-                </span>
+                </p>
               </div>
-              <p className="text-xs text-invoice-gray mt-2">
-                {invoiceData.includeITBIS ? 'ITBIS incluido en el precio' : 'ITBIS agregado al precio base'}
+            </div>
+          </div>
+
+          {/* Invoice Details Section */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            {/* Left Column - Client Info */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Facturar a</h3>
+              <div className="text-sm text-gray-800">
+                <p className="font-semibold text-lg">{invoiceData.clientName}</p>
+                {invoiceData.clientId && (
+                  <p>RNC/Cédula: {invoiceData.clientId}</p>
+                )}
+                {invoiceData.clientPhone && (
+                  <p>Tel: {invoiceData.clientPhone}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column - Invoice Details */}
+            <div className="text-right">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Fecha de la factura :</span>
+                  <span className="text-gray-800">
+                    {format(invoiceData.date, "dd MMM yyyy", { locale: es })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Términos :</span>
+                  <span className="text-gray-800">Pagadera a la recepción</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Fecha de vencimiento :</span>
+                  <span className="text-gray-800">
+                    {format(invoiceData.date, "dd MMM yyyy", { locale: es })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Services Table */}
+          <div className="mb-8">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-700 text-white">
+                  <th className="text-left p-3 text-sm font-semibold w-12">#</th>
+                  <th className="text-left p-3 text-sm font-semibold">Artículo & Descripción</th>
+                  <th className="text-center p-3 text-sm font-semibold w-20">Cant.</th>
+                  <th className="text-right p-3 text-sm font-semibold w-24">Tarifa</th>
+                  <th className="text-right p-3 text-sm font-semibold w-32">Cantidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoiceData.services.map((service, index) => (
+                  <tr key={index} className="border-b border-gray-200">
+                    <td className="p-3 text-sm text-gray-700">{index + 1}</td>
+                    <td className="p-3 text-sm text-gray-800 font-medium">{service.concept}</td>
+                    <td className="p-3 text-sm text-gray-700 text-center">1.00</td>
+                    <td className="p-3 text-sm text-gray-700 text-right">{formatCurrency(service.amount)}</td>
+                    <td className="p-3 text-sm text-gray-800 text-right font-semibold">{formatCurrency(service.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals Section */}
+          <div className="flex justify-end mb-8">
+            <div className="w-64 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-800">{formatCurrency(invoiceData.subtotal)}</span>
+              </div>
+              <div className="border-t border-gray-200 pt-2">
+                <div className="flex justify-between text-lg font-bold">
+                  <span className="text-gray-800">Total</span>
+                  <span className="text-gray-800">{formatCurrency(invoiceData.total)}</span>
+                </div>
+              </div>
+              <div className="border-t border-gray-200 pt-2">
+                <div className="flex justify-between text-lg font-bold">
+                  <span className="text-gray-800">Saldo adeudado</span>
+                  <span className="text-gray-800">{formatCurrency(invoiceData.total)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes Section */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Notas</h3>
+            <p className="text-sm text-gray-600">Gracias por su confianza.</p>
+          </div>
+
+          {/* Payment Options */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-700">Opciones de pago</span>
+            <div className="flex items-center gap-2">
+              <div className="px-3 py-1 bg-blue-600 text-white text-xs rounded">PayPal</div>
+              <div className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded flex items-center gap-1">
+                <span>💳</span>
+              </div>
+            </div>
+          </div>
+
+          {/* NCF Information if applicable */}
+          {invoiceData.ncf && (
+            <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-xs text-blue-800">
+                <strong>NCF:</strong> {invoiceData.ncf}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Comprobante Fiscal válido para fines tributarios - DGII
               </p>
             </div>
-          </div>
-
-          {/* Firma */}
-          <div className="mt-12 pt-6 border-t border-border">
-            <div className="flex justify-between items-start">
-              <div className="text-center">
-                <div className="w-48 border-b border-border mb-2"></div>
-                <p className="text-sm font-medium">{invoiceData.signatureName}</p>
-                <p className="text-xs text-invoice-gray">Firma autorizada</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="mt-8 text-center text-sm text-invoice-gray">
-            <p>Gracias por su preferencia</p>
-            <p className="mt-2">Esta factura fue generada con <span className="text-invoice-blue font-medium">Factura en 1 Click</span></p>
-          </div>
+          )}
         </CardContent>
       </Card>
 
