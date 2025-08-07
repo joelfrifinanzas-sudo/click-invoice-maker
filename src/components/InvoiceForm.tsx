@@ -104,43 +104,63 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     }
   }, [formData.ncfType, formData.clientId, formData.services, isEditingNCF]);
 
-  // Validar cédula/RNC cuando cambie y consultar datos automáticamente
+  // Función para consultar datos del cliente
+  const lookupClientData = () => {
+    const clientId = formData.clientId.trim();
+    if (!clientId) return;
+
+    const validation = validateClientId(clientId);
+    setClientIdValidation(validation);
+    
+    if (validation.isValid) {
+      console.log('🚀 Iniciando consulta automática...');
+      setIsLookingUpClient(true);
+      DominicanApiService.lookupClientData(
+        clientId,
+        (clientData) => {
+          // Actualizar el nombre automáticamente
+          setFormData(prev => ({ ...prev, clientName: clientData.name }));
+          setIsLookingUpClient(false);
+          
+          // Mostrar notificación de éxito
+          toast({
+            title: "✓ Datos encontrados",
+            description: `Nombre completado automáticamente: ${clientData.name}`,
+            duration: 2000,
+          });
+        },
+        (error) => {
+          // Fallar silenciosamente sin mostrar errores
+          setIsLookingUpClient(false);
+        }
+      );
+    }
+  };
+
+  // Validar cédula/RNC cuando cambie el valor
   useEffect(() => {
     console.log('🔄 ClientID cambió:', formData.clientId);
     if (formData.clientId.trim()) {
       const validation = validateClientId(formData.clientId);
       setClientIdValidation(validation);
       console.log('✅ Validación:', validation);
-      
-      // Si es válido, intentar consultar datos automáticamente
-      if (validation.isValid) {
-        console.log('🚀 Iniciando consulta automática...');
-        setIsLookingUpClient(true);
-        DominicanApiService.lookupClientData(
-          formData.clientId,
-          (clientData) => {
-            // Actualizar el nombre automáticamente
-            setFormData(prev => ({ ...prev, clientName: clientData.name }));
-            setIsLookingUpClient(false);
-            
-            // Mostrar notificación de éxito
-            toast({
-              title: "✓ Datos encontrados",
-              description: `Nombre completado automáticamente: ${clientData.name}`,
-              duration: 2000,
-            });
-          },
-          (error) => {
-            // Fallar silenciosamente sin mostrar errores
-            setIsLookingUpClient(false);
-          }
-        );
-      }
     } else {
       setClientIdValidation({ isValid: true, message: '' });
       setIsLookingUpClient(false);
     }
   }, [formData.clientId]);
+
+  // Manejar eventos onBlur y Enter para el campo clientId
+  const handleClientIdBlur = () => {
+    lookupClientData();
+  };
+
+  const handleClientIdKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      lookupClientData();
+    }
+  };
 
   // Limpiar consultas pendientes al desmontar el componente
   useEffect(() => {
@@ -496,16 +516,18 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                    </div>
                   <div className="space-y-2">
                     <Label htmlFor="clientId" className="text-sm font-medium">Cédula o RNC del cliente</Label>
-                    <Input
-                      id="clientId"
-                      value={formData.clientId}
-                      onChange={(e) => handleClientIdChange(e.target.value)}
-                      placeholder="001-1234567-8 o 123456789"
-                      className={cn(
-                        "h-11",
-                        formData.clientId.trim() && !clientIdValidation.isValid && "border-destructive"
-                      )}
-                    />
+                     <Input
+                       id="clientId"
+                       value={formData.clientId}
+                       onChange={(e) => handleClientIdChange(e.target.value)}
+                       onBlur={handleClientIdBlur}
+                       onKeyPress={handleClientIdKeyPress}
+                       placeholder="001-1234567-8 o 123456789"
+                       className={cn(
+                         "h-11",
+                         formData.clientId.trim() && !clientIdValidation.isValid && "border-destructive"
+                       )}
+                     />
                     {formData.clientId.trim() && (
                       <div className={cn(
                         "flex items-center gap-2 text-sm",
