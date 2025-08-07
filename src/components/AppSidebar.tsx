@@ -44,7 +44,7 @@ export function AppSidebar() {
   const getNavClassName = (path: string) => {
     return isActive(path) 
       ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium shadow-lg" 
-      : "text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200";
+      : "text-white hover:bg-slate-700/50 hover:text-white transition-all duration-200";
   };
 
   return (
