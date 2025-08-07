@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -8,24 +7,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAppConfig } from '@/contexts/AppConfigContext';
 
 const Configuracion = () => {
   const { toast } = useToast();
-  const [config, setConfig] = useState({
-    whatsappEnabled: false,
-    defaultPhone: '',
-    autoMessage: 'Adjunto encontrarás tu factura. ¡Gracias por tu preferencia!',
-    language: 'es',
-    currency: 'DOP',
-    whatsappBusinessConnected: false
-  });
+  const { config, updateConfig, updateLanguage, updateCurrency, t } = useAppConfig();
 
   const handleSave = () => {
-    // Aquí se guardaría la configuración en localStorage o backend
-    localStorage.setItem('app-config', JSON.stringify(config));
     toast({
-      title: "Configuración guardada",
-      description: "Los cambios se han aplicado correctamente.",
+      title: t('config.saved'),
+      description: t('config.saved.description'),
     });
   };
 
@@ -34,53 +25,53 @@ const Configuracion = () => {
       <div className="min-h-screen bg-gradient-subtle pt-14">
         <div className="container mx-auto py-8 px-4">
           <div className="max-w-4xl mx-auto space-y-6">
-            <h1 className="text-3xl font-bold text-foreground">Configuración</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('config.title')}</h1>
             
             {/* WhatsApp Configuration */}
             <Card>
               <CardHeader>
-                <CardTitle>WhatsApp</CardTitle>
+                <CardTitle>{t('config.whatsapp')}</CardTitle>
                 <CardDescription>
-                  Configura el envío automático de facturas por WhatsApp
+                  {t('config.whatsapp.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="whatsapp-enabled">Activar WhatsApp</Label>
+                    <Label htmlFor="whatsapp-enabled">{t('config.whatsapp.enable')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Permite enviar facturas por WhatsApp
+                      {t('config.whatsapp.enable.description')}
                     </p>
                   </div>
                   <Switch
                     id="whatsapp-enabled"
                     checked={config.whatsappEnabled}
                     onCheckedChange={(checked) => 
-                      setConfig(prev => ({ ...prev, whatsappEnabled: checked }))
+                      updateConfig({ whatsappEnabled: checked })
                     }
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="default-phone">Número predeterminado</Label>
+                  <Label htmlFor="default-phone">{t('config.defaultPhone')}</Label>
                   <Input
                     id="default-phone"
                     placeholder="+1 (809) 123-4567"
                     value={config.defaultPhone}
                     onChange={(e) => 
-                      setConfig(prev => ({ ...prev, defaultPhone: e.target.value }))
+                      updateConfig({ defaultPhone: e.target.value })
                     }
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="auto-message">Mensaje automático</Label>
+                  <Label htmlFor="auto-message">{t('config.autoMessage')}</Label>
                   <Textarea
                     id="auto-message"
                     placeholder="Mensaje que se enviará con las facturas"
                     value={config.autoMessage}
                     onChange={(e) => 
-                      setConfig(prev => ({ ...prev, autoMessage: e.target.value }))
+                      updateConfig({ autoMessage: e.target.value })
                     }
                   />
                 </div>
@@ -100,46 +91,41 @@ const Configuracion = () => {
             {/* System Configuration */}
             <Card>
               <CardHeader>
-                <CardTitle>Sistema</CardTitle>
+                <CardTitle>{t('config.system')}</CardTitle>
                 <CardDescription>
-                  Configuraciones generales del sistema
+                  {t('config.system.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="language">Idioma</Label>
+                    <Label htmlFor="language">{t('config.language')}</Label>
                     <Select
                       value={config.language}
-                      onValueChange={(value) => 
-                        setConfig(prev => ({ ...prev, language: value }))
-                      }
+                      onValueChange={updateLanguage}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="es">Español</SelectItem>
-                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="es">{t('language.es')}</SelectItem>
+                        <SelectItem value="en">{t('language.en')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="currency">Moneda</Label>
+                    <Label htmlFor="currency">{t('config.currency')}</Label>
                     <Select
                       value={config.currency}
-                      onValueChange={(value) => 
-                        setConfig(prev => ({ ...prev, currency: value }))
-                      }
+                      onValueChange={updateCurrency}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="DOP">Pesos Dominicanos (DOP)</SelectItem>
-                        <SelectItem value="USD">Dólares (USD)</SelectItem>
-                        <SelectItem value="EUR">Euros (EUR)</SelectItem>
+                        <SelectItem value="DOP">{t('currency.DOP')}</SelectItem>
+                        <SelectItem value="USD">{t('currency.USD')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -149,7 +135,7 @@ const Configuracion = () => {
 
             <div className="flex justify-end">
               <Button onClick={handleSave}>
-                Guardar Configuración
+                {t('common.save')} {t('config.title')}
               </Button>
             </div>
           </div>
