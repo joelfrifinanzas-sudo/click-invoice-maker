@@ -7,6 +7,11 @@ export interface CompanyProfile {
   businessAddress: string;
   logo: string | null;
   invoicePrefix: string;
+  // Nuevos campos
+  slogan?: string;
+  website?: string;
+  currency?: string; // p.ej. DOP
+  primaryColor?: string; // HSL o HEX
 }
 
 export const defaultCompanyProfile: CompanyProfile = {
@@ -18,4 +23,8 @@ export const defaultCompanyProfile: CompanyProfile = {
   businessAddress: '',
   logo: null,
   invoicePrefix: 'FAC',
+  slogan: '',
+  website: '',
+  currency: 'DOP',
+  primaryColor: '',
 };

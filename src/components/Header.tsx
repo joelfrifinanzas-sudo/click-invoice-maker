@@ -3,7 +3,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
+import { AccountPanelTrigger } from "@/components/AccountPanel";
 export function Header() {
   const { toggleSidebar } = useSidebar();
   const [time, setTime] = useState<string>("");
@@ -57,16 +57,18 @@ export function Header() {
       </div>
 
       {/* Derecha: Avatar con aro de estado */}
-      <div
-        className={`rounded-full p-0.5 ring-2 ${statusRingClass} shadow-sm`}
-        aria-label={isOnline ? "Conectado" : "Sin conexión"}
-        title={isOnline ? "Conectado" : "Sin conexión"}
-      >
-        <Avatar className="h-8 w-8">
-          <AvatarImage src="/placeholder.svg" alt="Foto de perfil" />
-          <AvatarFallback>U</AvatarFallback>
-        </Avatar>
-      </div>
+      <AccountPanelTrigger>
+        <button
+          className={`rounded-full p-0.5 ring-2 ${statusRingClass} shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
+          aria-label={isOnline ? "Conectado" : "Sin conexión"}
+          title={isOnline ? "Conectado" : "Sin conexión"}
+        >
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="/placeholder.svg" alt="Foto de perfil" />
+            <AvatarFallback>U</AvatarFallback>
+          </Avatar>
+        </button>
+      </AccountPanelTrigger>
     </header>
   );
 }
