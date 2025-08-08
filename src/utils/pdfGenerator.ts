@@ -47,7 +47,6 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
-  pdf.text('Technology', invoiceData.logo ? 50 : 20, yPosition + 18);
 
   // Título FACTURA (lado derecho)
   pdf.setFontSize(28);
@@ -201,6 +200,14 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
   pdf.text(subtotalFormatted, 170, yPosition);
 
+  if (invoiceData.itbisAmount && invoiceData.itbisAmount > 0) {
+    yPosition += 8;
+    pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+    pdf.text('ITBIS (18%)', 150, yPosition);
+    pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+    pdf.text(formatCurrency(invoiceData.itbisAmount), 170, yPosition);
+  }
+
   yPosition += 8;
   pdf.setDrawColor(229, 231, 235);
   pdf.line(150, yPosition, 190, yPosition);
@@ -236,17 +243,25 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
   pdf.text('Opciones de pago', 20, yPosition);
   
-  // Simular badges de PayPal y tarjeta
-  pdf.setFillColor(blueColor[0], blueColor[1], blueColor[2]);
-  pdf.rect(80, yPosition - 4, 20, 8, 'F');
+  // Logos de pago (texto estilizado)
+  // VISA
+  pdf.setFillColor(26, 31, 113);
+  pdf.rect(80, yPosition - 4, 18, 8, 'F');
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(7);
-  pdf.text('PayPal', 82, yPosition);
+  pdf.text('VISA', 83, yPosition);
   
-  pdf.setFillColor(grayLight[0], grayLight[1], grayLight[2]);
-  pdf.rect(105, yPosition - 4, 15, 8, 'F');
+  // Mastercard
+  pdf.setFillColor(235, 0, 27);
+  pdf.rect(102, yPosition - 4, 30, 8, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.text('Mastercard', 104, yPosition);
+  
+  // Depósito / Transferencia
+  pdf.setFillColor(229, 231, 235);
+  pdf.rect(135, yPosition - 4, 45, 8, 'F');
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
-  pdf.text('💳', 107, yPosition);
+  pdf.text('Depósito/Transfer.', 137, yPosition);
 
   // NCF si existe
   if (invoiceData.ncf && !invoiceData.ncf.startsWith('FAC-')) {

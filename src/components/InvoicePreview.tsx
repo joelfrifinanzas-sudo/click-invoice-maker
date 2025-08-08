@@ -52,7 +52,6 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
                   <h2 className="text-2xl font-bold text-blue-600">
                     {invoiceData.businessName}
                   </h2>
-                  <p className="text-sm text-gray-600">Technology</p>
                 </div>
               </div>
               
@@ -151,6 +150,12 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
                 <span className="text-gray-600">Subtotal</span>
                 <span className="text-gray-800">{formatCurrency(invoiceData.subtotal)}</span>
               </div>
+              {invoiceData.itbisAmount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">ITBIS (18%)</span>
+                  <span className="text-gray-800">{formatCurrency(invoiceData.itbisAmount)}</span>
+                </div>
+              )}
               <div className="border-t border-gray-200 pt-2">
                 <div className="flex justify-between text-lg font-bold">
                   <span className="text-gray-800">Total</span>
@@ -172,14 +177,12 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
             <p className="text-sm text-gray-600">Gracias por su confianza.</p>
           </div>
 
-          {/* Payment Options */}
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-700">Opciones de pago</span>
             <div className="flex items-center gap-2">
-              <div className="px-3 py-1 bg-blue-600 text-white text-xs rounded">PayPal</div>
-              <div className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded flex items-center gap-1">
-                <span>💳</span>
-              </div>
+              <span className="px-3 py-1 bg-primary text-primary-foreground text-xs rounded font-semibold tracking-wide">VISA</span>
+              <span className="px-3 py-1 bg-warning text-warning-foreground text-xs rounded font-semibold">Mastercard</span>
+              <span className="px-3 py-1 bg-muted text-foreground/80 text-xs rounded font-medium">Depósito / Transferencia</span>
             </div>
           </div>
 

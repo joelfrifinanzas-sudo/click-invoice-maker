@@ -1025,7 +1025,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                 <Button 
                 type="submit" 
                 className="flex-1 bg-gradient-primary hover:opacity-90 transition-all text-lg py-6 shadow-invoice"
-                disabled={!formData.businessName || !formData.signatureName || !formData.services.every(s => s.concept.trim() && s.amount.trim()) || (documentType === 'factura' && !formData.ncf)}
+                disabled={!formData.services.every(s => s.concept.trim() && s.amount.trim()) || (documentType === 'factura' && !formData.ncf)}
               >
                 <Receipt className="w-5 h-5 mr-2" />
                 {documentType === 'cotizacion' ? 'Generar Cotización Profesional' : 'Generar Factura Profesional'}
