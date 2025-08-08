@@ -5,6 +5,9 @@ export interface CompanyProfile {
   businessPhone: string;
   businessEmail: string;
   businessAddress: string;
+  businessCity?: string;
+  businessCountry?: string;
+  businessPostalCode?: string;
   logo: string | null;
   invoicePrefix: string;
   // Nuevos campos
@@ -21,6 +24,9 @@ export const defaultCompanyProfile: CompanyProfile = {
   businessPhone: '',
   businessEmail: '',
   businessAddress: '',
+  businessCity: '',
+  businessCountry: 'República Dominicana',
+  businessPostalCode: '',
   logo: null,
   invoicePrefix: 'FAC',
   slogan: '',

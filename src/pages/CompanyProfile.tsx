@@ -229,8 +229,38 @@ export const CompanyProfilePage = () => {
                       rows={3}
                       value={profile.businessAddress}
                       onChange={(e) => handleInput('businessAddress', e.target.value)}
-                      placeholder="Av. Principal #123, Ciudad"
+                      placeholder="Calle y número, sector"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="businessCity">Ciudad</Label>
+                      <Input
+                        id="businessCity"
+                        value={profile.businessCity ?? ''}
+                        onChange={(e) => handleInput('businessCity', e.target.value)}
+                        placeholder="Santo Domingo"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="businessCountry">País</Label>
+                      <Input
+                        id="businessCountry"
+                        value={profile.businessCountry ?? 'República Dominicana'}
+                        onChange={(e) => handleInput('businessCountry', e.target.value)}
+                        placeholder="República Dominicana"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="businessPostalCode">Código postal</Label>
+                      <Input
+                        id="businessPostalCode"
+                        value={profile.businessPostalCode ?? ''}
+                        onChange={(e) => handleInput('businessPostalCode', e.target.value)}
+                        placeholder="10101"
+                      />
+                    </div>
                   </div>
 
                   {/* Sub-sección: Apariencia y estilo del negocio */}

@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import { InvoiceData, ServiceItem } from '@/components/InvoiceForm';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getCompanyProfile } from '@/utils/companyProfile';
 
 export const getNextInvoiceNumber = (): string => {
   const lastNumber = localStorage.getItem('last-invoice-number') || '0';
@@ -17,6 +18,16 @@ export const getNextInvoiceNumber = (): string => {
 
 export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber: string) => {
   const pdf = new jsPDF();
+  
+  const company = getCompanyProfile();
+  const companyName = (company.businessName || invoiceData.businessName || '').trim();
+  const rnc = (company.businessRnc || '').trim();
+  const address = (company.businessAddress || '').trim();
+  const city = (company.businessCity || '').trim();
+  const country = (company.businessCountry || 'República Dominicana').trim();
+  const postal = (company.businessPostalCode || '').trim();
+  const countryShort = country === 'República Dominicana' ? 'RD' : country;
+  const cityLine = [city, countryShort].filter(Boolean).join(', ');
   
   // Configuración de colores siguiendo el diseño de Bootis
   const blueColor = [37, 99, 235]; // Blue-600
@@ -42,7 +53,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
-  pdf.text(invoiceData.businessName, invoiceData.logo ? 50 : 20, yPosition + 10);
+  pdf.text(companyName, invoiceData.logo ? 50 : 20, yPosition + 10);
   
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
@@ -80,13 +91,20 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
-  pdf.text(`${invoiceData.businessName} | RNC ${invoiceData.clientId || '000000000'}`, 20, yPosition);
+  const line1 = `${companyName}${rnc ? ` | RNC ${rnc}` : ''}`;
+  pdf.text(line1, 20, yPosition);
   yPosition += 6;
-  pdf.text('C | Dirección de la empresa', 20, yPosition);
-  yPosition += 6;
-  pdf.text('Ciudad, País | Código Postal', 20, yPosition);
-  yPosition += 6;
-  pdf.text('República Dominicana', 20, yPosition);
+  if (address) {
+    pdf.text(address, 20, yPosition);
+    yPosition += 6;
+  }
+  if (cityLine || postal) {
+    pdf.text(`${cityLine}${postal ? ` | ${postal}` : ''}`, 20, yPosition);
+    yPosition += 6;
+  }
+  if (country) {
+    pdf.text(country, 20, yPosition);
+  }
 
   // Sección de detalles de factura
   yPosition += 25;

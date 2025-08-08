@@ -5,6 +5,7 @@ import { es } from 'date-fns/locale';
 import { InvoiceData, ServiceItem } from './InvoiceForm';
 import { InvoiceActions } from './InvoiceActions';
 import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
+import { getCompanyProfile } from '@/utils/companyProfile';
 
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
@@ -15,6 +16,21 @@ interface InvoicePreviewProps {
 export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePreviewProps) => {
   // Usar el número de factura pasado como prop o generar uno nuevo
   const currentInvoiceNumber = invoiceNumber || getNextInvoiceNumber();
+
+  const company = getCompanyProfile();
+  const companyName = (company.businessName || invoiceData.businessName || '').trim();
+  const rnc = (company.businessRnc || '').trim();
+  const address = (company.businessAddress || '').trim();
+  const city = (company.businessCity || '').trim();
+  const country = (company.businessCountry || 'República Dominicana').trim();
+  const postal = (company.businessPostalCode || '').trim();
+  const countryShort = country === 'República Dominicana' ? 'RD' : country;
+  const cityLine = [city, countryShort].filter(Boolean).join(', ');
+  const missingFields = [
+    !company.businessName ? 'nombre del negocio' : null,
+    !rnc ? 'RNC' : null,
+    !address ? 'dirección' : null,
+  ].filter(Boolean) as string[];
 
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -32,6 +48,11 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
         invoiceNumber={currentInvoiceNumber}
         onBack={onBack}
       />
+      {missingFields.length > 0 && (
+        <div className="p-3 rounded border border-amber-300 bg-amber-50 text-amber-900 text-sm">
+          Faltan datos del perfil: {missingFields.join(', ')}. Completa tu perfil para que se incluyan automáticamente en la factura. <a href="/perfil-empresa" className="underline font-medium">Configurar perfil</a>
+        </div>
+      )}
 
       {/* Invoice - Siguiendo exactamente el diseño de Bootis */}
       <Card className="invoice-content bg-white shadow-soft border border-gray-200">
@@ -50,17 +71,19 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
                 )}
                 <div>
                   <h2 className="text-2xl font-bold text-blue-600">
-                    {invoiceData.businessName}
+                    {companyName}
                   </h2>
                 </div>
               </div>
               
               {/* Company Details */}
               <div className="text-sm text-gray-700 space-y-1">
-                <p className="font-semibold">{invoiceData.businessName} | RNC {invoiceData.clientId || '000000000'}</p>
-                <p>C | Dirección de la empresa</p>
-                <p>Ciudad, País | Código Postal</p>
-                <p>República Dominicana</p>
+                <p className="font-semibold">
+                  {companyName}{rnc ? ` | RNC ${rnc}` : ''}
+                </p>
+                {address && <p>{address}</p>}
+                {(cityLine || postal) && <p>{cityLine}{postal ? ` | ${postal}` : ''}</p>}
+                {country && <p>{country}</p>}
               </div>
             </div>
 
