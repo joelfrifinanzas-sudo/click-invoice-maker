@@ -33,7 +33,12 @@ export const getInvoiceHistory = (): HistoryInvoice[] => {
       includeITBIS: invoice.includeITBIS ?? true,
       subtotal: invoice.subtotal ?? 0,
       itbisAmount: invoice.itbisAmount ?? 0,
-      total: invoice.total ?? invoice.services?.reduce((sum: number, service: any) => sum + parseFloat(service.amount || '0'), 0) ?? 0
+      total: invoice.total ?? (invoice.services?.reduce((sum: number, service: any) => {
+        const qty = parseFloat(service.quantity ?? '1');
+        const unit = parseFloat(service.unitPrice ?? service.amount ?? '0');
+        return sum + (isNaN(qty) || isNaN(unit) ? 0 : qty * unit);
+      }, 0) ?? 0),
+      paymentStatus: invoice.paymentStatus ?? 'credito',
     }));
   } catch (error) {
     console.error('Error loading invoice history:', error);

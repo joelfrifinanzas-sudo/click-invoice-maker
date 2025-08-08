@@ -71,10 +71,13 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.text(`# ${invoiceNumber}`, 140, yPosition + 25);
 
   // Saldo adeudado (caja gris)
-  const totalFormatted = new Intl.NumberFormat('es-DO', {
+  const currencyFmt = new Intl.NumberFormat('es-DO', {
     style: 'currency',
     currency: 'DOP'
-  }).format(invoiceData.total);
+  });
+  const totalFormatted = currencyFmt.format(invoiceData.total);
+  const balanceDue = invoiceData.paymentStatus === 'pagado' ? 0 : invoiceData.total;
+  const balanceFormatted = currencyFmt.format(balanceDue);
   
   pdf.setFillColor(grayLight[0], grayLight[1], grayLight[2]);
   pdf.rect(140, yPosition + 30, 50, 20, 'F');
@@ -84,7 +87,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
-  pdf.text(totalFormatted, 145, yPosition + 46);
+  pdf.text(balanceFormatted, 145, yPosition + 46);
 
   // Información de la empresa (debajo del logo)
   yPosition += 35;
@@ -164,8 +167,8 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.text('#', 22, yPosition + 6);
   pdf.text('Artículo & Descripción', 30, yPosition + 6);
   pdf.text('Cant.', 130, yPosition + 6);
-  pdf.text('Tarifa', 150, yPosition + 6);
-  pdf.text('Cantidad', 170, yPosition + 6);
+  pdf.text('Precio unit.', 150, yPosition + 6);
+  pdf.text('Subtotal', 170, yPosition + 6);
   
   yPosition += 10;
   
@@ -197,13 +200,15 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
     const description = pdf.splitTextToSize(service.concept, 90);
     pdf.text(description[0], 30, yPosition);
     
-    pdf.text('1.00', 130, yPosition);
-    
-    const formattedAmount = formatCurrency(service.amount);
-    
-    pdf.text(formattedAmount, 150, yPosition);
+    const qty = parseFloat(((service as any).quantity || '1'));
+    const unit = parseFloat(((service as any).unitPrice || (service as any).amount || '0'));
+    const unitFormatted = formatCurrency(unit);
+    const lineSubtotal = (isNaN(qty) || isNaN(unit)) ? 0 : qty * unit;
+
+    pdf.text((isNaN(qty) ? 0 : qty).toFixed(2), 130, yPosition);
+    pdf.text(unitFormatted, 150, yPosition);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(formattedAmount, 170, yPosition);
+    pdf.text(formatCurrency(lineSubtotal), 170, yPosition);
     pdf.setFont('helvetica', 'normal');
   });
 
@@ -242,7 +247,14 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
 
   yPosition += 8;
   pdf.text('Saldo adeudado', 150, yPosition);
-  pdf.text(totalFormatted, 170, yPosition);
+  pdf.text(balanceFormatted, 170, yPosition);
+
+  yPosition += 8;
+  pdf.setFontSize(9);
+  pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+  pdf.text('Estado de pago', 150, yPosition);
+  pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+  pdf.text(invoiceData.paymentStatus === 'pagado' ? 'Pagado' : 'A crédito', 170, yPosition);
 
   // Notas
   yPosition += 20;

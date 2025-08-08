@@ -32,6 +32,8 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
     !address ? 'dirección' : null,
   ].filter(Boolean) as string[];
 
+  const balanceDue = invoiceData.paymentStatus === 'pagado' ? 0 : invoiceData.total;
+
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
     return new Intl.NumberFormat('es-DO', {
@@ -95,8 +97,13 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
               <div className="bg-gray-100 p-3 rounded mt-4 text-right">
                 <p className="text-sm text-gray-600">Saldo adeudado</p>
                 <p className="text-xl font-bold text-gray-800">
-                  {formatCurrency(invoiceData.total)}
+                  {formatCurrency(balanceDue)}
                 </p>
+              </div>
+              <div className="mt-2 text-right">
+                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${invoiceData.paymentStatus === 'pagado' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning-foreground'}`}>
+                  {invoiceData.paymentStatus === 'pagado' ? 'Pagado' : 'A crédito'}
+                </span>
               </div>
             </div>
           </div>
@@ -148,8 +155,8 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
                   <th className="text-left p-3 text-sm font-semibold w-12">#</th>
                   <th className="text-left p-3 text-sm font-semibold">Artículo & Descripción</th>
                   <th className="text-center p-3 text-sm font-semibold w-20">Cant.</th>
-                  <th className="text-right p-3 text-sm font-semibold w-24">Tarifa</th>
-                  <th className="text-right p-3 text-sm font-semibold w-32">Cantidad</th>
+                  <th className="text-right p-3 text-sm font-semibold w-24">Precio unitario</th>
+                  <th className="text-right p-3 text-sm font-semibold w-32">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
@@ -157,9 +164,9 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
                   <tr key={index} className="border-b border-gray-200">
                     <td className="p-3 text-sm text-gray-700">{index + 1}</td>
                     <td className="p-3 text-sm text-gray-800 font-medium">{service.concept}</td>
-                    <td className="p-3 text-sm text-gray-700 text-center">1.00</td>
-                    <td className="p-3 text-sm text-gray-700 text-right">{formatCurrency(service.amount)}</td>
-                    <td className="p-3 text-sm text-gray-800 text-right font-semibold">{formatCurrency(service.amount)}</td>
+                    <td className="p-3 text-sm text-gray-700 text-center">{((service as any).quantity || '1')}</td>
+                    <td className="p-3 text-sm text-gray-700 text-right">{formatCurrency((service as any).unitPrice || 0)}</td>
+                    <td className="p-3 text-sm text-gray-800 text-right font-semibold">{formatCurrency(getLineSubtotal(service))}</td>
                   </tr>
                 ))}
               </tbody>
@@ -188,7 +195,7 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
               <div className="border-t border-gray-200 pt-2">
                 <div className="flex justify-between text-lg font-bold">
                   <span className="text-gray-800">Saldo adeudado</span>
-                  <span className="text-gray-800">{formatCurrency(invoiceData.total)}</span>
+                  <span className="text-gray-800">{formatCurrency(balanceDue)}</span>
                 </div>
               </div>
             </div>
@@ -210,7 +217,7 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
           </div>
 
           {/* NCF Information if applicable */}
-          {invoiceData.ncf && (
+          {invoiceData.ncf && !invoiceData.ncf.startsWith('FAC-') && (
             <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded">
               <p className="text-xs text-blue-800">
                 <strong>NCF:</strong> {invoiceData.ncf}

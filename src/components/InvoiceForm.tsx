@@ -42,7 +42,8 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface ServiceItem {
   concept: string;
-  amount: string;
+  quantity: string; // min: "1"
+  unitPrice: string; // DOP
 }
 
 export interface InvoiceData {
@@ -61,6 +62,7 @@ export interface InvoiceData {
   itbisAmount: number;
   total: number;
   invoiceType: string;
+  paymentStatus: 'pagado' | 'credito';
 }
 
 interface InvoiceFormProps {
@@ -73,18 +75,19 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     clientName: '',
     clientId: '',
     clientPhone: '+1 ',
-    services: [{ concept: '', amount: '' }],
+    services: [{ concept: '', quantity: '1', unitPrice: '' }],
     date: new Date(),
     logo: null,
     businessName: '',
     signatureName: '',
-    ncfType: 'B02',
+    ncfType: 'NONE',
     ncf: '',
     includeITBIS: true,
     subtotal: 0,
     itbisAmount: 0,
     total: 0,
-    invoiceType: '',
+    invoiceType: 'sin-ncf',
+    paymentStatus: 'credito',
   });
 
   const [isEditingNCF, setIsEditingNCF] = useState(false);
@@ -108,7 +111,11 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   // Generar NCF automáticamente cuando cambie el tipo o los datos del cliente
   useEffect(() => {
     if (formData.ncfType && formData.services.length > 0) {
-      const totalAmount = formData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
+      const totalAmount = formData.services.reduce((sum, service) => {
+        const qty = parseFloat((service as any).quantity || '1');
+        const unit = parseFloat((service as any).unitPrice || '0');
+        return sum + (isNaN(qty) || isNaN(unit) ? 0 : qty * unit);
+      }, 0);
       const autoNCFType = determineNCFType(!!formData.clientId.trim(), totalAmount);
       const generatedNCF = generateNCF(formData.ncfType || autoNCFType);
       
@@ -210,8 +217,12 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     e.preventDefault();
     
     // Validaciones
-    const hasValidServices = formData.services.length > 0 && 
-      formData.services.every(service => service.concept.trim() && service.amount.trim());
+    const hasValidServices = formData.services.length > 0 &&
+      formData.services.every(service => {
+        const qty = parseFloat((service as any).quantity || '1');
+        const unit = parseFloat((service as any).unitPrice || '');
+        return service.concept.trim() && !isNaN(qty) && qty >= 1 && !isNaN(unit) && unit > 0;
+      });
     
     // Validación condicional del nombre del cliente
     const requiresClientInfo = formData.invoiceType === 'fiscal' || formData.invoiceType === 'gubernamental' || formData.invoiceType === 'consumidor-final';
@@ -275,7 +286,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
       return;
     }
     
-    if (!formData.ncf.trim()) {
+    if (formData.invoiceType !== 'sin-ncf' && !formData.ncf.trim()) {
       toast({
         title: "Error de validación",
         description: "Debe generar un NCF válido",
@@ -338,7 +349,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   const addService = () => {
     setFormData(prev => ({
       ...prev,
-      services: [...prev.services, { concept: '', amount: '' }]
+      services: [...prev.services, { concept: '', quantity: '1', unitPrice: '' }]
     }));
   };
 
@@ -366,13 +377,17 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   };
 
   const calculateTotals = () => {
-    const serviceTotal = formData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
+    const serviceTotal = formData.services.reduce((sum, service) => {
+      const qty = parseFloat((service as any).quantity || '1');
+      const unit = parseFloat((service as any).unitPrice || '0');
+      return sum + (isNaN(qty) || isNaN(unit) ? 0 : qty * unit);
+    }, 0);
     
     if (formData.includeITBIS) {
       const subtotal = calculateSubtotal(serviceTotal);
       const itbis = calculateITBIS(subtotal);
       return {
-        subtotal: subtotal,
+        subtotal,
         itbisAmount: itbis,
         total: serviceTotal
       };
@@ -749,7 +764,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
             )}
 
             {/* NCF Section Card - Only show for invoices */}
-            {documentType === 'factura' && (
+            {documentType === 'factura' && formData.invoiceType !== 'sin-ncf' && (
               <Card className="shadow-soft border border-border/50">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -915,19 +930,44 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                       />
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor={`amount-${index}`} className="text-sm font-medium">Monto (DOP) *</Label>
-                      <Input
-                        id={`amount-${index}`}
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={service.amount}
-                        onChange={(e) => updateService(index, 'amount', e.target.value)}
-                        placeholder="0.00"
-                        className="h-11 font-mono"
-                        required
-                      />
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`quantity-${index}`} className="text-sm font-medium">Cantidad *</Label>
+                        <Input
+                          id={`quantity-${index}`}
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={(service as any).quantity}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateService(index, 'quantity', val === '' ? '' : String(Math.max(1, parseInt(val, 10) || 1)));
+                          }}
+                          placeholder="1"
+                          className="h-11 font-mono"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`unitPrice-${index}`} className="text-sm font-medium">Precio unitario (DOP) *</Label>
+                        <Input
+                          id={`unitPrice-${index}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={(service as any).unitPrice}
+                          onChange={(e) => updateService(index, 'unitPrice', e.target.value)}
+                          placeholder="0.00"
+                          className="h-11 font-mono"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Subtotal</Label>
+                        <div className="h-11 flex items-center px-3 rounded-md border border-input bg-muted/50 font-mono">
+                          {formatCurrency(((parseFloat((service as any).quantity || '1') || 0) * (parseFloat((service as any).unitPrice || '0') || 0)))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1030,12 +1070,32 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
               </CardContent>
             </Card>
 
+            {/* Estado de pago */}
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div>
+                <Label className="text-sm font-medium">Estado de pago</Label>
+                <p className="text-xs text-muted-foreground">Define si la factura está pagada o a crédito.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={cn("text-sm", formData.paymentStatus === 'credito' ? "text-foreground" : "text-muted-foreground")}>A crédito</span>
+                <Switch
+                  checked={formData.paymentStatus === 'pagado'}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, paymentStatus: checked ? 'pagado' : 'credito' }))}
+                />
+                <span className={cn("text-sm", formData.paymentStatus === 'pagado' ? "text-foreground" : "text-muted-foreground")}>Pagado</span>
+              </div>
+            </div>
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-8">
                 <Button 
                 type="submit" 
                 className="flex-1 bg-gradient-primary hover:opacity-90 transition-all text-lg py-6 shadow-invoice"
-                disabled={!formData.services.every(s => s.concept.trim() && s.amount.trim()) || (documentType === 'factura' && !formData.ncf)}
+                disabled={!formData.services.every((s) => {
+                  const qty = parseFloat((s as any).quantity || '1');
+                  const unit = parseFloat((s as any).unitPrice || '');
+                  return s.concept.trim() && !isNaN(qty) && qty >= 1 && !isNaN(unit) && unit > 0;
+                }) || (documentType === 'factura' && formData.invoiceType !== 'sin-ncf' && !formData.ncf)}
               >
                 <Receipt className="w-5 h-5 mr-2" />
                 {documentType === 'cotizacion' ? 'Generar Cotización Profesional' : 'Generar Factura Profesional'}
