@@ -1,247 +1,376 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Building2, Upload, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { CompanyProfile } from '@/types/company';
-import { saveCompanyProfile, getCompanyProfile } from '@/utils/companyProfile';
 import { useToast } from '@/hooks/use-toast';
+import { CompanyProfile } from '@/types/company';
+import { getCompanyProfile, saveCompanyProfile } from '@/utils/companyProfile';
+import {
+  ArrowLeft,
+  Building2,
+  Phone,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Landmark,
+  UserCheck,
+  Shield,
+  LogOut,
+  Palette,
+  Image as ImageIcon,
+  Save,
+} from 'lucide-react';
 
 export const CompanyProfilePage = () => {
-  const [profile, setProfile] = useState<CompanyProfile>(getCompanyProfile());
-  const [dragActive, setDragActive] = useState(false);
   const { toast } = useToast();
+  const [profile, setProfile] = useState<CompanyProfile>(getCompanyProfile());
+  const [open, setOpen] = useState<string>('contacto');
 
-  const handleInputChange = (field: keyof CompanyProfile, value: string) => {
-    setProfile(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = () => {
-    if (!profile.businessName.trim()) {
-      toast({
-        title: "Error",
-        description: "El nombre del negocio es obligatorio",
-        variant: "destructive",
-      });
-      return;
+  // SEO: Title + meta description + canonical
+  useEffect(() => {
+    const title = 'Configuración del perfil de empresa | Perfil de Empresa';
+    document.title = title;
+    const metaDesc = 'Actualiza los datos de tu negocio y contacto. Perfil de empresa dominicanizado, simple y moderno.';
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
     }
-
-    saveCompanyProfile(profile);
-    toast({
-      title: "Perfil guardado",
-      description: "Los datos de la empresa han sido guardados correctamente",
-    });
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
+    meta.setAttribute('content', metaDesc);
+    let link: HTMLLinkElement | null = document.querySelector('link[rel="canonical"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      document.head.appendChild(link);
     }
-  };
+    link.setAttribute('href', window.location.href);
+  }, []);
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    const files = e.dataTransfer.files;
-    if (files?.[0]) {
-      handleFileUpload(files[0]);
-    }
+  const handleInput = (field: keyof CompanyProfile, value: string) => {
+    setProfile((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleFileUpload = (file: File) => {
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setProfile(prev => ({ ...prev, logo: result }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setProfile((prev) => ({ ...prev, logo: e.target?.result as string }));
+    };
+    reader.readAsDataURL(file);
   };
 
-  const removeLogo = () => {
-    setProfile(prev => ({ ...prev, logo: null }));
+  const removeLogo = () => setProfile((p) => ({ ...p, logo: null }));
+
+  const handleSave = () => {
+    if (!profile.businessName?.trim()) {
+      toast({
+        title: 'Falta el nombre del negocio',
+        description: 'Por favor, completa el nombre del negocio.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    saveCompanyProfile(profile);
+    toast({
+      title: 'Datos guardados',
+      description: 'El perfil del negocio se guardó correctamente.',
+    });
   };
+
+  const contacto = useMemo(
+    () => ({
+      nombre: 'Joelfri Acevedo',
+      telefono: '+1 (809) 942-0001',
+      correo: 'jacevedo@bootis.com.do',
+      direccion: 'Av. Las Américas, Plaza Kilvio, local #4, Santo Domingo Este',
+      whatsapp: 'https://wa.me/18099420001',
+    }),
+    []
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
+    <main className="min-h-screen bg-gradient-subtle">
+      <header className="container-responsive pt-6 pb-4">
+        <div className="flex items-center gap-3">
           <Link to="/">
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" aria-label="Volver">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div className="flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Perfil de Empresa</h1>
+            <h1 className="text-responsive-2xl font-bold">Configuración del perfil de empresa</h1>
           </div>
         </div>
+      </header>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Configuración de Datos Empresariales</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Datos básicos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="businessName">
-                  Nombre del Negocio <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="businessName"
-                  value={profile.businessName}
-                  onChange={(e) => handleInputChange('businessName', e.target.value)}
-                  placeholder="Mi Empresa S.R.L."
-                  required
-                />
+      <section className="container-responsive pb-10 max-w-2xl mx-auto">
+        <Accordion
+          type="single"
+          collapsible
+          value={open}
+          onValueChange={(v) => setOpen(v)}
+          className="space-y-4"
+        >
+          {/* 1. Información de contacto */}
+          <AccordionItem value="contacto" className="border rounded-lg">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Phone className="h-5 w-5 text-primary" />
+                <span className="text-base font-medium">Información de contacto</span>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signatureName">Nombre de quien Firma</Label>
-                <Input
-                  id="signatureName"
-                  value={profile.signatureName}
-                  onChange={(e) => handleInputChange('signatureName', e.target.value)}
-                  placeholder="Juan Pérez"
-                />
-              </div>
-            </div>
-
-            {/* RNC y contacto */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="businessRnc">RNC / Cédula</Label>
-                <Input
-                  id="businessRnc"
-                  value={profile.businessRnc}
-                  onChange={(e) => handleInputChange('businessRnc', e.target.value)}
-                  placeholder="123-45678-9"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="businessPhone">Teléfono Comercial</Label>
-                <Input
-                  id="businessPhone"
-                  value={profile.businessPhone}
-                  onChange={(e) => handleInputChange('businessPhone', e.target.value)}
-                  placeholder="+1 (809) 123-4567"
-                />
-              </div>
-            </div>
-
-            {/* Email y dirección */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="businessEmail">Correo de Facturación</Label>
-                <Input
-                  id="businessEmail"
-                  type="email"
-                  value={profile.businessEmail}
-                  onChange={(e) => handleInputChange('businessEmail', e.target.value)}
-                  placeholder="facturacion@miempresa.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="businessAddress">Dirección del Negocio</Label>
-                <Textarea
-                  id="businessAddress"
-                  value={profile.businessAddress}
-                  onChange={(e) => handleInputChange('businessAddress', e.target.value)}
-                  placeholder="Calle Principal #123, Ciudad, País"
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            {/* Prefijo y logo */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="invoicePrefix">Prefijo de Factura</Label>
-                <Input
-                  id="invoicePrefix"
-                  value={profile.invoicePrefix}
-                  onChange={(e) => handleInputChange('invoicePrefix', e.target.value)}
-                  placeholder="FAC"
-                  maxLength={5}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Ejemplo: FAC-0001, INV-0001
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Logo del Negocio</Label>
-                <div
-                  className={`border-2 border-dashed rounded-lg p-4 text-center ${
-                    dragActive ? 'border-primary bg-primary/10' : 'border-gray-300'
-                  }`}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  {profile.logo ? (
-                    <div className="relative inline-block">
-                      <img
-                        src={profile.logo}
-                        alt="Logo"
-                        className="h-20 w-20 object-contain mx-auto rounded"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6"
-                        onClick={removeLogo}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card className="border-t-0 rounded-t-none">
+                <CardContent className="pt-4 space-y-3">
+                  <div className="grid grid-cols-1 gap-2">
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">Nombre: {contacto.nombre}</span>
                     </div>
-                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">Teléfono: {contacto.telefono}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">Correo: {contacto.correo}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <span className="text-sm leading-relaxed">Dirección: {contacto.direccion}</span>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <Button asChild variant="success" size="lg">
+                      <a href={contacto.whatsapp} target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="h-4 w-4" /> Escríbenos por WhatsApp
+                      </a>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 2. Perfil del negocio */}
+          <AccordionItem value="negocio" className="border rounded-lg">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Landmark className="h-5 w-5 text-primary" />
+                <span className="text-base font-medium">Perfil del negocio</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card className="border-t-0 rounded-t-none">
+                <CardContent className="pt-4 space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Upload className="mx-auto h-8 w-8 text-gray-400" />
-                      <p className="text-sm text-gray-600">
-                        Arrastra una imagen o{' '}
-                        <label className="text-primary cursor-pointer hover:underline">
-                          selecciona un archivo
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleFileUpload(file);
-                            }}
-                          />
-                        </label>
-                      </p>
+                      <Label htmlFor="businessName">Nombre del negocio</Label>
+                      <Input
+                        id="businessName"
+                        value={profile.businessName}
+                        onChange={(e) => handleInput('businessName', e.target.value)}
+                        placeholder="Ej: Mi Empresa S.R.L."
+                      />
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signatureName">Nombre para firma</Label>
+                      <Input
+                        id="signatureName"
+                        value={profile.signatureName}
+                        onChange={(e) => handleInput('signatureName', e.target.value)}
+                        placeholder="Ej: Juan Rodríguez"
+                      />
+                    </div>
+                  </div>
 
-            {/* Botón guardar */}
-            <div className="flex justify-end pt-4">
-              <Button onClick={handleSave} size="lg">
-                Guardar Perfil
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="businessRnc">RNC o Cédula</Label>
+                      <Input
+                        id="businessRnc"
+                        value={profile.businessRnc}
+                        onChange={(e) => handleInput('businessRnc', e.target.value)}
+                        placeholder="123-45678-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="businessPhone">Teléfono</Label>
+                      <Input
+                        id="businessPhone"
+                        value={profile.businessPhone}
+                        onChange={(e) => handleInput('businessPhone', e.target.value)}
+                        placeholder="+1 (809) 000-0000"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="businessEmail">Correo</Label>
+                    <Input
+                      id="businessEmail"
+                      type="email"
+                      value={profile.businessEmail}
+                      onChange={(e) => handleInput('businessEmail', e.target.value)}
+                      placeholder="facturacion@miempresa.com"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="businessAddress">Dirección</Label>
+                    <Textarea
+                      id="businessAddress"
+                      rows={3}
+                      value={profile.businessAddress}
+                      onChange={(e) => handleInput('businessAddress', e.target.value)}
+                      placeholder="Av. Principal #123, Ciudad"
+                    />
+                  </div>
+
+                  {/* Sub-sección: Apariencia y estilo del negocio */}
+                  <div className="rounded-lg border bg-card">
+                    <div className="px-4 py-3 flex items-center gap-2 border-b">
+                      <Palette className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Apariencia y estilo del negocio</span>
+                    </div>
+                    <div className="p-4 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="primaryColor">Color principal (opcional/futuro)</Label>
+                          <Input
+                            id="primaryColor"
+                            value={profile.primaryColor ?? ''}
+                            onChange={(e) => handleInput('primaryColor', e.target.value)}
+                            placeholder="hsl(214 100% 50%) o #0B5ED7"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="logoUpload">Subir logo del negocio</Label>
+                          <div className="flex items-center gap-3">
+                            <Button asChild variant="outline" size="sm">
+                              <label htmlFor="logoUpload" className="cursor-pointer">
+                                <span className="inline-flex items-center gap-2">
+                                  <ImageIcon className="h-4 w-4" /> Seleccionar imagen
+                                </span>
+                              </label>
+                            </Button>
+                            <input
+                              id="logoUpload"
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload(file);
+                              }}
+                            />
+                            {profile.logo && (
+                              <Button variant="destructive" size="sm" onClick={removeLogo} aria-label="Quitar logo">
+                                <span>Quitar logo</span>
+                              </Button>
+                            )}
+                          </div>
+                          {profile.logo && (
+                            <div className="mt-2">
+                              <img
+                                src={profile.logo}
+                                alt="Logo del negocio"
+                                className="h-16 w-16 object-contain rounded"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button onClick={handleSave} size="lg">
+                      <Save className="h-4 w-4" /> Guardar datos del negocio
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 3. Usuarios y permisos */}
+          <AccordionItem value="usuarios" className="border rounded-lg">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Shield className="h-5 w-5 text-primary" />
+                <span className="text-base font-medium">Usuarios y permisos</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card className="border-t-0 rounded-t-none">
+                <CardContent className="pt-4 space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Agrega usuarios y asigna roles como Cajero, Supervisor o Administrador. Requiere Supabase conectado.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      onClick={() =>
+                        toast({
+                          title: 'Conecta Supabase',
+                          description: 'Para crear usuarios reales y asignar roles, conecta Supabase.',
+                        })
+                      }
+                    >
+                      + Crear usuario
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        toast({
+                          title: 'Ver roles',
+                          description: 'Gestiona roles cuando Supabase esté conectado.',
+                        })
+                      }
+                    >
+                      Ver roles
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 4. Cerrar sesión */}
+          <AccordionItem value="logout" className="border rounded-lg">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className="flex items-center gap-3">
+                <LogOut className="h-5 w-5 text-destructive" />
+                <span className="text-base font-medium">Cerrar sesión</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="py-4 flex justify-center">
+                <Button
+                  variant="destructive"
+                  size="lg"
+                  onClick={() =>
+                    toast({
+                      title: 'Sesión cerrada',
+                      description: 'Para cierre real y redirección a login, conecta Supabase.',
+                    })
+                  }
+                >
+                  <LogOut className="h-4 w-4" /> Cerrar sesión
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
+    </main>
   );
 };
