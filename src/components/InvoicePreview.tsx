@@ -6,7 +6,8 @@ import { InvoiceData, ServiceItem } from './InvoiceForm';
 import { InvoiceActions } from './InvoiceActions';
 import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
 import { getCompanyProfile } from '@/utils/companyProfile';
-
+import { useIsMobile } from '@/hooks/use-mobile';
+import { CreditCard, Landmark } from 'lucide-react';
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
   onBack: () => void;
@@ -33,7 +34,7 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
   ].filter(Boolean) as string[];
 
   const balanceDue = invoiceData.paymentStatus === 'pagado' ? 0 : invoiceData.total;
-
+  const isMobile = useIsMobile();
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
     return new Intl.NumberFormat('es-DO', {
@@ -66,7 +67,7 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
       <Card className="invoice-content bg-white shadow-soft border border-gray-200">
         <CardContent className="p-8">
           {/* Header Section */}
-          <div className="flex justify-between items-start mb-8">
+          <div className="flex justify-between items-start mb-4 md:mb-8">
             {/* Left Side - Logo and Company Info */}
             <div className="flex-1">
               <div className="flex items-center gap-4 mb-4">
@@ -100,12 +101,14 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
               <h1 className="text-4xl font-bold text-gray-800 mb-2">FACTURA</h1>
               <p className="text-sm text-gray-600 mb-1"># {currentInvoiceNumber}</p>
               
-              <div className="bg-gray-100 p-3 rounded mt-4 text-right">
-                <p className="text-sm text-gray-600">Saldo adeudado</p>
-                <p className="text-xl font-bold text-gray-800">
-                  {formatCurrency(balanceDue)}
-                </p>
-              </div>
+              {!isMobile && (
+                <div className="bg-muted p-3 rounded mt-4 text-right">
+                  <p className="text-sm text-muted-foreground">Saldo adeudado</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {formatCurrency(balanceDue)}
+                  </p>
+                </div>
+              )}
               <div className="mt-2 text-right">
                 <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${invoiceData.paymentStatus === 'pagado' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning-foreground'}`}>
                   {invoiceData.paymentStatus === 'pagado' ? 'Pagado' : 'A crédito'}
@@ -115,7 +118,7 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
           </div>
 
           {/* Invoice Details Section */}
-          <div className="grid grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-4 md:mb-8">
             {/* Left Column - Client Info */}
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-2">Facturar a</h3>
@@ -131,20 +134,20 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
             </div>
 
             {/* Right Column - Invoice Details */}
-            <div className="text-right">
+            <div className="md:text-right">
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Fecha de la factura :</span>
+                  <span className="text-gray-600">Fecha de factura</span>
                   <span className="text-gray-800">
                     {format(invoiceData.date, "dd MMM yyyy", { locale: es })}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Términos :</span>
+                  <span className="text-gray-600">Términos</span>
                   <span className="text-gray-800">Pagadera a la recepción</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Fecha de vencimiento :</span>
+                  <span className="text-gray-600">Fecha de vencimiento</span>
                   <span className="text-gray-800">
                     {format(invoiceData.date, "dd MMM yyyy", { locale: es })}
                   </span>
@@ -153,34 +156,64 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
             </div>
           </div>
 
-          {/* Services Table */}
-          <div className="mb-8">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-700 text-white">
-                  <th className="text-left p-3 text-sm font-semibold w-12">#</th>
-                  <th className="text-left p-3 text-sm font-semibold">Artículo & Descripción</th>
-                  <th className="text-center p-3 text-sm font-semibold w-20">Cant.</th>
-                  <th className="text-right p-3 text-sm font-semibold w-24">Precio unitario</th>
-                  <th className="text-right p-3 text-sm font-semibold w-32">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
+          {/* Services Table / Cards */}
+          <div className="mb-4 md:mb-8">
+            {isMobile ? (
+              <div className="space-y-3">
                 {invoiceData.services.map((service, index) => (
-                  <tr key={index} className="border-b border-gray-200">
-                    <td className="p-3 text-sm text-gray-700">{index + 1}</td>
-                    <td className="p-3 text-sm text-gray-800 font-medium">{service.concept}</td>
-                    <td className="p-3 text-sm text-gray-700 text-center">{((service as any).quantity || '1')}</td>
-                    <td className="p-3 text-sm text-gray-700 text-right">{formatCurrency((service as any).unitPrice || 0)}</td>
-                    <td className="p-3 text-sm text-gray-800 text-right font-semibold">{formatCurrency(getLineSubtotal(service))}</td>
-                  </tr>
+                  <div key={index} className="rounded-xl border border-border bg-card text-foreground p-3 shadow-sm">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-semibold">{index + 1}</span>
+                        <p className="font-medium text-sm md:text-base">{service.concept}</p>
+                      </div>
+                      <div className="text-right text-xs text-muted-foreground">{formatCurrency(getLineSubtotal(service))}</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs md:text-sm">
+                      <div className="">
+                        <span className="block text-muted-foreground">Cant.</span>
+                        <span className="font-medium">{((service as any).quantity || '1')}</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="block text-muted-foreground">Precio</span>
+                        <span className="font-medium">{formatCurrency((service as any).unitPrice || 0)}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-muted-foreground">Subtotal</span>
+                        <span className="font-semibold">{formatCurrency(getLineSubtotal(service))}</span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : (
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-700 text-white">
+                    <th className="text-left p-3 text-sm font-semibold w-12">#</th>
+                    <th className="text-left p-3 text-sm font-semibold">Artículo & Descripción</th>
+                    <th className="text-center p-3 text-sm font-semibold w-20">Cant.</th>
+                    <th className="text-right p-3 text-sm font-semibold w-24">Precio unitario</th>
+                    <th className="text-right p-3 text-sm font-semibold w-32">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoiceData.services.map((service, index) => (
+                    <tr key={index} className="border-b border-gray-200">
+                      <td className="p-3 text-sm text-gray-700">{index + 1}</td>
+                      <td className="p-3 text-sm text-gray-800 font-medium">{service.concept}</td>
+                      <td className="p-3 text-sm text-gray-700 text-center">{((service as any).quantity || '1')}</td>
+                      <td className="p-3 text-sm text-gray-700 text-right">{formatCurrency((service as any).unitPrice || 0)}</td>
+                      <td className="p-3 text-sm text-gray-800 text-right font-semibold">{formatCurrency(getLineSubtotal(service))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
 
           {/* Totals Section */}
-          <div className="flex justify-end mb-8">
+          <div className="flex justify-end mb-4 md:mb-8">
             <div className="w-64 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
@@ -208,17 +241,23 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
           </div>
 
           {/* Notes Section */}
-          <div className="mb-6">
+          <div className="mb-4 md:mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Notas</h3>
             <p className="text-sm text-gray-600">Gracias por su confianza.</p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-700">Opciones de pago</span>
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-primary text-primary-foreground text-xs rounded font-semibold tracking-wide">VISA</span>
-              <span className="px-3 py-1 bg-warning text-warning-foreground text-xs rounded font-semibold">Mastercard</span>
-              <span className="px-3 py-1 bg-muted text-foreground/80 text-xs rounded font-medium">Depósito / Transferencia</span>
+          <div className="mt-4 md:mt-6 mb-2">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Opciones de pago</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs md:text-sm shadow-sm">
+                <CreditCard size={18} className="text-foreground/80" /> Visa
+              </span>
+              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs md:text-sm shadow-sm">
+                <CreditCard size={18} className="text-foreground/80" /> Mastercard
+              </span>
+              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs md:text-sm shadow-sm">
+                <Landmark size={18} className="text-foreground/80" /> Depósito / Transferencia
+              </span>
             </div>
           </div>
 
