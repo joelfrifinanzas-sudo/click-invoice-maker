@@ -64,6 +64,7 @@ export interface InvoiceData {
   total: number;
   invoiceType: string;
   paymentStatus: 'pagado' | 'credito';
+  notas?: string;
 }
 
 interface InvoiceFormProps {
@@ -89,6 +90,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     total: 0,
     invoiceType: 'sin-ncf',
     paymentStatus: 'credito',
+    notas: '',
   });
 
   const [isEditingNCF, setIsEditingNCF] = useState(false);
@@ -1111,6 +1113,20 @@ const [isSubmitting, setIsSubmitting] = useState(false);
                 />
                 <span className={cn("text-sm", formData.paymentStatus === 'pagado' ? "text-foreground" : "text-muted-foreground")}>Pagado</span>
               </div>
+            </div>
+
+            {/* Notas */}
+            <div className="space-y-2">
+              <Label htmlFor="notas" className="text-sm font-medium">Notas (opcional)</Label>
+              <Textarea
+                id="notas"
+                value={formData.notas || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, notas: e.target.value.slice(0, 1000) }))}
+                placeholder="Instrucciones de pago, agradecimientos, condiciones, etc. (máx. 1000 caracteres)"
+                className="min-h-[80px] resize-none"
+                maxLength={1000}
+              />
+              <p className="text-xs text-muted-foreground">{(formData.notas?.length || 0)}/1000</p>
             </div>
 
             {/* Action Buttons */}

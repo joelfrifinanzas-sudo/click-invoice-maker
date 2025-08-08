@@ -243,7 +243,7 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
           {/* Notes Section */}
           <div className="mb-4 md:mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Notas</h3>
-            <p className="text-sm text-gray-600">Gracias por su confianza.</p>
+            <p className="text-sm text-gray-600">{invoiceData.notas?.trim() ? invoiceData.notas.trim() : 'Gracias por su confianza.'}</p>
           </div>
 
           <div className="mt-4 md:mt-6 mb-2">

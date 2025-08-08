@@ -266,7 +266,12 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   yPosition += 8;
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
-  pdf.text('Gracias por su confianza.', 20, yPosition);
+  const notesText = (invoiceData.notas && invoiceData.notas.trim().length > 0) ? invoiceData.notas.trim() : 'Gracias por su confianza.';
+  const notesLines = pdf.splitTextToSize(notesText, 170);
+  notesLines.forEach((line, idx) => {
+    pdf.text(line, 20, yPosition + idx * 5);
+  });
+  yPosition += Math.max(0, (notesLines.length - 1) * 5);
 
   // Opciones de pago
   yPosition += 15;
@@ -507,7 +512,12 @@ export const generateInvoicePDFBlob = async (invoiceData: InvoiceData, invoiceNu
   yPosition += 8;
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
-  pdf.text('Gracias por su confianza.', 20, yPosition);
+  const notesText2 = (invoiceData.notas && invoiceData.notas.trim().length > 0) ? invoiceData.notas.trim() : 'Gracias por su confianza.';
+  const notesLines2 = pdf.splitTextToSize(notesText2, 170);
+  notesLines2.forEach((line, idx) => {
+    pdf.text(line, 20, yPosition + idx * 5);
+  });
+  yPosition += Math.max(0, (notesLines2.length - 1) * 5);
 
   yPosition += 15;
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
