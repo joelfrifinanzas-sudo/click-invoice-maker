@@ -5,6 +5,8 @@ import { Layout } from '@/components/Layout';
 import { saveInvoiceToHistory } from '@/utils/invoiceHistory';
 import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
 import { FileText, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 
 const Index = () => {
@@ -12,15 +14,18 @@ const Index = () => {
   const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleGenerateInvoice = (data: InvoiceData) => {
-    const nextInvoiceNumber = getNextInvoiceNumber();
-    setInvoiceData(data);
-    setInvoiceNumber(nextInvoiceNumber);
-    setShowPreview(true);
-    
-    // Guardar en historial
-    saveInvoiceToHistory(data, nextInvoiceNumber);
+  const handleGenerateInvoice = async (data: InvoiceData) => {
+    try {
+      const nextInvoiceNumber = getNextInvoiceNumber();
+      const newId = saveInvoiceToHistory(data, nextInvoiceNumber);
+      navigate(`/facturas/${newId}`);
+    } catch (error) {
+      console.error('Error al generar desde inicio:', error);
+      toast({ title: 'Error al generar', description: 'No se pudo generar la factura. Intenta nuevamente.', variant: 'destructive' });
+    }
   };
 
   const handleBackToForm = () => {

@@ -43,7 +43,7 @@ const HistoryPage = () => {
   };
 
   const handleCreateNewInvoice = () => {
-    navigate('/nueva-factura');
+    navigate('/crear-factura');
   };
 
   const formatCurrency = (amount: string) => {
