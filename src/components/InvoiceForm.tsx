@@ -252,19 +252,24 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
       return;
     }
     
-    if (!formData.businessName.trim()) {
+    // Rellenar datos del negocio desde el Perfil si faltan
+    const companyProfile = getCompanyProfile();
+    const resolvedBusinessName = (formData.businessName || '').trim() || (companyProfile.businessName || '').trim();
+    const resolvedSignatureName = (formData.signatureName || '').trim() || (companyProfile.signatureName || '').trim();
+
+    if (!resolvedBusinessName) {
       toast({
-        title: "Error de validación",
-        description: "El nombre del negocio es obligatorio",
+        title: "Falta información del negocio",
+        description: "Completa el Perfil de Empresa para continuar.",
         variant: "destructive",
       });
       return;
     }
-    
-    if (!formData.signatureName.trim()) {
+
+    if (!resolvedSignatureName) {
       toast({
-        title: "Error de validación",
-        description: "El nombre para la firma es obligatorio",
+        title: "Falta nombre para la firma",
+        description: "Agrega un nombre de firma en el Perfil de Empresa.",
         variant: "destructive",
       });
       return;
@@ -280,11 +285,16 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     }
     
     // Guardar datos del negocio para futuros usos
-    localStorage.setItem('business-name', formData.businessName);
-    localStorage.setItem('signature-name', formData.signatureName);
+    localStorage.setItem('business-name', resolvedBusinessName);
+    localStorage.setItem('signature-name', resolvedSignatureName);
     
-    // Generar factura
-    onGenerateInvoice(formData);
+    // Generar factura con datos del perfil consolidados
+    onGenerateInvoice({
+      ...formData,
+      businessName: resolvedBusinessName,
+      signatureName: resolvedSignatureName,
+      logo: formData.logo ?? companyProfile.logo ?? null,
+    });
     
     toast({
       title: "¡Factura generada!",
