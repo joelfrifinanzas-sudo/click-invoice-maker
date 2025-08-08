@@ -48,8 +48,9 @@ export const InvoiceActions = ({ invoiceData, invoiceNumber, onBack }: InvoiceAc
       await shareInvoiceViaWhatsApp(invoiceData, invoiceNumber);
       toast({ title: 'Compartido', description: 'Se abrió WhatsApp para enviar la factura.' });
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo compartir por WhatsApp.';
       logError('share_whatsapp_error', { invoiceNumber }, error);
-      toast({ title: 'Error al compartir', description: 'No se pudo compartir por WhatsApp.', variant: 'destructive' });
+      toast({ title: 'Error al compartir', description: message, variant: 'destructive' });
     } finally {
       if (isMounted.current) setIsSharing(false);
     }
