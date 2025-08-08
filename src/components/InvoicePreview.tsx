@@ -7,7 +7,14 @@ import { InvoiceActions } from './InvoiceActions';
 import { getNextInvoiceNumber } from '@/utils/pdfGenerator';
 import { getCompanyProfile } from '@/utils/companyProfile';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { CreditCard, Landmark } from 'lucide-react';
+import { CreditCard, Landmark, CreditCardIcon, Wallet, Link as LinkIcon, Copy } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { getPaymentMethods, getBankAccounts } from '@/utils/localPayments';
+import { maskAccountNumber } from '@/utils/mask';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
   onBack: () => void;
@@ -43,11 +50,25 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
     }).format(num);
   };
 
+
   const getLineSubtotal = (service: ServiceItem): number => {
     const qty = parseFloat(((service as any).quantity || '1'));
     const unit = parseFloat(((service as any).unitPrice || '0'));
     return (isNaN(qty) || isNaN(unit)) ? 0 : qty * unit;
   };
+
+  // Métodos y cuentas desde configuración local
+  const methods = useMemo(() => getPaymentMethods(), []);
+  const accountsLs = useMemo(() => getBankAccounts(), []);
+  const activeAccounts = useMemo(() => accountsLs.filter(a => a.activa), [accountsLs]);
+  const preferredAccount = useMemo(() => activeAccounts.find(a => a.preferida) || activeAccounts[0] || null, [activeAccounts]);
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [otherAccountsOpen, setOtherAccountsOpen] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(preferredAccount?.id ?? null);
+  const selectedAccount = useMemo(() => activeAccounts.find(a => a.id === selectedAccountId) || preferredAccount || null, [activeAccounts, preferredAccount, selectedAccountId]);
+  const [otrosOpen, setOtrosOpen] = useState(false);
+  const paypalUrl = useMemo(() => localStorage.getItem('payments:paypal_url') || 'https://www.paypal.com/', []);
+  const { toast } = useToast();
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
@@ -247,18 +268,108 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
           </div>
 
           <div className="mt-4 md:mt-6 mb-2">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Opciones de pago</h3>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs md:text-sm shadow-sm">
-                <CreditCard size={18} className="text-foreground/80" /> Visa
-              </span>
-              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs md:text-sm shadow-sm">
-                <CreditCard size={18} className="text-foreground/80" /> Mastercard
-              </span>
-              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs md:text-sm shadow-sm">
-                <Landmark size={18} className="text-foreground/80" /> Depósito / Transferencia
-              </span>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Cobrar con</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {methods.visa && (
+                <Button variant="outline" className="h-12 justify-start" onClick={() => toast({ title: 'Pago con tarjeta', description: 'Continuar al flujo de tarjeta (demo local).' })}>
+                  <CreditCardIcon className="mr-2 h-5 w-5" /> TC Visa
+                </Button>
+              )}
+              {methods.mastercard && (
+                <Button variant="outline" className="h-12 justify-start" onClick={() => toast({ title: 'Pago con tarjeta', description: 'Continuar al flujo de tarjeta (demo local).' })}>
+                  <CreditCard className="mr-2 h-5 w-5" /> TC Mastercard
+                </Button>
+              )}
+              {methods.transferencia && (
+                <Button className="h-12 justify-start" onClick={() => setShowTransfer(true)}>
+                  <Landmark className="mr-2 h-5 w-5" /> Transferencia
+                </Button>
+              )}
+              {methods.paypal && (
+                <Button variant="outline" className="h-12 justify-start" onClick={() => window.open(paypalUrl, '_blank', 'noopener,noreferrer')}>
+                  <LinkIcon className="mr-2 h-5 w-5" /> PayPal
+                </Button>
+              )}
+              {methods.otros && (
+                <Button variant="outline" className="h-12 justify-start" onClick={() => setOtrosOpen((v) => !v)}>
+                  <Wallet className="mr-2 h-5 w-5" /> Otros
+                </Button>
+              )}
             </div>
+
+            {/* Detalle de transferencia */}
+            {methods.transferencia && showTransfer && (
+              <div className="mt-4 rounded-lg border border-border bg-card p-4">
+                {selectedAccount ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold">{selectedAccount.banco_nombre}</p>
+                        <p className="text-sm text-muted-foreground">{selectedAccount.alias} • <span className="capitalize">{selectedAccount.tipo}</span></p>
+                      </div>
+                      <div className="text-sm font-mono">{maskAccountNumber(selectedAccount.numero)}</div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(selectedAccount.numero);
+                            toast({ title: 'Cuenta copiada' });
+                          } catch {
+                            toast({ title: 'No se pudo copiar', variant: 'destructive' });
+                          }
+                        }}
+                      >
+                        <Copy className="h-4 w-4 mr-1" /> Copiar cuenta
+                      </Button>
+                      {activeAccounts.length > 1 && (
+                        <Button size="sm" variant="outline" onClick={() => setOtherAccountsOpen(true)}>Ver otras</Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No tienes cuentas activas configuradas. Agrega una en Ajustes › Pagos.</p>
+                )}
+              </div>
+            )}
+
+            {/* Modal para seleccionar otras cuentas */}
+            <Dialog open={otherAccountsOpen} onOpenChange={setOtherAccountsOpen}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Selecciona una cuenta</DialogTitle>
+                  <DialogDescription>Elige otra cuenta activa para mostrar</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                  {activeAccounts.map(acc => (
+                    <div key={acc.id} className="flex items-center justify-between gap-2 border rounded-md p-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{acc.banco_nombre}</p>
+                        <p className="text-xs text-muted-foreground truncate">{acc.alias} • <span className="capitalize">{acc.tipo}</span> • {maskAccountNumber(acc.numero)}</p>
+                      </div>
+                      <Button size="sm" onClick={() => { setSelectedAccountId(acc.id); setOtherAccountsOpen(false); }}>Seleccionar</Button>
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Otros (acordeón) */}
+            {methods.otros && (
+              <div className="mt-4">
+                <Accordion type="single" collapsible value={otrosOpen ? 'otros' : undefined} onValueChange={(v) => setOtrosOpen(v === 'otros')}>
+                  <AccordionItem value="otros">
+                    <AccordionTrigger>Otros métodos</AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-sm text-muted-foreground">
+                        Configura el texto desde Ajustes › Pagos. Por ahora: coordina con nuestro equipo para otras formas de pago.
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            )}
           </div>
 
           {/* NCF Information if applicable */}
