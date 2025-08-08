@@ -12,7 +12,6 @@ import {
   Search,
   Mic,
   QrCode,
-  CheckCircle,
   MoreHorizontal,
   Star
 } from 'lucide-react';
@@ -82,19 +81,11 @@ export default function Inicio() {
   ];
 
   return (
-    <Layout showSidebar={false}>
+    <Layout>
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Header */}
         <div className="bg-white px-4 py-6">
           {/* Logo */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-7 h-7 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">FacturaClick</h1>
-            </div>
-          </div>
           
           {/* Search Bar */}
           <div className="relative">
