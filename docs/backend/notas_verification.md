@@ -9,7 +9,7 @@ Requisitos:
 
 ## REST (PostgREST)
 
-1) Crear factura con `notas` (reemplaza la ruta por `invoices` o `facturas` según tu tabla)
+1) Crear factura con `notas` (tabla: `invoices`)
 
 curl -X POST \
   "https://<PROJECT_REF>.supabase.co/rest/v1/invoices" \
@@ -30,6 +30,18 @@ curl -X GET \
   "https://<PROJECT_REF>.supabase.co/rest/v1/invoices?select=*&numero=eq.FAC-0014" \
   -H "apikey: <ANON_KEY>" \
   -H "Authorization: Bearer <ANON_KEY>"
+
+3) Actualizar `notas` de una factura existente
+
+curl -X PATCH \
+  "https://<PROJECT_REF>.supabase.co/rest/v1/invoices?id=eq.<ID>" \
+  -H "apikey: <ANON_KEY>" \
+  -H "Authorization: Bearer <ANON_KEY>" \
+  -H "Content-Type: application/json" \
+  -H "Prefer: return=representation" \
+  -d '{
+    "notas": "Nueva nota actualizada."
+  }'
 
 ## GraphQL (pg_graphql)
 
@@ -56,5 +68,4 @@ query GetFactura {
 }
 
 Notas:
-- RLS puede requerir políticas adecuadas para insertar/leer.
-- Si usas la tabla `facturas`, reemplaza `invoices` por `facturas` en los ejemplos.
+- RLS puede requerir políticas adecuadas para insertar/leer/actualizar.
