@@ -24,6 +24,7 @@ import Articulos from "./pages/Articulos";
 import Creditos from "./pages/Creditos";
 import Pagos from "./pages/Pagos";
 import NotFound from "./pages/NotFound";
+import FacturaDetalle from "./pages/FacturaDetalle";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ function AppRoutes() {
       <Route path="/inicio" element={<Inicio />} />
       <Route path="/cotizaciones" element={<Cotizaciones />} />
       <Route path="/facturas" element={<Facturas />} />
+      <Route path="/facturas/:id" element={<FacturaDetalle />} />
       <Route path="/crear-factura" element={<CrearFactura />} />
       <Route path="/clientes" element={<Clientes />} />
       <Route path="/inventario" element={<Inventario />} />

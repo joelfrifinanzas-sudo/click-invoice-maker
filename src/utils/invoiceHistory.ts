@@ -8,7 +8,7 @@ export interface HistoryInvoice extends InvoiceData {
 
 const HISTORY_KEY = 'invoice-history';
 
-export const saveInvoiceToHistory = (invoiceData: InvoiceData, invoiceNumber: string): void => {
+export const saveInvoiceToHistory = (invoiceData: InvoiceData, invoiceNumber: string): string => {
   const existingHistory = getInvoiceHistory();
   
   const historyInvoice: HistoryInvoice = {
@@ -20,6 +20,7 @@ export const saveInvoiceToHistory = (invoiceData: InvoiceData, invoiceNumber: st
 
   const updatedHistory = [historyInvoice, ...existingHistory];
   localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+  return historyInvoice.id;
 };
 
 export const getInvoiceHistory = (): HistoryInvoice[] => {
@@ -54,4 +55,8 @@ export const deleteInvoiceFromHistory = (id: string): void => {
   const existingHistory = getInvoiceHistory();
   const updatedHistory = existingHistory.filter(invoice => invoice.id !== id);
   localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+};
+
+export const getInvoiceById = (id: string): HistoryInvoice | undefined => {
+  return getInvoiceHistory().find(inv => inv.id === id);
 };

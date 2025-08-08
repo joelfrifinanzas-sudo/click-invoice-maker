@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { BackButton } from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CrearFactura() {
   useScrollToTop();
@@ -19,14 +20,22 @@ export default function CrearFactura() {
   const [activeTab, setActiveTab] = useState<'factura' | 'cotizacion'>('factura');
   const navigate = useNavigate();
 
-  const handleGenerateInvoice = (data: InvoiceData) => {
-    const nextInvoiceNumber = getNextInvoiceNumber();
-    setInvoiceData(data);
-    setInvoiceNumber(nextInvoiceNumber);
-    setShowPreview(true);
-    
-    // Guardar en historial
-    saveInvoiceToHistory(data, nextInvoiceNumber);
+  const handleGenerateInvoice = async (data: InvoiceData) => {
+    const { toast } = useToast();
+    try {
+      const nextInvoiceNumber = getNextInvoiceNumber();
+      // Guardar en historial y obtener ID
+      const newId = saveInvoiceToHistory(data, nextInvoiceNumber);
+      // Navegar al detalle
+      navigate(`/facturas/${newId}`);
+    } catch (error) {
+      console.error('Error al guardar/navegar a detalle:', error);
+      toast({
+        title: 'Error al generar',
+        description: 'No se pudo finalizar la generación. Permanece en esta pantalla e intenta nuevamente.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
