@@ -6,16 +6,24 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Building2, LogOut, MessageCircle, Plus, Shield } from "lucide-react";
+import { Building2, LogOut, MessageCircle, Plus, Shield, Phone, Mail, MapPin, ChevronRight, Palette, CreditCard } from "lucide-react";
 import { CompanyProfile } from "@/types/company";
 import { getCompanyProfile, saveCompanyProfile } from "@/utils/companyProfile";
 import { useToast } from "@/hooks/use-toast";
-
+import { useNavigate } from "react-router-dom";
 interface AccountPanelTriggerProps {
   children: React.ReactNode;
 }
 
 export function AccountPanelTrigger({ children }: AccountPanelTriggerProps) {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const goUsers = () =>
+    toast({
+      title: "Conecta Supabase para gestionar usuarios",
+      description: "Esta sección se habilitará al conectar tu proyecto de Supabase.",
+    });
+
   return (
     <Sheet>
       <SheetTrigger asChild>{children}</SheetTrigger>
@@ -29,14 +37,28 @@ export function AccountPanelTrigger({ children }: AccountPanelTriggerProps) {
           </SheetHeader>
         </div>
 
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-4 bg-muted/30">
           <ContactSection />
-          <Separator />
-          <CompanyProfileSection />
-          <Separator />
-          <UsersRolesSection />
-          <Separator />
-          <LogoutSection />
+
+          <div className="space-y-3">
+            <NavItem
+              icon={Building2}
+              label="Perfil de la Empresa"
+              onClick={() => navigate("/perfil-empresa")}
+            />
+            <NavItem
+              icon={Palette}
+              label="Marca y preferencias"
+              onClick={() => navigate("/perfil-empresa")}
+            />
+            <NavItem icon={Shield} label="Gestión de Usuarios" onClick={goUsers} />
+            <NavItem
+              icon={CreditCard}
+              label="Métodos de pago"
+              onClick={() => navigate("/pagos")}
+              highlight
+            />
+          </div>
         </div>
       </SheetContent>
     </Sheet>
@@ -44,21 +66,46 @@ export function AccountPanelTrigger({ children }: AccountPanelTriggerProps) {
 }
 
 function ContactSection() {
+  const profile = getCompanyProfile();
+  const contactName = profile.signatureName?.trim() || profile.businessName || "Contacto";
+  const phone = profile.businessPhone || "";
+  const email = profile.businessEmail || "";
+  const address = profile.businessAddress || "";
+  const phoneDigits = phone.replace(/[^\d]/g, "");
+  const wa = phoneDigits ? `https://wa.me/${phoneDigits.startsWith("1") ? phoneDigits : `1${phoneDigits}`}` : "";
+
   return (
-    <section aria-labelledby="contacto-title">
-      <h2 id="contacto-title" className="text-base font-semibold mb-2">Contáctanos</h2>
-      <div className="text-sm space-y-1">
-        <p className="font-medium">Joelfri Acevedo</p>
-        <p>Teléfono: +1 (809) 942-0001</p>
-        <p>Correo: Jacevedo@bootis.com.do</p>
-        <p>Dirección: Av. Las Américas, Plaza Kilvio, local #4, Santo Domingo Este</p>
-      </div>
-      <div className="mt-3">
-        <Button asChild variant="success" className="w-full">
-          <a href="https://wa.me/18099420001" target="_blank" rel="noopener noreferrer">
-            <MessageCircle className="mr-2" /> WhatsApp
-          </a>
-        </Button>
+    <section aria-labelledby="contacto-title" className="bg-card rounded-xl border shadow-card">
+      <div className="p-4">
+        <h2 id="contacto-title" className="text-base font-semibold mb-3">Contáctanos</h2>
+        <div className="text-sm space-y-2">
+          <div className="flex items-start gap-3">
+            <Phone className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="font-medium leading-tight">{contactName}</p>
+              {phone && <p className="text-muted-foreground">{phone}</p>}
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Mail className="h-5 w-5 text-muted-foreground" />
+            <div>
+              {email && <p className="text-muted-foreground break-all">{email}</p>}
+            </div>
+          </div>
+          {address && (
+            <div className="flex items-start gap-3">
+              <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <p className="text-muted-foreground leading-relaxed">{address}</p>
+            </div>
+          )}
+        </div>
+        <div className="mt-3">
+          <Button asChild variant="success" className="w-full" disabled={!wa}>
+            <a href={wa || undefined} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="mr-2" /> WhatsApp
+            </a>
+          </Button>
+        </div>
       </div>
     </section>
   );
@@ -205,5 +252,21 @@ function LogoutSection() {
         <LogOut className="mr-2" /> Cerrar sesión
       </Button>
     </section>
+  );
+}
+
+function NavItem({ icon: Icon, label, onClick, highlight = false }: { icon: any; label: string; onClick?: () => void; highlight?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-card hover:bg-accent transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <Icon className="h-5 w-5 text-primary" />
+        <span className={highlight ? "text-primary font-medium" : "font-medium"}>{label}</span>
+      </div>
+      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+    </button>
   );
 }
