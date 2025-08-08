@@ -26,6 +26,7 @@ import Pagos from "./pages/Pagos";
 import NotFound from "./pages/NotFound";
 import FacturaDetalle from "./pages/FacturaDetalle";
 import { useIsMobile } from "./hooks/use-mobile";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -76,9 +77,11 @@ const App = () => (
           <Toaster />
           <Sonner />
           <MobileDetector />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
+          <ErrorBoundary>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </ErrorBoundary>
         </TooltipProvider>
       </NavigationProvider>
     </AppConfigProvider>

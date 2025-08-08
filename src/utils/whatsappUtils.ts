@@ -1,6 +1,7 @@
 import { InvoiceData } from '@/components/InvoiceForm';
 import { generateInvoicePDFBlob } from './pdfGenerator';
 import { generateWhatsAppLink } from './shareUtils';
+import { logError } from './logger';
 
 // Genera PDF como Blob y realiza el flujo de compartir sin bloquear la SPA
 export const shareInvoiceViaWhatsApp = async (invoiceData: InvoiceData, invoiceNumber: string) => {
@@ -29,6 +30,12 @@ export const shareInvoiceViaWhatsApp = async (invoiceData: InvoiceData, invoiceN
 
     // Fallback: abrir WhatsApp con link seguro (mobile/web)
     const waUrl = buildWhatsAppUrl(invoiceData, `${message}\n${objectUrl}`);
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+  } catch (error) {
+    // Log y fallback simple sin archivo adjunto
+    logError('share_whatsapp_error', { invoiceNumber }, error);
+    const message = createShareMessage(invoiceData, invoiceNumber);
+    const waUrl = buildWhatsAppUrl(invoiceData, message);
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   } finally {
     // 3) Post-share: limpiar y restaurar

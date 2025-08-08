@@ -4,8 +4,9 @@ import { InvoiceData } from './InvoiceForm';
 import { generateInvoicePDF } from '@/utils/pdfGenerator';
 import { shareInvoiceViaWhatsApp } from '@/utils/whatsappUtils';
 import { generateEmailLink } from '@/utils/shareUtils';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/utils/logger';
 
 interface InvoiceActionsProps {
   invoiceData: InvoiceData;
@@ -17,6 +18,10 @@ export const InvoiceActions = ({ invoiceData, invoiceNumber, onBack }: InvoiceAc
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const { toast } = useToast();
+  const isMounted = useRef(true);
+  useEffect(() => {
+    return () => { isMounted.current = false; };
+  }, []);
 
   const handlePrint = () => {
     window.print();
@@ -28,10 +33,10 @@ export const InvoiceActions = ({ invoiceData, invoiceNumber, onBack }: InvoiceAc
       await generateInvoicePDF(invoiceData, invoiceNumber);
       toast({ title: 'PDF generado', description: 'Se descargó la factura en PDF.' });
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      logError('generate_pdf_error', { invoiceNumber }, error);
       toast({ title: 'Error al generar PDF', description: 'Intenta nuevamente.', variant: 'destructive' });
     } finally {
-      setIsGeneratingPDF(false);
+      if (isMounted.current) setIsGeneratingPDF(false);
     }
   };
 
@@ -42,10 +47,10 @@ export const InvoiceActions = ({ invoiceData, invoiceNumber, onBack }: InvoiceAc
       await shareInvoiceViaWhatsApp(invoiceData, invoiceNumber);
       toast({ title: 'Compartido', description: 'Se abrió WhatsApp para enviar la factura.' });
     } catch (error) {
-      console.error('Error sharing via WhatsApp:', error);
+      logError('share_whatsapp_error', { invoiceNumber }, error);
       toast({ title: 'Error al compartir', description: 'No se pudo compartir por WhatsApp.', variant: 'destructive' });
     } finally {
-      setIsSharing(false);
+      if (isMounted.current) setIsSharing(false);
     }
   };
 
@@ -74,6 +79,7 @@ export const InvoiceActions = ({ invoiceData, invoiceNumber, onBack }: InvoiceAc
           <Button
             onClick={handleWhatsAppShare}
             disabled={isSharing}
+            aria-busy={isSharing}
             className="flex items-center justify-center gap-3 w-full h-20 bg-green-100 hover:bg-green-200 border border-green-300 rounded-2xl text-green-700 p-4 shadow-sm disabled:opacity-70"
           >
             <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -100,6 +106,7 @@ export const InvoiceActions = ({ invoiceData, invoiceNumber, onBack }: InvoiceAc
         <Button
           onClick={handleDownloadPDF}
           disabled={isGeneratingPDF}
+          aria-busy={isGeneratingPDF}
           className="flex items-center justify-center gap-3 h-16 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-semibold shadow-sm disabled:opacity-70"
         >
           <Download className="w-5 h-5" />

@@ -19,9 +19,9 @@ export default function CrearFactura() {
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState<'factura' | 'cotizacion'>('factura');
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleGenerateInvoice = async (data: InvoiceData) => {
-    const { toast } = useToast();
     try {
       const nextInvoiceNumber = getNextInvoiceNumber();
       // Guardar en historial y obtener ID
@@ -35,6 +35,7 @@ export default function CrearFactura() {
         description: 'No se pudo finalizar la generación. Permanece en esta pantalla e intenta nuevamente.',
         variant: 'destructive',
       });
+      try { localStorage.setItem('lastError', JSON.stringify({ event: 'crear_factura_navigate_error', route: location.pathname, timestamp: new Date().toISOString() })); } catch {}
     }
   };
 

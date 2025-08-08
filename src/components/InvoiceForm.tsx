@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,7 @@ import { PhoneInput } from '@/components/ui/phone-input';
 import { validateClientId, autoFormatClientId, ValidationResult } from '@/utils/validationUtils';
 import { DominicanApiService } from '@/utils/dominicanApiService';
 import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/utils/logger';
 
 export interface ServiceItem {
   concept: string;
@@ -95,7 +96,11 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [isLookingUpClient, setIsLookingUpClient] = useState(false);
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const [isSubmitting, setIsSubmitting] = useState(false);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   // Cargar perfil de empresa al montar el componente
   useEffect(() => {
@@ -316,14 +321,14 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
         description: "Su factura ha sido creada exitosamente",
       });
     } catch (error) {
-      console.error('Error al generar factura:', error);
+      logError('generate_invoice_error', { invoiceType: formData.invoiceType, total: formData.total }, error);
       toast({
         title: 'Error al generar',
         description: 'No se pudo generar la factura. Permanece en esta pantalla e intenta nuevamente.',
         variant: 'destructive'
       });
     } finally {
-      setIsSubmitting(false);
+      if (isMountedRef.current) setIsSubmitting(false);
     }
   };
 
