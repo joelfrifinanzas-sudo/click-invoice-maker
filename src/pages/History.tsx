@@ -143,7 +143,7 @@ const HistoryPage = () => {
                         {/* Total amount */}
                         <div className="pt-2">
                           <p className="text-2xl font-bold text-primary">
-                            {formatCurrency(invoice.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0).toString())}
+                            {formatCurrency(invoice.total.toString())}
                           </p>
                         </div>
 

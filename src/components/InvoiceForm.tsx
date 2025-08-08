@@ -95,6 +95,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [isLookingUpClient, setIsLookingUpClient] = useState(false);
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Cargar perfil de empresa al montar el componente
   useEffect(() => {
@@ -213,104 +214,117 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
     };
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validaciones
-    const hasValidServices = formData.services.length > 0 &&
-      formData.services.every(service => {
-        const qty = parseFloat((service as any).quantity || '1');
-        const unit = parseFloat((service as any).unitPrice || '');
-        return service.concept.trim() && !isNaN(qty) && qty >= 1 && !isNaN(unit) && unit > 0;
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      
+      // Validaciones
+      const hasValidServices = formData.services.length > 0 &&
+        formData.services.every(service => {
+          const qty = parseFloat((service as any).quantity || '1');
+          const unit = parseFloat((service as any).unitPrice || '');
+          return service.concept.trim() && !isNaN(qty) && qty >= 1 && !isNaN(unit) && unit > 0;
+        });
+      
+      // Validación condicional del nombre del cliente
+      const requiresClientInfo = formData.invoiceType === 'fiscal' || formData.invoiceType === 'gubernamental' || formData.invoiceType === 'consumidor-final' || formData.invoiceType === 'sin-ncf';
+      
+      if (requiresClientInfo && !formData.clientName.trim()) {
+        toast({
+          title: "Error de validación",
+          description: "El nombre del cliente es obligatorio para este tipo de factura",
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      if (!hasValidServices) {
+        toast({
+          title: "Error de validación", 
+          description: "Debe agregar al menos un servicio con concepto y monto",
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      if (requiresClientInfo && formData.clientId.trim() && !clientIdValidation.isValid) {
+        toast({
+          title: "Error de validación",
+          description: clientIdValidation.message,
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      if (!formData.invoiceType) {
+        toast({
+          title: "Error de validación",
+          description: "Debe seleccionar un tipo de factura",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Rellenar datos del negocio desde el Perfil si faltan
+      const companyProfile = getCompanyProfile();
+      const resolvedBusinessName = (formData.businessName || '').trim() || (companyProfile.businessName || '').trim();
+      const resolvedSignatureName = (formData.signatureName || '').trim() || (companyProfile.signatureName || '').trim();
+  
+      if (!resolvedBusinessName) {
+        toast({
+          title: "Falta información del negocio",
+          description: "Completa el Perfil de Empresa para continuar.",
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      if (!resolvedSignatureName) {
+        toast({
+          title: "Falta nombre para la firma",
+          description: "Agrega un nombre de firma en el Perfil de Empresa.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (formData.invoiceType !== 'sin-ncf' && !formData.ncf.trim()) {
+        toast({
+          title: "Error de validación",
+          description: "Debe generar un NCF válido",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Guardar datos del negocio para futuros usos
+      localStorage.setItem('business-name', resolvedBusinessName);
+      localStorage.setItem('signature-name', resolvedSignatureName);
+      
+      // Generar factura con datos del perfil consolidados
+      onGenerateInvoice({
+        ...formData,
+        businessName: resolvedBusinessName,
+        signatureName: resolvedSignatureName,
+        logo: formData.logo ?? companyProfile.logo ?? null,
       });
-    
-    // Validación condicional del nombre del cliente
-    const requiresClientInfo = formData.invoiceType === 'fiscal' || formData.invoiceType === 'gubernamental' || formData.invoiceType === 'consumidor-final';
-    
-    if (requiresClientInfo && !formData.clientName.trim()) {
+      
       toast({
-        title: "Error de validación",
-        description: "El nombre del cliente es obligatorio para este tipo de factura",
-        variant: "destructive",
+        title: "¡Factura generada!",
+        description: "Su factura ha sido creada exitosamente",
       });
-      return;
-    }
-
-    if (!hasValidServices) {
+    } catch (error) {
+      console.error('Error al generar factura:', error);
       toast({
-        title: "Error de validación", 
-        description: "Debe agregar al menos un servicio con concepto y monto",
-        variant: "destructive",
+        title: 'Error al generar',
+        description: 'No se pudo generar la factura. Permanece en esta pantalla e intenta nuevamente.',
+        variant: 'destructive'
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (requiresClientInfo && formData.clientId.trim() && !clientIdValidation.isValid) {
-      toast({
-        title: "Error de validación",
-        description: clientIdValidation.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.invoiceType) {
-      toast({
-        title: "Error de validación",
-        description: "Debe seleccionar un tipo de factura",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Rellenar datos del negocio desde el Perfil si faltan
-    const companyProfile = getCompanyProfile();
-    const resolvedBusinessName = (formData.businessName || '').trim() || (companyProfile.businessName || '').trim();
-    const resolvedSignatureName = (formData.signatureName || '').trim() || (companyProfile.signatureName || '').trim();
-
-    if (!resolvedBusinessName) {
-      toast({
-        title: "Falta información del negocio",
-        description: "Completa el Perfil de Empresa para continuar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!resolvedSignatureName) {
-      toast({
-        title: "Falta nombre para la firma",
-        description: "Agrega un nombre de firma en el Perfil de Empresa.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (formData.invoiceType !== 'sin-ncf' && !formData.ncf.trim()) {
-      toast({
-        title: "Error de validación",
-        description: "Debe generar un NCF válido",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Guardar datos del negocio para futuros usos
-    localStorage.setItem('business-name', resolvedBusinessName);
-    localStorage.setItem('signature-name', resolvedSignatureName);
-    
-    // Generar factura con datos del perfil consolidados
-    onGenerateInvoice({
-      ...formData,
-      businessName: resolvedBusinessName,
-      signatureName: resolvedSignatureName,
-      logo: formData.logo ?? companyProfile.logo ?? null,
-    });
-    
-    toast({
-      title: "¡Factura generada!",
-      description: "Su factura ha sido creada exitosamente",
-    });
   };
 
   const duplicateInvoice = () => {
@@ -339,7 +353,11 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
   };
 
   const regenerateNCF = () => {
-    const totalAmount = formData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
+    const totalAmount = formData.services.reduce((sum, service) => {
+      const qty = parseFloat((service as any).quantity || '1');
+      const unit = parseFloat((service as any).unitPrice || '0');
+      return sum + (isNaN(qty) || isNaN(unit) ? 0 : qty * unit);
+    }, 0);
     const autoNCFType = determineNCFType(!!formData.clientId.trim(), totalAmount);
     const generatedNCF = generateNCF(formData.ncfType || autoNCFType);
     setFormData(prev => ({ ...prev, ncf: generatedNCF }));
@@ -594,7 +612,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                 <CardHeader className="pb-3 sm:pb-4">
                   <CardTitle className="text-responsive-lg sm:text-responsive-xl flex items-center gap-2">
                     <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                    Tipo de factura con Número de Comprobante Fiscal (NCF)
+                    Tipo de factura
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 sm:space-y-6">
@@ -644,7 +662,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                 </div>
 
                 {/* Client Information - Conditional */}
-                {(formData.invoiceType === 'fiscal' || formData.invoiceType === 'gubernamental' || formData.invoiceType === 'consumidor-final') && (
+                {(formData.invoiceType === 'fiscal' || formData.invoiceType === 'gubernamental' || formData.invoiceType === 'consumidor-final' || formData.invoiceType === 'sin-ncf') && (
                   <>
                     <div className="space-y-4">
                       <h3 className="text-responsive-lg font-medium flex items-center gap-2">
@@ -671,38 +689,40 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                             required
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="clientId" className="text-responsive-sm font-medium">Cédula o RNC del cliente</Label>
-                          <Input
-                            id="clientId"
-                            value={formData.clientId}
-                            onChange={(e) => handleClientIdChange(e.target.value)}
-                            onBlur={handleClientIdBlur}
-                            onKeyPress={handleClientIdKeyPress}
-                            placeholder="001-1234567-8 o 123456789"
-                            className={cn(
-                              formData.clientId.trim() && !clientIdValidation.isValid && "border-destructive"
+                        {formData.invoiceType !== 'sin-ncf' && (
+                          <div className="space-y-2">
+                            <Label htmlFor="clientId" className="text-responsive-sm font-medium">Cédula o RNC del cliente</Label>
+                            <Input
+                              id="clientId"
+                              value={formData.clientId}
+                              onChange={(e) => handleClientIdChange(e.target.value)}
+                              onBlur={handleClientIdBlur}
+                              onKeyPress={handleClientIdKeyPress}
+                              placeholder="001-1234567-8 o 123456789"
+                              className={cn(
+                                formData.clientId.trim() && !clientIdValidation.isValid && "border-destructive"
+                              )}
+                            />
+                            {formData.clientId.trim() && (
+                              <div className={cn(
+                                "flex items-center gap-2 text-responsive-sm",
+                                clientIdValidation.isValid ? "text-success" : "text-destructive"
+                              )}>
+                                {clientIdValidation.isValid ? (
+                                  <CheckCircle className="w-4 h-4" />
+                                ) : (
+                                  <AlertCircle className="w-4 h-4" />
+                                )}
+                                <span>{clientIdValidation.message}</span>
+                                {clientIdValidation.type && (
+                                  <Badge variant="outline" className="text-responsive-xs">
+                                    {clientIdValidation.type === 'cedula' ? 'Cédula' : 'RNC'}
+                                  </Badge>
+                                )}
+                              </div>
                             )}
-                          />
-                          {formData.clientId.trim() && (
-                            <div className={cn(
-                              "flex items-center gap-2 text-responsive-sm",
-                              clientIdValidation.isValid ? "text-success" : "text-destructive"
-                            )}>
-                              {clientIdValidation.isValid ? (
-                                <CheckCircle className="w-4 h-4" />
-                              ) : (
-                                <AlertCircle className="w-4 h-4" />
-                              )}
-                              <span>{clientIdValidation.message}</span>
-                              {clientIdValidation.type && (
-                                <Badge variant="outline" className="text-responsive-xs">
-                                  {clientIdValidation.type === 'cedula' ? 'Cédula' : 'RNC'}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </>
@@ -1091,14 +1111,14 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                 <Button 
                 type="submit" 
                 className="flex-1 bg-gradient-primary hover:opacity-90 transition-all text-lg py-6 shadow-invoice"
-                disabled={!formData.services.every((s) => {
+                disabled={isSubmitting || !formData.services.every((s) => {
                   const qty = parseFloat((s as any).quantity || '1');
                   const unit = parseFloat((s as any).unitPrice || '');
                   return s.concept.trim() && !isNaN(qty) && qty >= 1 && !isNaN(unit) && unit > 0;
                 }) || (documentType === 'factura' && formData.invoiceType !== 'sin-ncf' && !formData.ncf)}
               >
                 <Receipt className="w-5 h-5 mr-2" />
-                {documentType === 'cotizacion' ? 'Generar Cotización Profesional' : 'Generar Factura Profesional'}
+                {isSubmitting ? 'Generando...' : (documentType === 'cotizacion' ? 'Generar Cotización Profesional' : 'Generar Factura Profesional')}
               </Button>
             </div>
           </form>

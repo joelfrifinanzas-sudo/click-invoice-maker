@@ -11,13 +11,16 @@ export const generateWhatsAppLink = (invoiceData: InvoiceData, invoiceNumber: st
     }).format(num);
   };
 
-  const subtotal = invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
-  const itbis = subtotal * 0.18;
-  const total = subtotal + itbis;
+  const subtotal = invoiceData.subtotal;
+  const itbis = invoiceData.itbisAmount;
+  const total = invoiceData.total;
 
-  const servicesText = invoiceData.services.map((service, index) => 
-    `${index + 1}. ${service.concept} - ${formatCurrency(service.amount)}`
-  ).join('\n');
+  const servicesText = invoiceData.services.map((service, index) => {
+    const qty = parseFloat(((service as any).quantity || '1'));
+    const unit = parseFloat(((service as any).unitPrice || '0'));
+    const lineTotal = (isNaN(qty) || isNaN(unit)) ? 0 : qty * unit;
+    return `${index + 1}. ${service.concept} - ${formatCurrency(lineTotal.toString())}`;
+  }).join('\n');
 
   const message = `🧾 *FACTURA #${invoiceNumber}*
 
@@ -61,13 +64,16 @@ export const generateEmailLink = (invoiceData: InvoiceData, invoiceNumber: strin
     }).format(num);
   };
 
-  const subtotal = invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
-  const itbis = subtotal * 0.18;
-  const total = subtotal + itbis;
+  const subtotal = invoiceData.subtotal;
+  const itbis = invoiceData.itbisAmount;
+  const total = invoiceData.total;
 
-  const servicesText = invoiceData.services.map((service, index) => 
-    `${index + 1}. ${service.concept} - ${formatCurrency(service.amount)}`
-  ).join('\n');
+  const servicesText = invoiceData.services.map((service, index) => {
+    const qty = parseFloat(((service as any).quantity || '1'));
+    const unit = parseFloat(((service as any).unitPrice || '0'));
+    const lineTotal = (isNaN(qty) || isNaN(unit)) ? 0 : qty * unit;
+    return `${index + 1}. ${service.concept} - ${formatCurrency(lineTotal.toString())}`;
+  }).join('\n');
 
   const subject = `Factura #${invoiceNumber} - ${invoiceData.businessName}`;
   

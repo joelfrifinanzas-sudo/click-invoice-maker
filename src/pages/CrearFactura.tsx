@@ -8,6 +8,7 @@ import { ArrowLeft, FileText, ClipboardList, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function CrearFactura() {
   useScrollToTop();
@@ -29,7 +30,7 @@ export default function CrearFactura() {
   };
 
   return (
-    <>
+    <ErrorBoundary>
       {!showPreview ? (
         <div className="min-h-screen bg-white">
           {/* Back Button */}
@@ -85,6 +86,6 @@ export default function CrearFactura() {
           </div>
         )
       )}
-    </>
+    </ErrorBoundary>
   );
 }

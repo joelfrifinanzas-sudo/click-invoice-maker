@@ -42,6 +42,12 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
     }).format(num);
   };
 
+  const getLineSubtotal = (service: ServiceItem): number => {
+    const qty = parseFloat(((service as any).quantity || '1'));
+    const unit = parseFloat(((service as any).unitPrice || '0'));
+    return (isNaN(qty) || isNaN(unit)) ? 0 : qty * unit;
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
       {/* Action Buttons */}

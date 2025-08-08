@@ -72,8 +72,8 @@ const createWhatsAppMessage = (invoiceData: InvoiceData, invoiceNumber: string):
     }).format(num);
   };
 
-  const subtotal = invoiceData.services.reduce((sum, service) => sum + parseFloat(service.amount || '0'), 0);
-  const total = subtotal * 1.18;
+  const subtotal = invoiceData.subtotal;
+  const total = invoiceData.total;
 
   return `🧾 *FACTURA #${invoiceNumber}*
 
