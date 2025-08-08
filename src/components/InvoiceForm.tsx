@@ -484,7 +484,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
 
           <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Business Information Card */}
-            <Card className="shadow-soft border border-border/50">
+            <Card className="shadow-soft border border-border/50 hidden">
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-responsive-lg sm:text-responsive-xl flex items-center gap-2">
                   <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -548,7 +548,6 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                       value={formData.businessName}
                       onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
                       placeholder="Ej: Mi Empresa S.R.L."
-                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -558,7 +557,6 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                       value={formData.signatureName}
                       onChange={(e) => setFormData(prev => ({ ...prev, signatureName: e.target.value }))}
                       placeholder="Ej: Juan Rodríguez"
-                      required
                     />
                   </div>
                 </div>
