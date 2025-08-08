@@ -956,6 +956,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                         <Input
                           id={`quantity-${index}`}
                           type="number"
+                          inputMode="numeric"
                           min="1"
                           step="1"
                           value={(service as any).quantity}
@@ -973,6 +974,7 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
                         <Input
                           id={`unitPrice-${index}`}
                           type="number"
+                          inputMode="decimal"
                           step="0.01"
                           min="0"
                           value={(service as any).unitPrice}
@@ -1107,10 +1109,10 @@ export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-8">
+            <div className="flex flex-col sm:flex-row gap-4 pt-8 mobile-sticky-action">
                 <Button 
-                type="submit" 
-                className="flex-1 bg-gradient-primary hover:opacity-90 transition-all text-lg py-6 shadow-invoice"
+                  type="submit" 
+                  className="w-full flex-1 bg-gradient-primary hover:opacity-90 transition-all text-lg py-6 shadow-invoice"
                 disabled={isSubmitting || !formData.services.every((s) => {
                   const qty = parseFloat((s as any).quantity || '1');
                   const unit = parseFloat((s as any).unitPrice || '');

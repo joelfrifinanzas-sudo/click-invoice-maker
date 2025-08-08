@@ -25,6 +25,7 @@ import Creditos from "./pages/Creditos";
 import Pagos from "./pages/Pagos";
 import NotFound from "./pages/NotFound";
 import FacturaDetalle from "./pages/FacturaDetalle";
+import { useIsMobile } from "./hooks/use-mobile";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,11 @@ function AppRoutes() {
   );
 }
 
+function MobileDetector() {
+  useIsMobile();
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppConfigProvider>
@@ -69,6 +75,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <MobileDetector />
           <BrowserRouter>
             <AppRoutes />
           </BrowserRouter>
