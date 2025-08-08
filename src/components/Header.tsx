@@ -5,7 +5,7 @@ import { Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Header() {
-  const { open, toggleSidebar } = useSidebar();
+  const { toggleSidebar } = useSidebar();
   const [time, setTime] = useState<string>("");
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
 
@@ -19,11 +19,11 @@ export function Header() {
 
   useEffect(() => {
     const update = () => setIsOnline(navigator.onLine);
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
+    window.addEventListener("online", update, { passive: true } as any);
+    window.addEventListener("offline", update, { passive: true } as any);
     return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
+      window.removeEventListener("online", update as any);
+      window.removeEventListener("offline", update as any);
     };
   }, []);
 
@@ -33,9 +33,8 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-header h-14 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 header-container transition-transform duration-300 ${
-        open ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
-      }`}
+      data-app-header="true"
+      className={"fixed top-0 left-0 right-0 z-header h-14 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 header-container transition-transform duration-200 header--visible"}
     >
       {/* Izquierda: Botón hamburguesa */}
       <div className="flex items-center">

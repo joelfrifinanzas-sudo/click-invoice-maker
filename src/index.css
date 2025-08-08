@@ -308,6 +308,17 @@
   overflow: visible !important;
 }
 
+/* Auto-hide Header utility classes */
+[data-app-header="true"] {
+  will-change: transform;
+}
+.header--visible {
+  transform: translateY(0);
+}
+.header--hidden {
+  transform: translateY(-100%);
+}
+
 /* Mobile-specific fixes for dropdowns */
 @media (max-width: 768px) {
   [data-radix-popper-content-wrapper],
