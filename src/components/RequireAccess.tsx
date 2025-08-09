@@ -1,46 +1,29 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useUserRole, AppRole } from "@/hooks/useUserRole";
+import { canAccess, type RouteKey as GuardRouteKey } from "@/utils/accessGuard";
+import { getCurrentContext } from "@/data/utils";
 
-export type RouteKey =
-  | "inicio"
-  | "cotizaciones"
-  | "facturas"
-  | "factura-detalle"
-  | "crear-factura"
-  | "clientes"
-  | "inventario"
-  | "articulos"
-  | "creditos"
-  | "pagos"
-  | "plan-pro"
-  | "contactos"
-  | "perfil-empresa"
-  | "configuracion"
-  | "perfil"
-  | "historial";
-
-function canAccess(role: AppRole, route: RouteKey): boolean {
-  if (role === "superadmin") return true;
-  if (role === "admin") return true; // todo: restringir solo gestión de superadmins cuando exista
-  if (role === "cajera") {
-    return [
-      "crear-factura",
-      "clientes",
-      "articulos",
-      "historial",
-      "pagos",
-    ].includes(route);
-  }
-  return false;
-}
+export type RouteKey = GuardRouteKey;
 
 export function RequireAccess({ routeKey, children }: PropsWithChildren<{ routeKey: RouteKey }>) {
   const { role, loading } = useUserRole();
   const location = useLocation();
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
-  if (loading) return null; // could add a spinner
-  if (!canAccess(role, routeKey)) {
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const ctx = await getCurrentContext();
+      if (!mounted) return;
+      setCompanyId(ctx.data?.companyId ?? null);
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  if (loading) return null;
+  const allowed = canAccess(routeKey, { role: role as AppRole, companyId });
+  if (!allowed) {
     return <Navigate to="/acceso-denegado" state={{ from: location.pathname }} replace />;
   }
   return <>{children}</>;
