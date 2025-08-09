@@ -208,7 +208,7 @@ export default function Inicio() {
                               <div className="font-semibold">{formatMoneyDOP(inv.total || 0)}</div>
                               <div className="text-xs text-muted-foreground">{inv.invoiceType}</div>
                             </div>
-                            <Badge variant={st.variant} className="flex items-center gap-1">
+                            <Badge variant={st.variant} className={`flex items-center gap-1 ${st.label === 'Pagada' ? 'bg-[hsl(var(--btn-success))] text-white hover:bg-[hsl(var(--btn-success-hover))] active:bg-[hsl(var(--btn-success-active))] border-transparent' : st.label === 'Borrador' ? 'bg-[hsl(var(--btn-warning))] text-white hover:bg-[hsl(var(--btn-warning-hover))] active:bg-[hsl(var(--btn-warning-active))] border-transparent' : st.variant === 'destructive' ? 'bg-[hsl(var(--btn-destructive))] text-white hover:bg-[hsl(var(--btn-destructive-hover))] active:bg-[hsl(var(--btn-destructive-active))] border-transparent' : ''}`}>
                               {st.variant === 'secondary' ? <CheckCircle className="h-4 w-4" /> : st.variant === 'destructive' ? <AlertTriangle className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                               {st.label}
                             </Badge>
