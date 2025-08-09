@@ -63,36 +63,32 @@ const buildWhatsAppMessage = (invoiceData: InvoiceData, invoiceNumber: string) =
   lines.push('');
   lines.push(`👤 *Cliente:* ${invoiceData.clientName || ''}`);
   lines.push(`💰 *Total:* ${totalFmt}`);
-  if (invoiceData.ncf && invoiceData.ncf.trim()) {
-    lines.push(`🔢 *NCF:* ${invoiceData.ncf.trim()}`);
-  }
 
-  // Método de pago y (si aplica) cuenta
+  // Insertar cuenta para pago (solo si el método elegido es Transferencia)
   try {
     const methodKey = (localStorage.getItem('checkout:selected_method') || '').toLowerCase();
-    const methodMap: Record<string, string> = { visa: 'Visa', mastercard: 'Mastercard', transferencia: 'Transferencia', paypal: 'PayPal', otros: 'Otros' };
-    const methodLabel = methodMap[methodKey];
-    if (methodLabel) {
-      lines.push(`🏦 *Pago:* ${methodLabel}`);
-      if (methodKey === 'transferencia') {
-        const selectedId = localStorage.getItem('checkout:selected_account_id');
-        let acc: any = null;
-        try {
-          const raw = localStorage.getItem('payments:cuentas_bancarias');
-          const accounts = raw ? JSON.parse(raw) as any[] : [];
-          if (selectedId) acc = accounts.find(a => a.id === selectedId) || null;
-          if (!acc) {
-            const actives = accounts.filter(a => a.activa);
-            acc = actives.find((a: any) => a.preferida) || actives[0] || null;
-          }
-        } catch {}
-        if (acc && acc.numero) {
-          const mask = (val: string) => { const digits = String(val).replace(/\s+/g, ''); const last4 = digits.slice(-4); return `•••• ${last4}`; };
-          lines.push(`Cuenta ${acc.banco_nombre}/${acc.tipo}: ${mask(acc.numero)} (${acc.alias})`);
+    if (methodKey === 'transferencia') {
+      const selectedId = localStorage.getItem('checkout:selected_account_id');
+      let acc: any = null;
+      try {
+        const raw = localStorage.getItem('payments:cuentas_bancarias');
+        const accounts = raw ? JSON.parse(raw) as any[] : [];
+        if (selectedId) acc = accounts.find(a => a.id === selectedId) || null;
+        if (!acc) {
+          const actives = accounts.filter(a => a.activa);
+          acc = actives.find((a: any) => a.preferida) || actives[0] || null;
         }
+      } catch {}
+      if (acc && acc.numero) {
+        const mask = (val: string) => { const digits = String(val).replace(/\s+/g, ''); const last4 = digits.slice(-4); return `•••• ${last4}`; };
+        lines.push(`🏦 *Cuenta para pago:* ${acc.banco_nombre} • ${acc.tipo} • ${mask(acc.numero)} (${acc.alias})`);
       }
     }
   } catch {}
+
+  if (invoiceData.ncf && invoiceData.ncf.trim()) {
+    lines.push(`🔢 *NCF:* ${invoiceData.ncf.trim()}`);
+  }
 
   lines.push('');
   lines.push(`✅ ${invoiceData.businessName || ''}`);
