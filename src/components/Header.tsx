@@ -10,12 +10,65 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { hasPermission } from "@/utils/permissions";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentContext } from "@/data/utils";
+import { getCurrentCompany } from "@/data/companyDb";
 export function Header() {
   const { toggleSidebar } = useSidebar();
   const [time, setTime] = useState<string>("");
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const isMobile = useIsMobile();
   const [appsOpen, setAppsOpen] = useState(false);
+
+  // Empresa activa y selector de empresa
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
+  const [activeCompany, setActiveCompany] = useState<{ id: string; name: string } | null>(null);
+  const [loadingCompanies, setLoadingCompanies] = useState<boolean>(true);
+
+  const loadCompanies = async () => {
+    try {
+      setLoadingCompanies(true);
+      const ctx = await getCurrentContext();
+      if (!ctx.data) { setLoadingCompanies(false); return; }
+
+      const current = await getCurrentCompany();
+      if (current.data) setActiveCompany({ id: current.data.id as any, name: (current.data as any).name });
+
+      const { data: list, error } = await supabase
+        .from("companies")
+        .select("id,name,active")
+        .order("created_at", { ascending: false });
+      if (!error && list) {
+        const mapped = (list as any[])
+          .filter((c) => c.active !== false)
+          .map((c) => ({ id: c.id, name: c.name }));
+        setCompanies(mapped);
+      }
+    } finally {
+      setLoadingCompanies(false);
+    }
+  };
+
+  useEffect(() => { loadCompanies(); }, []);
+
+  const onCompanyChange = async (companyId: string) => {
+    try {
+      const ctx = await getCurrentContext();
+      if (!ctx.data) return;
+      await supabase
+        .from("users_profiles")
+        .update({ company_id: companyId })
+        .eq("id", ctx.data.user.id);
+      const selected = companies.find((c) => c.id === companyId) || null;
+      if (selected) setActiveCompany(selected);
+      toast({ title: "Empresa cambiada", description: selected?.name ?? "Contexto actualizado" });
+      // Refrescar toda la app para asegurar listas por contexto
+      window.location.reload();
+    } catch (e: any) {
+      toast({ title: "Error cambiando empresa", description: e?.message ?? "Intenta de nuevo", variant: "destructive" });
+    }
+  };
 
   const modules: { label: string; Icon: LucideIcon }[] = useMemo(() => [
     { label: "Cotizaciones", Icon: FileText },
@@ -291,7 +344,42 @@ export function Header() {
               </div>
             </PopoverContent>
           </Popover>
-        )}
+)}
+
+        {/* Empresa activa: texto/selector */}
+        <div className="hidden sm:flex items-center gap-2 mr-2">
+          <span className="text-xs text-muted-foreground">Empresa activa:</span>
+          {companies.length > 1 ? (
+            <Select value={activeCompany?.id ?? undefined} onValueChange={onCompanyChange}>
+              <SelectTrigger className="h-8 w-[220px]">
+                <SelectValue placeholder={loadingCompanies ? "Cargando..." : "Selecciona empresa"} />
+              </SelectTrigger>
+              <SelectContent className="z-[1000]">
+                {companies.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="text-sm font-medium truncate max-w-[220px]">{activeCompany?.name ?? "—"}</span>
+          )}
+        </div>
+        <div className="flex sm:hidden items-center mr-1">
+          {companies.length > 1 ? (
+            <Select value={activeCompany?.id ?? undefined} onValueChange={onCompanyChange}>
+              <SelectTrigger className="h-9 w-[160px]">
+                <SelectValue placeholder={loadingCompanies ? "Cargando..." : "Empresa"} />
+              </SelectTrigger>
+              <SelectContent className="z-[1000]">
+                {companies.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="text-xs font-medium truncate max-w-[140px]">{activeCompany?.name ?? ""}</span>
+          )}
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
