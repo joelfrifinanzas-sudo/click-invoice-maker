@@ -53,6 +53,123 @@ export type Database = {
         }
         Relationships: []
       }
+      cotizacion_items: {
+        Row: {
+          cotizacion_id: string
+          created_at: string
+          id: string
+          itbis_rate: number
+          nombre: string
+          precio_unitario: number
+          product_id: string | null
+          qty: number
+          subtotal: number
+          updated_at: string
+        }
+        Insert: {
+          cotizacion_id: string
+          created_at?: string
+          id?: string
+          itbis_rate?: number
+          nombre: string
+          precio_unitario?: number
+          product_id?: string | null
+          qty?: number
+          subtotal?: number
+          updated_at?: string
+        }
+        Update: {
+          cotizacion_id?: string
+          created_at?: string
+          id?: string
+          itbis_rate?: number
+          nombre?: string
+          precio_unitario?: number
+          product_id?: string | null
+          qty?: number
+          subtotal?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotizacion_items_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cotizacion_items_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "v_cotizacion_totales"
+            referencedColumns: ["cotizacion_id"]
+          },
+        ]
+      }
+      cotizaciones: {
+        Row: {
+          company_id: string
+          created_at: string
+          customer_id: string | null
+          estado: Database["public"]["Enums"]["cotizacion_status"]
+          fecha: string
+          id: string
+          itbis_rate: number
+          moneda: string
+          notas: string | null
+          number: string | null
+          terminos: string | null
+          tipo_descuento: Database["public"]["Enums"]["cotizacion_discount_type"]
+          total: number
+          total_itbis: number
+          total_neto: number
+          updated_at: string
+          valor_descuento: number
+          vence_el: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          customer_id?: string | null
+          estado?: Database["public"]["Enums"]["cotizacion_status"]
+          fecha?: string
+          id?: string
+          itbis_rate?: number
+          moneda?: string
+          notas?: string | null
+          number?: string | null
+          terminos?: string | null
+          tipo_descuento?: Database["public"]["Enums"]["cotizacion_discount_type"]
+          total?: number
+          total_itbis?: number
+          total_neto?: number
+          updated_at?: string
+          valor_descuento?: number
+          vence_el?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          customer_id?: string | null
+          estado?: Database["public"]["Enums"]["cotizacion_status"]
+          fecha?: string
+          id?: string
+          itbis_rate?: number
+          moneda?: string
+          notas?: string | null
+          number?: string | null
+          terminos?: string | null
+          tipo_descuento?: Database["public"]["Enums"]["cotizacion_discount_type"]
+          total?: number
+          total_itbis?: number
+          total_neto?: number
+          updated_at?: string
+          valor_descuento?: number
+          vence_el?: string | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
@@ -105,6 +222,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      empresa_cotizacion_config: {
+        Row: {
+          company_id: string
+          created_at: string
+          next_seq: number
+          prefix: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          next_seq?: number
+          prefix?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          next_seq?: number
+          prefix?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       invoice_items: {
         Row: {
@@ -406,6 +547,16 @@ export type Database = {
       }
     }
     Views: {
+      v_cotizacion_totales: {
+        Row: {
+          cotizacion_id: string | null
+          itbis: number | null
+          moneda: string | null
+          neto: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
       v_invoice_totals: {
         Row: {
           currency: string | null
@@ -422,13 +573,30 @@ export type Database = {
         Args: { _company_id: string; _user_id: string }
         Returns: undefined
       }
+      cotizaciones_recalc_totals: {
+        Args: { _cotizacion_id: string }
+        Returns: undefined
+      }
       fn_calc_itbis: {
         Args: { net: number; rate?: number }
         Returns: number
       }
+      next_cotizacion_number: {
+        Args: { _company_id: string }
+        Returns: string
+      }
     }
     Enums: {
       company_role: "owner" | "member"
+      cotizacion_discount_type: "none" | "percent" | "amount"
+      cotizacion_status:
+        | "borrador"
+        | "enviada"
+        | "vista"
+        | "aceptada"
+        | "rechazada"
+        | "vencida"
+        | "facturada"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -557,6 +725,16 @@ export const Constants = {
   public: {
     Enums: {
       company_role: ["owner", "member"],
+      cotizacion_discount_type: ["none", "percent", "amount"],
+      cotizacion_status: [
+        "borrador",
+        "enviada",
+        "vista",
+        "aceptada",
+        "rechazada",
+        "vencida",
+        "facturada",
+      ],
     },
   },
 } as const
