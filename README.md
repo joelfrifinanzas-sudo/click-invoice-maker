@@ -71,3 +71,15 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Seguridad: eliminar warning de OTP (Supabase)
+
+Para resolver el aviso del Security Advisor sobre expiración de OTP (sin cambios de código):
+
+1. Abre Supabase Dashboard → Authentication → Providers → Email y/o SMS.
+2. En Expiration time (OTP/Magic Link), configura un valor entre 180 y 300 segundos (recomendado: 300s).
+3. Guarda los cambios.
+4. Ve a Database → Security Advisor y vuelve a ejecutar el linter; la advertencia debe desaparecer.
+
+Acceso directo a Providers: https://supabase.com/dashboard/project/byzjesxixjztsjhxwgic/auth/providers
+
