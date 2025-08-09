@@ -21,7 +21,7 @@ export default {
 			fontFamily: {
 				montserrat: ['Montserrat', 'ui-sans-serif', 'system-ui', 'sans-serif'],
 				poppins: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-				inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+				inter: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
 				sans: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
 			},
 			colors: {
