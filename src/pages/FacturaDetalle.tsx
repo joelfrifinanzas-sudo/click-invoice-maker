@@ -24,6 +24,14 @@ export default function FacturaDetalle() {
     }
   }, [invoice]);
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/inicio', { replace: true });
+    }
+  };
+
   if (!invoice) {
     return (
       <div className="min-h-screen bg-gradient-subtle p-4">
@@ -56,7 +64,7 @@ export default function FacturaDetalle() {
           <h1 className="sr-only">Detalle de factura #{invoice.invoiceNumber}</h1>
           <div className="w-14" />
         </header>
-        <InvoicePreview invoiceData={invoice} onBack={() => navigate(-1)} invoiceNumber={invoice.invoiceNumber} />
+        <InvoicePreview invoiceData={invoice} onBack={handleBack} invoiceNumber={invoice.invoiceNumber} />
       </div>
 
       {/* Floating Home Button */}

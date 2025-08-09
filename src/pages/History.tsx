@@ -46,6 +46,14 @@ const HistoryPage = () => {
     navigate('/crear-factura');
   };
 
+  const handleSafeBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/inicio', { replace: true });
+    }
+  };
+
   const formatCurrency = (amount: string) => {
     return new Intl.NumberFormat('es-DO', {
       style: 'currency',
@@ -77,7 +85,7 @@ const HistoryPage = () => {
                 variant="ghost" 
                 size="sm" 
                 className="text-white hover:bg-white/20"
-                onClick={() => navigate(-1)}
+                onClick={handleSafeBack}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver

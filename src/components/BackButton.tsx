@@ -11,7 +11,11 @@ export function BackButton({ className = '', fallbackRoute = '/inicio' }: BackBu
   const navigate = useNavigate();
 
   const handleBack = () => {
-    navigate(-1);
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(fallbackRoute, { replace: true });
+    }
   };
 
   return (
@@ -19,9 +23,10 @@ export function BackButton({ className = '', fallbackRoute = '/inicio' }: BackBu
       variant="ghost"
       size="sm"
       onClick={handleBack}
-      className={`p-2 hover:bg-gray-100 rounded-full transition-colors ${className}`}
+      aria-label="Volver"
+      className={`p-2 rounded-full transition-colors ${className}`}
     >
-      <ArrowLeft className="w-5 h-5 text-gray-600" />
+      <ArrowLeft className="w-5 h-5 text-muted-foreground" />
     </Button>
   );
 }
