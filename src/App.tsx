@@ -28,6 +28,8 @@ import NotFound from "./pages/NotFound";
 import FacturaDetalle from "./pages/FacturaDetalle";
 import { useIsMobile } from "./hooks/use-mobile";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { RequireAccess } from "./components/RequireAccess";
+import AccessDenied from "./pages/AccessDenied";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Login from "./pages/Login";
@@ -60,23 +62,24 @@ function AppRoutes() {
 
       {/* Existing public routes remain unchanged */}
       <Route path="/" element={<Index />} />
-      <Route path="/inicio" element={<Inicio />} />
-      <Route path="/cotizaciones" element={<Cotizaciones />} />
+      <Route path="/inicio" element={<RequireAccess routeKey="inicio"><Inicio /></RequireAccess>} />
+      <Route path="/cotizaciones" element={<RequireAccess routeKey="cotizaciones"><Cotizaciones /></RequireAccess>} />
       <Route path="/c/:publicId" element={<CotizacionPublic />} />
-      <Route path="/facturas" element={<Facturas />} />
-      <Route path="/crear-factura" element={<CrearFactura />} />
-      <Route path="/clientes" element={<Clientes />} />
-      <Route path="/inventario" element={<Inventario />} />
-      <Route path="/articulos" element={<Articulos />} />
-      <Route path="/creditos" element={<Creditos />} />
-      <Route path="/pagos" element={<Pagos />} />
-      <Route path="/plan-pro" element={<PlanPro />} />
-      <Route path="/contactos" element={<Contactos />} />
-      <Route path="/perfil-empresa" element={<CompanyProfilePage />} />
-      <Route path="/configuracion" element={<Configuracion />} />
-      <Route path="/perfil" element={<Perfil />} />
-      <Route path="/historial" element={<History />} />
-      <Route path="/history" element={<History />} />
+      <Route path="/facturas" element={<RequireAccess routeKey="facturas"><Facturas /></RequireAccess>} />
+      <Route path="/crear-factura" element={<RequireAccess routeKey="crear-factura"><CrearFactura /></RequireAccess>} />
+      <Route path="/clientes" element={<RequireAccess routeKey="clientes"><Clientes /></RequireAccess>} />
+      <Route path="/inventario" element={<RequireAccess routeKey="inventario"><Inventario /></RequireAccess>} />
+      <Route path="/articulos" element={<RequireAccess routeKey="articulos"><Articulos /></RequireAccess>} />
+      <Route path="/creditos" element={<RequireAccess routeKey="creditos"><Creditos /></RequireAccess>} />
+      <Route path="/pagos" element={<RequireAccess routeKey="pagos"><Pagos /></RequireAccess>} />
+      <Route path="/plan-pro" element={<RequireAccess routeKey="plan-pro"><PlanPro /></RequireAccess>} />
+      <Route path="/contactos" element={<RequireAccess routeKey="contactos"><Contactos /></RequireAccess>} />
+      <Route path="/perfil-empresa" element={<RequireAccess routeKey="perfil-empresa"><CompanyProfilePage /></RequireAccess>} />
+      <Route path="/configuracion" element={<RequireAccess routeKey="configuracion"><Configuracion /></RequireAccess>} />
+      <Route path="/perfil" element={<RequireAccess routeKey="perfil"><Perfil /></RequireAccess>} />
+      <Route path="/historial" element={<RequireAccess routeKey="historial"><History /></RequireAccess>} />
+      <Route path="/history" element={<RequireAccess routeKey="historial"><History /></RequireAccess>} />
+      <Route path="/acceso-denegado" element={<AccessDenied />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
