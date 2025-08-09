@@ -119,6 +119,7 @@ export type Database = {
           moneda: string
           notas: string | null
           number: string | null
+          public_id: string | null
           terminos: string | null
           tipo_descuento: Database["public"]["Enums"]["cotizacion_discount_type"]
           total: number
@@ -139,6 +140,7 @@ export type Database = {
           moneda?: string
           notas?: string | null
           number?: string | null
+          public_id?: string | null
           terminos?: string | null
           tipo_descuento?: Database["public"]["Enums"]["cotizacion_discount_type"]
           total?: number
@@ -159,6 +161,7 @@ export type Database = {
           moneda?: string
           notas?: string | null
           number?: string | null
+          public_id?: string | null
           terminos?: string | null
           tipo_descuento?: Database["public"]["Enums"]["cotizacion_discount_type"]
           total?: number
@@ -571,6 +574,14 @@ export type Database = {
     Functions: {
       add_owner_membership: {
         Args: { _company_id: string; _user_id: string }
+        Returns: undefined
+      }
+      cotizacion_mark_viewed: {
+        Args: { _public_id: string }
+        Returns: undefined
+      }
+      cotizacion_send: {
+        Args: { _id: string }
         Returns: undefined
       }
       cotizaciones_recalc_totals: {

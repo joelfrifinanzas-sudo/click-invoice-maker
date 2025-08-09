@@ -16,6 +16,7 @@ import Contactos from "./pages/Contactos";
 import Configuracion from "./pages/Configuracion";
 import Perfil from "./pages/Perfil";
 import Cotizaciones from "./pages/Cotizaciones";
+import CotizacionPublic from "./pages/CotizacionPublic";
 import Facturas from "./pages/Facturas";
 import CrearFactura from "./pages/CrearFactura";
 import Clientes from "./pages/Clientes";
@@ -61,8 +62,8 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/inicio" element={<Inicio />} />
       <Route path="/cotizaciones" element={<Cotizaciones />} />
+      <Route path="/c/:publicId" element={<CotizacionPublic />} />
       <Route path="/facturas" element={<Facturas />} />
-      <Route path="/facturas/:id" element={<FacturaDetalle />} />
       <Route path="/crear-factura" element={<CrearFactura />} />
       <Route path="/clientes" element={<Clientes />} />
       <Route path="/inventario" element={<Inventario />} />
