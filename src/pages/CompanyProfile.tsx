@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { CompanyProfile } from '@/types/company';
 import { getCompanyProfile, saveCompanyProfile } from '@/utils/companyProfile';
+import { getCurrentCompany, patchCurrentCompany } from '@/data/companyDb';
 import {
   Building2,
   Phone,
@@ -27,7 +28,10 @@ import {
 export const CompanyProfilePage = () => {
   const { toast } = useToast();
   const [profile, setProfile] = useState<CompanyProfile>(getCompanyProfile());
-  const [open, setOpen] = useState<string>('contacto');
+  const [open, setOpen] = useState<string>('facturacion');
+  const [dbCompany, setDbCompany] = useState<any | null>(null);
+  const [itbisPct, setItbisPct] = useState<number>(18);
+  const [loadingDb, setLoadingDb] = useState<boolean>(true);
 
   // SEO: Title + meta description + canonical
   useEffect(() => {
@@ -54,6 +58,28 @@ export const CompanyProfilePage = () => {
     setProfile((prev) => ({ ...prev, [field]: value }));
   };
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoadingDb(true);
+      const { data } = await getCurrentCompany();
+      if (!mounted) return;
+      if (data) {
+        setDbCompany(data);
+        setItbisPct(typeof data.itbis_rate === 'number' ? Math.round(Number(data.itbis_rate) * 10000) / 100 : 18);
+        setProfile((prev) => ({
+          ...prev,
+          businessName: data.name ?? prev.businessName,
+          businessRnc: data.rnc ?? prev.businessRnc,
+          businessAddress: data.address ?? prev.businessAddress,
+          businessPhone: data.phone ?? prev.businessPhone,
+        }));
+      }
+      setLoadingDb(false);
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   const handleFileUpload = (file: File) => {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
@@ -65,20 +91,59 @@ export const CompanyProfilePage = () => {
 
   const removeLogo = () => setProfile((p) => ({ ...p, logo: null }));
 
-  const handleSave = () => {
+  const isValidRnc = (v: string) => /^\d{9,11}$/.test(v.replace(/\D/g, ''));
+  const isValidPhone = (v: string) => /^\+?\d{7,15}$/.test(v.replace(/[^+\d]/g, ''));
+  const isValidNcf = (v: string) => /^(B01|B02|B14|E31|E32|E33|E34|E41|E42|E43)-?\d{8,10}$/.test(v.trim());
+
+  const handleSave = async () => {
+    // Validaciones
     if (!profile.businessName?.trim()) {
-      toast({
-        title: 'Falta el nombre del negocio',
-        description: 'Por favor, completa el nombre del negocio.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Falta el nombre comercial', description: 'Completa el nombre del negocio.', variant: 'destructive' });
       return;
     }
-    saveCompanyProfile(profile);
-    toast({
-      title: 'Datos guardados',
-      description: 'El perfil del negocio se guardó correctamente.',
-    });
+    if (profile.businessRnc && !isValidRnc(profile.businessRnc)) {
+      toast({ title: 'RNC inválido', description: 'Debe contener 9 a 11 dígitos.', variant: 'destructive' });
+      return;
+    }
+    if (profile.businessPhone && !isValidPhone(profile.businessPhone)) {
+      toast({ title: 'Teléfono inválido', description: 'Usa solo números, admite formato internacional +.', variant: 'destructive' });
+      return;
+    }
+    if (profile.ncfFormat && !isValidNcf(profile.ncfFormat)) {
+      toast({ title: 'Formato de NCF inválido', description: 'Ejemplos válidos: B01-00000000, E31-12345678.', variant: 'destructive' });
+      return;
+    }
+    const pct = Number.isFinite(itbisPct) ? itbisPct : 18;
+    if (pct < 0 || pct > 100) {
+      toast({ title: 'ITBIS inválido', description: 'Debe estar entre 0% y 100%.', variant: 'destructive' });
+      return;
+    }
+
+    // Patch solo campos modificados en BD
+    try {
+      const patch: any = {};
+      if (dbCompany) {
+        const rncDigits = (profile.businessRnc || '').replace(/\D/g, '') || null;
+        const phoneNorm = (profile.businessPhone || '').replace(/[^+\d]/g, '') || null;
+        if (profile.businessName !== dbCompany.name) patch.name = profile.businessName || null;
+        if (rncDigits !== (dbCompany.rnc || null)) patch.rnc = rncDigits;
+        if ((profile.businessAddress || null) !== (dbCompany.address || null)) patch.address = profile.businessAddress || null;
+        if (phoneNorm !== (dbCompany.phone || null)) patch.phone = phoneNorm;
+        const newRate = Math.round((pct / 100) * 100000) / 100000; // 5 decimales
+        const oldRate = typeof dbCompany.itbis_rate === 'number' ? dbCompany.itbis_rate : 0.18;
+        if (Math.abs(newRate - oldRate) > 0.000001) patch.itbis_rate = newRate;
+      }
+      if (Object.keys(patch).length) {
+        const { error } = await patchCurrentCompany(patch);
+        if (error) throw new Error(error);
+      }
+
+      // Guardar parte local (logo, ncfFormat, etc.)
+      saveCompanyProfile(profile);
+      toast({ title: 'Datos guardados', description: 'El perfil se actualizó correctamente.' });
+    } catch (e: any) {
+      toast({ title: 'Error al guardar', description: e?.message || 'Intenta nuevamente', variant: 'destructive' });
+    }
   };
 
   const contacto = useMemo(
@@ -152,8 +217,35 @@ export const CompanyProfilePage = () => {
               </Card>
             </AccordionContent>
           </AccordionItem>
+          {/* 2. Parámetros de facturación */}
+          <AccordionItem value="facturacion" className="border rounded-lg">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Landmark className="h-5 w-5 text-primary" />
+                <span className="text-base font-medium">Parámetros de facturación</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card className="border-t-0 rounded-t-none">
+                <CardContent className="pt-4 space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="itbisPct">ITBIS (%)</Label>
+                      <Input id="itbisPct" type="number" step="0.01" value={itbisPct} onChange={(e) => setItbisPct(Number(e.target.value || 0))} placeholder="18" />
+                      <p className="text-xs text-muted-foreground">Valor por defecto 18%. Editable.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ncfFormat">Formato de NCF (DGII)</Label>
+                      <Input id="ncfFormat" value={profile.ncfFormat ?? ''} onChange={(e) => handleInput('ncfFormat', e.target.value.toUpperCase())} placeholder="Ej: B01-00000000" />
+                      <p className="text-xs text-muted-foreground">Ejemplos: B01-00000000, E31-12345678.</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
 
-          {/* 2. Perfil del negocio */}
+          {/* 3. Perfil del negocio */}
           <AccordionItem value="negocio" className="border rounded-lg">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <div className="flex items-center gap-3">

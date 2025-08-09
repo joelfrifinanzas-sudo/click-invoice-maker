@@ -15,7 +15,9 @@ export interface CompanyProfile {
   website?: string;
   currency?: string; // p.ej. DOP
   primaryColor?: string; // HSL o HEX
+  ncfFormat?: string; // Formato DGII (ej. B01-00000000)
 }
+
 
 export const defaultCompanyProfile: CompanyProfile = {
   businessName: '',
@@ -33,4 +35,5 @@ export const defaultCompanyProfile: CompanyProfile = {
   website: '',
   currency: 'DOP',
   primaryColor: '',
+  ncfFormat: '',
 };
