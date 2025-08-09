@@ -42,6 +42,7 @@ import { DominicanApiService } from '@/utils/dominicanApiService';
 import { useToast } from '@/hooks/use-toast';
 import { logError } from '@/utils/logger';
 import { getNextNCF } from '@/data/ncf';
+import { getCurrentCompany } from '@/data/companyDb';
 
 export interface ServiceItem {
   concept: string;
@@ -101,10 +102,22 @@ export const InvoiceForm = ({ onGenerateInvoice, prefill }: InvoiceFormProps) =>
   const [dragActive, setDragActive] = useState(false);
   const [isLookingUpClient, setIsLookingUpClient] = useState(false);
   const { toast } = useToast();
-const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [companyItbisRate, setCompanyItbisRate] = useState(0.18);
   const isMountedRef = useRef(true);
   useEffect(() => {
     return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Cargar ITBIS de empresa
+  useEffect(() => {
+    (async () => {
+      const { data } = await getCurrentCompany();
+      if (data?.itbis_rate !== undefined && data?.itbis_rate !== null) {
+        const rate = Number(data.itbis_rate);
+        if (!Number.isNaN(rate) && rate >= 0) setCompanyItbisRate(rate);
+      }
+    })();
   }, []);
 
   // Cargar perfil de empresa al montar el componente
@@ -979,7 +992,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
                       />
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor={`quantity-${index}`} className="text-sm font-medium">Cantidad *</Label>
                         <Input
@@ -1016,9 +1029,100 @@ const [isSubmitting, setIsSubmitting] = useState(false);
                       <div className="space-y-2">
                         <Label className="text-sm font-medium">Subtotal</Label>
                         <div className="h-11 flex items-center px-3 rounded-md border border-input bg-muted/50 font-mono">
-                          {formatCurrency(((parseFloat((service as any).quantity || '1') || 0) * (parseFloat((service as any).unitPrice || '0') || 0)))}
+                          {(() => {
+                            const qty = parseFloat((service as any).quantity || '1') || 1;
+                            const unit = parseFloat((service as any).unitPrice || '0') || 0;
+                            const disc = parseFloat((service as any).lineDiscountAbs || '0') || 0;
+                            const net = Math.max(0, qty * unit - Math.max(0, disc));
+                            return formatCurrency(net);
+                          })()}
                         </div>
                       </div>
+                    </div>
+
+                    {/* Descuento e ITBIS por línea */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`discount-${index}`} className="text-sm font-medium">Descuento (DOP)</Label>
+                        <Input
+                          id={`discount-${index}`}
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          value={(service as any).lineDiscountAbs || ''}
+                          onChange={(e) => updateService(index, 'lineDiscountAbs' as any, e.target.value)}
+                          placeholder="0.00"
+                          className="h-11 font-mono"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Aplicar ITBIS</Label>
+                        <div className="h-11 flex items-center justify-between px-3 rounded-md border border-input bg-muted/30">
+                          <span className="text-sm text-muted-foreground">{(service as any).isExempt ? 'Exento' : 'Gravado'}</span>
+                          <Switch
+                            checked={!((service as any).isExempt === true)}
+                            onCheckedChange={(checked) => {
+                              updateService(index, 'isExempt' as any, (!checked) as any);
+                              if (checked && (service as any).itbisRate == null) {
+                                updateService(index, 'itbisRate' as any, String(companyItbisRate));
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`itbisRate-${index}`} className="text-sm font-medium">Tasa ITBIS (%)</Label>
+                        <Input
+                          id={`itbisRate-${index}`}
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          disabled={(service as any).isExempt === true}
+                          value={(() => {
+                            const rate = (service as any).isExempt ? 0 : Number((service as any).itbisRate ?? companyItbisRate);
+                            return isFinite(rate) ? String((rate * 100).toFixed(2)) : '';
+                          })()}
+                          onChange={(e) => {
+                            const pct = parseFloat(e.target.value);
+                            const dec = !isNaN(pct) ? String(Math.max(0, pct) / 100) : '';
+                            updateService(index, 'itbisRate' as any, dec as any);
+                          }}
+                          placeholder={String(companyItbisRate * 100)}
+                          className="h-11 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Resumen por línea */}
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      {(() => {
+                        const qty = parseFloat((service as any).quantity || '1') || 1;
+                        const unit = parseFloat((service as any).unitPrice || '0') || 0;
+                        const disc = parseFloat((service as any).lineDiscountAbs || '0') || 0;
+                        const net = Math.max(0, qty * unit - Math.max(0, disc));
+                        const rate = (service as any).isExempt ? 0 : Number((service as any).itbisRate ?? companyItbisRate);
+                        const tax = Math.max(0, net * (isFinite(rate) ? rate : companyItbisRate));
+                        const lineTotal = net + tax;
+                        return (
+                          <>
+                            <div>
+                              <span className="text-muted-foreground">Neto:</span>
+                              <div className="font-medium">{formatCurrency(net)}</div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">ITBIS:</span>
+                              <div className="font-medium">{formatCurrency(tax)}</div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Total:</span>
+                              <div className="font-medium">{formatCurrency(lineTotal)}</div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}
