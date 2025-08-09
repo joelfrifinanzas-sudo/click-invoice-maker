@@ -103,6 +103,10 @@ export default function SuperAdmin() {
     if (active === "planes") {
       return <PlanCatalog />;
     }
+    if (active === "auditoria") {
+      const SuperAdminAudit = require("@/components/superadmin/SuperAdminAudit").default;
+      return <SuperAdminAudit />;
+    }
     if (active !== "empresas") {
       return (
         <Card>

@@ -88,6 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn: AuthContextType["signIn"] = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) {
+      setTimeout(async () => {
+        try { await supabase.rpc('audit_log', { _event_type: 'auth_login', _company_id: null, _subject_id: null, _message: 'Inicio de sesión', _details: {} }); } catch {}
+      }, 0);
+    }
     return { error };
   };
 

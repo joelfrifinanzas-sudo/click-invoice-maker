@@ -68,6 +68,39 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_events: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          details: Json | null
+          event_type: Database["public"]["Enums"]["audit_event_type"]
+          id: string
+          message: string | null
+          subject_id: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type: Database["public"]["Enums"]["audit_event_type"]
+          id?: string
+          message?: string | null
+          subject_id?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type?: Database["public"]["Enums"]["audit_event_type"]
+          id?: string
+          message?: string | null
+          subject_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           active: boolean
@@ -780,6 +813,16 @@ export type Database = {
         Args: { _invoice_id: string; _ncf_type: string }
         Returns: string
       }
+      audit_log: {
+        Args: {
+          _event_type: Database["public"]["Enums"]["audit_event_type"]
+          _company_id?: string
+          _subject_id?: string
+          _message?: string
+          _details?: Json
+        }
+        Returns: undefined
+      }
       cotizacion_mark_viewed: {
         Args: { _public_id: string }
         Returns: undefined
@@ -818,6 +861,27 @@ export type Database = {
           _role: Database["public"]["Enums"]["company_role"]
         }
         Returns: undefined
+      }
+      su_audit_list: {
+        Args: {
+          _company_id?: string
+          _user_id?: string
+          _event_type?: Database["public"]["Enums"]["audit_event_type"]
+          _from?: string
+          _to?: string
+        }
+        Returns: {
+          id: string
+          created_at: string
+          user_id: string
+          user_email: string
+          user_name: string
+          company_id: string
+          company_name: string
+          event_type: Database["public"]["Enums"]["audit_event_type"]
+          subject_id: string
+          message: string
+        }[]
       }
       su_companies_list: {
         Args: Record<PropertyKey, never>
@@ -980,6 +1044,14 @@ export type Database = {
     }
     Enums: {
       app_role: "superadmin"
+      audit_event_type:
+        | "auth_login"
+        | "invoice_created"
+        | "invoice_updated"
+        | "invoice_canceled"
+        | "role_changed"
+        | "company_activated"
+        | "company_deactivated"
       company_role: "owner" | "member"
       cotizacion_discount_type: "none" | "percent" | "amount"
       cotizacion_status:
@@ -1118,6 +1190,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["superadmin"],
+      audit_event_type: [
+        "auth_login",
+        "invoice_created",
+        "invoice_updated",
+        "invoice_canceled",
+        "role_changed",
+        "company_activated",
+        "company_deactivated",
+      ],
       company_role: ["owner", "member"],
       cotizacion_discount_type: ["none", "percent", "amount"],
       cotizacion_status: [
