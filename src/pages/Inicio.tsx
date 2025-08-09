@@ -161,7 +161,7 @@ export default function Inicio() {
           <section>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {actions.map((a, i) => (
-                <button key={i} onClick={() => go(a.path)} className="bg-card border rounded-xl p-4 shadow-sm hover:shadow-md transition hover-scale text-left">
+                <button key={i} onClick={() => go(a.path)} className="bg-[hsl(var(--btn-primary))] text-[hsl(var(--btn-primary-foreground))] hover:bg-[hsl(var(--btn-primary-hover))] border rounded-xl p-4 shadow-sm hover:shadow-md transition hover-scale text-left">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                       <a.icon className="w-5 h-5 text-foreground" />
