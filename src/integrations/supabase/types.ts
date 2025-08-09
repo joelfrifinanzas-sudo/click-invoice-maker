@@ -14,13 +14,371 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          address: string | null
+          created_at: string
+          currency: string
+          id: string
+          itbis_rate: number
+          name: string
+          owner_user_id: string
+          phone: string | null
+          rnc: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          itbis_rate?: number
+          name: string
+          owner_user_id: string
+          phone?: string | null
+          rnc?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          itbis_rate?: number
+          name?: string
+          owner_user_id?: string
+          phone?: string | null
+          rnc?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          address: string | null
+          company_id: string | null
+          created_at: string
+          currency: string
+          email: string | null
+          id: string
+          itbis_rate: number
+          name: string
+          owner_user_id: string
+          phone: string | null
+          rnc: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          email?: string | null
+          id?: string
+          itbis_rate?: number
+          name: string
+          owner_user_id: string
+          phone?: string | null
+          rnc?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          email?: string | null
+          id?: string
+          itbis_rate?: number
+          name?: string
+          owner_user_id?: string
+          phone?: string | null
+          rnc?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_items: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          invoice_id: string
+          itbis_rate: number
+          owner_user_id: string
+          product_id: string | null
+          quantity: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          itbis_rate?: number
+          owner_user_id: string
+          product_id?: string | null
+          quantity?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          itbis_rate?: number
+          owner_user_id?: string
+          product_id?: string | null
+          quantity?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_totals"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          company_id: string
+          created_at: string
+          currency: string
+          customer_id: string | null
+          due_date: string | null
+          id: string
+          issue_date: string
+          itbis_rate: number
+          notes: string | null
+          number: string | null
+          owner_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          itbis_rate?: number
+          notes?: string | null
+          number?: string | null
+          owner_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          itbis_rate?: number
+          notes?: string | null
+          number?: string | null
+          owner_user_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          invoice_id: string
+          method: string | null
+          notes: string | null
+          owner_user_id: string
+          paid_at: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id: string
+          method?: string | null
+          notes?: string | null
+          owner_user_id: string
+          paid_at?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string
+          method?: string | null
+          notes?: string | null
+          owner_user_id?: string
+          paid_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_totals"
+            referencedColumns: ["invoice_id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          active: boolean
+          company_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          itbis_rate: number
+          name: string
+          owner_user_id: string
+          sku: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          itbis_rate?: number
+          name: string
+          owner_user_id: string
+          sku?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          itbis_rate?: number
+          name?: string
+          owner_user_id?: string
+          sku?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users_profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      v_invoice_totals: {
+        Row: {
+          currency: string | null
+          invoice_id: string | null
+          itbis: number | null
+          net: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      fn_calc_itbis: {
+        Args: { net: number; rate?: number }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
