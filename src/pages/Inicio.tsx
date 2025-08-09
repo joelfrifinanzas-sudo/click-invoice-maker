@@ -16,10 +16,21 @@ import {
   Star
 } from 'lucide-react';
 import { Layout } from '@/components/Layout';
+import { useAppConfig } from '@/contexts/AppConfigContext';
+import { HomeScreenV2 } from '@/components/home/HomeScreenV2';
 
 export default function Inicio() {
   const navigate = useNavigate();
   const { markDashboardNavigation } = useNavigation();
+  const { config } = useAppConfig();
+
+  if (config.homeV2Enabled) {
+    return (
+      <Layout>
+        <HomeScreenV2 />
+      </Layout>
+    );
+  }
 
   const modules = [
     {

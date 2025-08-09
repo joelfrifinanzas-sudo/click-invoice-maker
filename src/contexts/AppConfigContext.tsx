@@ -9,6 +9,7 @@ interface AppConfig {
   whatsappEnabled: boolean;
   defaultPhone: string;
   autoMessage: string;
+  homeV2Enabled?: boolean; // Feature flag: HomeScreenV2
 }
 
 interface AppConfigContextType {
@@ -25,7 +26,8 @@ const defaultConfig: AppConfig = {
   currency: 'DOP',
   whatsappEnabled: false,
   defaultPhone: '',
-  autoMessage: 'Adjunto encontrarás tu factura. ¡Gracias por tu preferencia!'
+  autoMessage: 'Adjunto encontrarás tu factura. ¡Gracias por tu preferencia!',
+  homeV2Enabled: false,
 };
 
 const AppConfigContext = createContext<AppConfigContextType | undefined>(undefined);
@@ -106,6 +108,10 @@ export const AppConfigProvider = ({ children }: AppConfigProviderProps) => {
       'config.currency': 'Moneda',
       'config.saved': 'Configuración guardada',
       'config.saved.description': 'Los cambios se han aplicado correctamente.',
+      'config.appearance': 'Apariencia',
+      'config.appearance.description': 'Personaliza la apariencia de la aplicación',
+      'config.homeV2': 'Inicio Home V2',
+      'config.homeV2.description': 'Usar la nueva pantalla de inicio con acceso rápido y resúmenes',
       
       // Languages
       'language.es': 'Español',
@@ -205,6 +211,10 @@ export const AppConfigProvider = ({ children }: AppConfigProviderProps) => {
       'config.currency': 'Currency',
       'config.saved': 'Configuration saved',
       'config.saved.description': 'Changes have been applied successfully.',
+      'config.appearance': 'Appearance',
+      'config.appearance.description': 'Customize the app appearance',
+      'config.homeV2': 'Home V2',
+      'config.homeV2.description': 'Use the new home screen with quick access and summaries',
       
       // Languages
       'language.es': 'Español',

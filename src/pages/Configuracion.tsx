@@ -99,6 +99,31 @@ const Configuracion = () => {
               </CardContent>
             </Card>
 
+            {/* Apariencia */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('config.appearance')}</CardTitle>
+                <CardDescription>
+                  {t('config.appearance.description')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="home-v2">{t('config.homeV2')}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('config.homeV2.description')}
+                    </p>
+                  </div>
+                  <Switch
+                    id="home-v2"
+                    checked={!!config.homeV2Enabled}
+                    onCheckedChange={(checked) => updateConfig({ homeV2Enabled: checked })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             {/* System Configuration */}
             <Card>
               <CardHeader>
