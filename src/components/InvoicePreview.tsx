@@ -313,8 +313,9 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
                       <Button
                         size="sm"
                         onClick={async () => {
+                          const text = `${selectedAccount.banco_nombre} • ${selectedAccount.tipo} • ${selectedAccount.numero} (${selectedAccount.alias})`;
                           try {
-                            await navigator.clipboard.writeText(selectedAccount.numero);
+                            await navigator.clipboard.writeText(text);
                             toast({ title: 'Cuenta copiada' });
                           } catch {
                             toast({ title: 'No se pudo copiar', variant: 'destructive' });
