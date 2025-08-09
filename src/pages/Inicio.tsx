@@ -250,14 +250,14 @@ export default function Inicio() {
                       </ResponsiveContainer>
                     </div>
                     <ul className="space-y-2">
-                      {topProducts.map((p, i) => <li key={i} className="flex items-center justify-between">
+                      {topProducts.map((p, i) => <li key={i} className="flex items-center justify-between bg-transparent">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="inline-block w-3 h-3 rounded-sm" style={{
                         background: COLORS[i % COLORS.length]
                       }} />
-                            <span className="truncate text-[#D1D5DB] lg:text-[#374151]">{p.name}</span>
+                            <span className="truncate lg:text-[#374151] text-slate-700">{p.name}</span>
                           </div>
-                          <span className="font-medium text-[#F9FAFB] lg:text-[#111827]">{formatMoneyDOP(p.value)}</span>
+                          <span className="font-medium lg:text-[#111827] text-slate-700">{formatMoneyDOP(p.value)}</span>
                         </li>)}
                     </ul>
                   </div>}
