@@ -147,7 +147,7 @@ export default function Inicio() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-subtle pb-20">
+      <div className="min-h-screen bg-card border border-border pb-20 text-foreground">
         {/* Encabezado */}
         <div className="container mx-auto px-4 py-6">
           <div className="rounded-2xl bg-card border shadow-sm p-6">
