@@ -131,6 +131,21 @@ export function HomeScreenV2() {
     { title: 'Cotizaciones', icon: ClipboardList, path: '/cotizaciones' },
   ];
 
+  function getQuickActionIconColor(title: string) {
+    switch (title) {
+      case 'Nueva factura':
+        return 'text-primary';
+      case 'Clientes':
+        return 'text-success';
+      case 'Productos':
+        return 'text-secondary';
+      case 'Cotizaciones':
+        return 'text-warning';
+      default:
+        return 'text-foreground';
+    }
+  }
+
   function go(path: string) {
     markDashboardNavigation();
     navigate(path);
@@ -167,7 +182,7 @@ export function HomeScreenV2() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                    <a.icon className="w-5 h-5 text-foreground" />
+                    <a.icon className={`w-5 h-5 ${getQuickActionIconColor(a.title)}`} />
                   </div>
                   <div className="font-medium">{a.title}</div>
                 </div>
