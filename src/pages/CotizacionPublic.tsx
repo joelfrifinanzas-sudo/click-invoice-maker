@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getCotizacionByPublicId, markCotizacionViewed } from "@/data/cotizaciones";
+import { getCotizacionByPublicId, markCotizacionViewed, acceptCotizacionPublic, rejectCotizacionPublic } from "@/data/cotizaciones";
 import { generateQuotePDFBlob } from "@/utils/quotePdf";
 import { getCompanyProfile } from "@/utils/companyProfile";
 
@@ -11,6 +11,7 @@ export default function CotizacionPublic() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [data, setData] = useState<any | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -29,6 +30,7 @@ export default function CotizacionPublic() {
     })();
     return () => { mounted = false; };
   }, [publicId]);
+  
 
   const totals = useMemo(() => {
     if (!data) return { neto: 0, itbis: 0, descuento: 0, total: 0 };
@@ -40,6 +42,39 @@ export default function CotizacionPublic() {
     const total = neto + itbis - descuento;
     return { neto, itbis, descuento, total };
   }, [data]);
+  useEffect(() => {
+    (async () => {
+      if (!data) return;
+      try {
+        const profile = getCompanyProfile();
+        const blob = await generateQuotePDFBlob({
+          company: { name: profile.businessName || "" },
+          cliente: { nombre: "Cliente" },
+          cotizacion: { number: data.number, fecha: data.fecha, vence_el: data.vence_el, moneda: data.moneda, itbis_rate: Number(data.itbis_rate || 0.18), notas: data.notas, terminos: data.terminos },
+          items: (data.items || []).map((it: any) => ({ nombre: it.nombre, qty: Number(it.qty || 0), precio_unitario: Number(it.precio_unitario || 0), itbis_rate: Number(it.itbis_rate || 0.18), subtotal: Number(it.subtotal || 0) })),
+          totales: totals,
+        });
+        const url = URL.createObjectURL(blob);
+        setPdfUrl(url);
+      } catch {}
+    })();
+    return () => { if (pdfUrl) URL.revokeObjectURL(pdfUrl); };
+  }, [data, totals]);
+
+  const onAccept = async () => {
+    if (!publicId) return;
+    await acceptCotizacionPublic(publicId);
+    setData((d: any) => d ? { ...d, estado: 'aceptada' } : d);
+  };
+
+  const onReject = async () => {
+    if (!publicId) return;
+    const motivo = window.prompt('Motivo del rechazo');
+    if (!motivo) return;
+    await rejectCotizacionPublic(publicId, motivo);
+    setData((d: any) => d ? { ...d, estado: 'rechazada', rechazo_motivo: motivo } : d);
+  };
+
 
   const downloadPdf = async () => {
     if (!data) return;
@@ -69,14 +104,22 @@ export default function CotizacionPublic() {
           <CardTitle>Cotización {data?.number ? `#${data.number}` : ''}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-sm text-muted-foreground mb-1">Cliente</h3>
-              <div className="text-sm">{data?.customer_name || '—'}</div>
-            </div>
-            <div>
-              <h3 className="text-sm text-muted-foreground mb-1">Válida hasta</h3>
-              <div className="text-sm">{data?.vence_el || '—'}</div>
+          <div className="space-y-4">
+            {pdfUrl && (
+              <object data={pdfUrl} type="application/pdf" width="100%" height="600px">
+                <p>No se pudo mostrar el PDF. <button className="underline" onClick={downloadPdf}>Descargar</button></p>
+              </object>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm text-muted-foreground mb-1">Cliente</h3>
+                <div className="text-sm">{data?.customer_name || '—'}</div>
+              </div>
+              <div>
+                <h3 className="text-sm text-muted-foreground mb-1">Válida hasta</h3>
+                <div className="text-sm">{data?.vence_el || '—'}</div>
+              </div>
             </div>
           </div>
 

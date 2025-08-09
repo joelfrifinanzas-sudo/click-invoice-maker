@@ -107,3 +107,55 @@ export async function markCotizacionViewed(publicId: string): Promise<{ error: s
     return { error: e?.message ?? "Unknown error" };
   }
 }
+
+export async function acceptCotizacionPublic(publicId: string): Promise<{ error: string | null }> {
+  try {
+    const { error } = await (supabase as any).rpc("cotizacion_public_accept", { _public_id: publicId });
+    return { error: error?.message ?? null };
+  } catch (e: any) {
+    return { error: e?.message ?? "Unknown error" };
+  }
+}
+
+export async function rejectCotizacionPublic(publicId: string, motivo: string): Promise<{ error: string | null }> {
+  try {
+    const { error } = await (supabase as any).rpc("cotizacion_public_reject", { _public_id: publicId, _motivo: motivo });
+    return { error: error?.message ?? null };
+  } catch (e: any) {
+    return { error: e?.message ?? "Unknown error" };
+  }
+}
+
+export async function duplicateCotizacion(id: string): Promise<{ data: string | null; error: string | null }> {
+  try {
+    const { data, error } = await (supabase as any).rpc("cotizacion_duplicate", { _id: id });
+    return { data: (data as any) ?? null, error: error?.message ?? null };
+  } catch (e: any) {
+    return { data: null, error: e?.message ?? "Unknown error" };
+  }
+}
+
+export async function convertCotizacionToInvoice(id: string): Promise<{ data: string | null; error: string | null }> {
+  try {
+    const { data, error } = await (supabase as any).rpc("cotizacion_convert_to_invoice", { _id: id });
+    return { data: (data as any) ?? null, error: error?.message ?? null };
+  } catch (e: any) {
+    return { data: null, error: e?.message ?? "Unknown error" };
+  }
+}
+
+export async function listCotizaciones(params?: { estado?: string; from?: string; to?: string; customerId?: string; search?: string; limit?: number }): Promise<{ data: Cotizacion[] | null; error: string | null }>{
+  try {
+    let query = supabase.from("cotizaciones").select("*").order("created_at", { ascending: false });
+    if (params?.estado) query = query.eq("estado", params.estado as any);
+    if (params?.customerId) query = query.eq("customer_id", params.customerId);
+    if (params?.from) query = query.gte("fecha", params.from);
+    if (params?.to) query = query.lte("fecha", params.to);
+    if (params?.limit) query = query.limit(params.limit);
+    if (params?.search) query = query.ilike("number", `%${params.search}%`);
+    const { data, error } = await query;
+    return { data: (data as any) ?? null, error: error?.message ?? null };
+  } catch (e: any) {
+    return { data: null, error: e?.message ?? "Unknown error" };
+  }
+}
