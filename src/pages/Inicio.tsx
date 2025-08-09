@@ -82,14 +82,14 @@ export default function Inicio() {
 
   // Productos más vendidos (agregación local a partir de facturas)
   const COLORS = [
-    'hsl(var(--primary))',
-    'hsl(var(--secondary))',
-    'hsl(var(--muted-foreground))',
-    'hsl(var(--accent))',
-    'hsl(var(--destructive))',
-    'hsl(var(--ring))',
-    'hsl(var(--border))',
-    'hsl(var(--foreground))',
+    'hsl(234 77% 57%)', // Azul primario
+    'hsl(148 50% 46%)', // Verde éxito
+    'hsl(44 100% 48%)', // Amarillo advertencia
+    'hsl(7 80% 56%)',   // Rojo error
+    'hsl(218 10% 65%)', // Gris claro (categorías menores)
+    'hsl(234 77% 57%)',
+    'hsl(148 50% 46%)',
+    'hsl(44 100% 48%)',
   ];
 
   const topProducts = useMemo(() => {
@@ -226,7 +226,7 @@ export default function Inicio() {
           <section>
             <Card>
               <CardHeader>
-                <CardTitle>Productos más vendidos</CardTitle>
+                <CardTitle className="text-[#F9FAFB]">Productos más vendidos</CardTitle>
               </CardHeader>
               <CardContent>
                 {loadingProducts ? (
@@ -238,7 +238,11 @@ export default function Inicio() {
                     <div className="h-56">
                       <ResponsiveContainer>
                         <PieChart>
-                          <Tooltip formatter={(val: any) => formatMoneyDOP(Number(val))} />
+                          <Tooltip
+                            formatter={(val: any) => formatMoneyDOP(Number(val))}
+                            labelStyle={{ color: '#D1D5DB' }}
+                            itemStyle={{ color: '#F9FAFB' }}
+                          />
                           <Pie data={topProducts} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} stroke="transparent">
                             {topProducts.map((_, idx) => (<Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />))}
                           </Pie>
@@ -250,9 +254,9 @@ export default function Inicio() {
                         <li key={i} className="flex items-center justify-between">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="inline-block w-3 h-3 rounded-sm" style={{ background: COLORS[i % COLORS.length] }} />
-                            <span className="truncate">{p.name}</span>
+                            <span className="truncate text-[#D1D5DB]">{p.name}</span>
                           </div>
-                          <span className="font-medium">{formatMoneyDOP(p.value)}</span>
+                          <span className="font-medium text-[#F9FAFB]">{formatMoneyDOP(p.value)}</span>
                         </li>
                       ))}
                     </ul>
