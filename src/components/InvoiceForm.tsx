@@ -41,6 +41,7 @@ import { validateClientId, autoFormatClientId, ValidationResult } from '@/utils/
 import { DominicanApiService } from '@/utils/dominicanApiService';
 import { useToast } from '@/hooks/use-toast';
 import { logError } from '@/utils/logger';
+import { getNextNCF } from '@/data/ncf';
 
 export interface ServiceItem {
   concept: string;
@@ -128,7 +129,8 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     }));
   }, [prefill]);
   useEffect(() => {
-    if (formData.ncfType && formData.services.length > 0) {
+    // Solo autogenerar para facturas internas (sin NCF fiscal)
+    if (formData.ncfType === 'NONE' && formData.services.length > 0) {
       const totalAmount = formData.services.reduce((sum, service) => {
         const qty = parseFloat((service as any).quantity || '1');
         const unit = parseFloat((service as any).unitPrice || '0');
@@ -136,7 +138,6 @@ const [isSubmitting, setIsSubmitting] = useState(false);
       }, 0);
       const autoNCFType = determineNCFType(!!formData.clientId.trim(), totalAmount);
       const generatedNCF = generateNCF(formData.ncfType || autoNCFType);
-      
       if (!isEditingNCF) {
         setFormData(prev => ({ ...prev, ncf: generatedNCF }));
       }
@@ -344,9 +345,16 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     }
   };
 
-  const duplicateInvoice = () => {
-    const newNCF = generateNCF(formData.ncfType);
-    setFormData(prev => ({ ...prev, ncf: newNCF, date: new Date() }));
+  const duplicateInvoice = async () => {
+    if (formData.ncfType !== 'NONE') {
+      const { data } = await getNextNCF(formData.ncfType);
+      if (data) {
+        setFormData(prev => ({ ...prev, ncf: data, date: new Date() }));
+      }
+    } else {
+      const newNCF = generateNCF('NONE');
+      setFormData(prev => ({ ...prev, ncf: newNCF, date: new Date() }));
+    }
     setIsEditingNCF(false);
     
     toast({
@@ -369,15 +377,20 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     });
   };
 
-  const regenerateNCF = () => {
-    const totalAmount = formData.services.reduce((sum, service) => {
-      const qty = parseFloat((service as any).quantity || '1');
-      const unit = parseFloat((service as any).unitPrice || '0');
-      return sum + (isNaN(qty) || isNaN(unit) ? 0 : qty * unit);
-    }, 0);
-    const autoNCFType = determineNCFType(!!formData.clientId.trim(), totalAmount);
-    const generatedNCF = generateNCF(formData.ncfType || autoNCFType);
-    setFormData(prev => ({ ...prev, ncf: generatedNCF }));
+  const regenerateNCF = async () => {
+    if (formData.ncfType !== 'NONE') {
+      const { data } = await getNextNCF(formData.ncfType);
+      if (data) setFormData(prev => ({ ...prev, ncf: data }));
+    } else {
+      const totalAmount = formData.services.reduce((sum, service) => {
+        const qty = parseFloat((service as any).quantity || '1');
+        const unit = parseFloat((service as any).unitPrice || '0');
+        return sum + (isNaN(qty) || isNaN(unit) ? 0 : qty * unit);
+      }, 0);
+      // Para facturas internas, mantenemos el numerado local
+      const generatedNCF = generateNCF('NONE');
+      setFormData(prev => ({ ...prev, ncf: generatedNCF }));
+    }
     setIsEditingNCF(false);
   };
 
@@ -626,7 +639,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
                   <Label htmlFor="invoiceType" className="text-responsive-sm font-medium">Tipo de factura *</Label>
                   <Select
                     value={formData.invoiceType}
-                    onValueChange={(value) => {
+                    onValueChange={async (value) => {
                       // Mapeo de tipos de factura a NCF
                       const invoiceTypeToNCF: Record<string, NCFType> = {
                         'fiscal': 'B01',
@@ -636,15 +649,26 @@ const [isSubmitting, setIsSubmitting] = useState(false);
                         'nota-credito': 'B04',
                         'nota-debito': 'B03'
                       };
-                      
                       const selectedNCF = invoiceTypeToNCF[value] || 'B02';
-                      
+
                       setFormData(prev => ({ 
                         ...prev, 
                         invoiceType: value,
                         ncfType: selectedNCF 
                       }));
                       setIsEditingNCF(false);
+
+                      // Generar NCF desde Supabase para tipos fiscales
+                      if (selectedNCF !== 'NONE') {
+                        const { data } = await getNextNCF(selectedNCF);
+                        if (data) {
+                          setFormData(prev => ({ ...prev, ncf: data }));
+                        }
+                      } else {
+                        // Interna sin NCF fiscal: generar número interno local
+                        const internal = generateNCF('NONE');
+                        setFormData(prev => ({ ...prev, ncf: internal }));
+                      }
                     }}
                   >
                     <SelectTrigger className="h-11">

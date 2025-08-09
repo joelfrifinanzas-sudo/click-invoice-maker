@@ -296,6 +296,30 @@ export type Database = {
         }
         Relationships: []
       }
+      empresa_ncf_sequences: {
+        Row: {
+          company_id: string
+          created_at: string
+          ncf_type: string
+          next_seq: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          ncf_type: string
+          next_seq?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          ncf_type?: string
+          next_seq?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -677,6 +701,10 @@ export type Database = {
         Args: { _company_id: string; _user_id: string }
         Returns: undefined
       }
+      assign_invoice_ncf: {
+        Args: { _invoice_id: string; _ncf_type: string }
+        Returns: string
+      }
       cotizacion_mark_viewed: {
         Args: { _public_id: string }
         Returns: undefined
@@ -695,6 +723,10 @@ export type Database = {
       }
       next_cotizacion_number: {
         Args: { _company_id: string }
+        Returns: string
+      }
+      next_ncf: {
+        Args: { _company_id: string; _ncf_type: string }
         Returns: string
       }
     }
