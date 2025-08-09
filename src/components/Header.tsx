@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
+import { hasPermission } from "@/utils/permissions";
 export function Header() {
   const { toggleSidebar } = useSidebar();
   const [time, setTime] = useState<string>("");
@@ -45,7 +46,7 @@ export function Header() {
     "Gestión de usuarios": null,
     "Métodos de pago": null,
   };
-  const visibleModules = modules.filter((m) => routesByLabel[m.label]);
+  const visibleModules = modules.filter((m) => routesByLabel[m.label] && hasPermission(m.label));
   const onModuleClick = (label: string) => {
     const path = routesByLabel[label];
     if (!path) return;
