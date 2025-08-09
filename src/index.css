@@ -332,6 +332,24 @@ button,
   }
 }
 
+/* Responsive container used across pages */
+.container-responsive {
+  width: 100%;
+  max-width: var(--max-width-content);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (max-width: 480px) {
+  .container-responsive {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+
 /* Form improvements */
 input, textarea, select {
   font-size: 16px; /* Prevents zoom on iOS */
@@ -404,5 +422,27 @@ html.is-mobile .mobile-sticky-action {
     left: 1rem !important;
     right: 1rem !important;
     transform: none !important;
+  }
+}
+
+/* Horizontal scroll for tables on small screens */
+@media (max-width: 480px) {
+  .container-responsive table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .container-responsive th,
+  .container-responsive td {
+    padding: 0.5rem;
+    font-size: 0.875rem; /* 14px */
+  }
+  .container-responsive .space-y-6 > * + * {
+    margin-top: 1rem; /* tighten vertical rhythm */
+  }
+  button, .btn {
+    min-height: var(--touch-target-comfortable);
   }
 }
