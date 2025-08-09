@@ -166,8 +166,45 @@
   --leading-relaxed: 1.625;
   
   /* Touch targets */
-  --touch-target: 44px;
-  
+  --touch-target: 44px; /* legacy var */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+
+  /* Layout */
+  --max-width-content: 1200px;
+
+  /* Derived color shades (HSL) */
+  --primary-light: 234 77% 64%;
+  --primary-dark: 234 77% 47%;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.85) 100%);
+  --gradient-secondary: linear-gradient(180deg, hsl(var(--secondary) / 0.12), transparent);
+  --gradient-subtle: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+  --gradient-hero: radial-gradient(1200px circle at 10% 10%, hsl(var(--primary) / 0.18), transparent 40%), radial-gradient(1000px circle at 90% 20%, hsl(var(--secondary) / 0.18), transparent 40%);
+
+  /* Shadows (use HSL with alpha) */
+  --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+  --shadow-card: 0 4px 12px -2px hsl(0 0% 0% / 0.08), 0 8px 24px -4px hsl(0 0% 0% / 0.04);
+  --shadow-lg: 0 10px 30px -10px hsl(var(--primary) / 0.25);
+  --shadow-invoice: 0 8px 32px -8px hsl(var(--primary) / 0.30), 0 4px 16px -4px hsl(0 0% 0% / 0.10);
+  --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.10), 0 4px 16px -4px hsl(0 0% 0% / 0.06);
+
+  /* Transitions */
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Sidebar tokens */
+  --sidebar-background: 224 15% 20%; /* matches secondary */
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 234 77% 57%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217.2 32.6% 17.5%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 220 12% 20%;
+  --sidebar-ring: 234 77% 57%;
+
   /* Safe areas */
   --safe-area-top: env(safe-area-inset-top);
   --safe-area-bottom: env(safe-area-inset-bottom);
