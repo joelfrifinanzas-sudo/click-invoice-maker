@@ -3,6 +3,7 @@ import { InvoiceData, ServiceItem } from '@/components/InvoiceForm';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getCompanyProfile } from '@/utils/companyProfile';
+import { maskAccountNumber } from './mask';
 
 export const getNextInvoiceNumber = (): string => {
   const lastNumber = localStorage.getItem('last-invoice-number') || '0';
@@ -256,6 +257,42 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
   pdf.text(invoiceData.paymentStatus === 'pagado' ? 'Pagado' : 'A crédito', 170, yPosition);
 
+  // Método de pago (debajo de totales)
+  try {
+    const methodKey = (localStorage.getItem('checkout:selected_method') || '').toLowerCase();
+    const methodMap: Record<string, string> = { visa: 'Visa', mastercard: 'Mastercard', transferencia: 'Transferencia', paypal: 'PayPal', otros: 'Otros' };
+    const methodLabel = methodMap[methodKey];
+    if (methodLabel) {
+      yPosition += 8;
+      pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+      pdf.text('Método de pago', 150, yPosition);
+      pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+      pdf.text(methodLabel, 170, yPosition);
+
+      if (methodKey === 'transferencia') {
+        let acc: any = null;
+        try {
+          const selectedId = localStorage.getItem('checkout:selected_account_id');
+          const raw = localStorage.getItem('payments:cuentas_bancarias');
+          const accounts = raw ? JSON.parse(raw) as any[] : [];
+          if (selectedId) acc = accounts.find(a => a.id === selectedId) || null;
+          if (!acc) {
+            const actives = accounts.filter(a => a.activa);
+            acc = actives.find((a: any) => a.preferida) || actives[0] || null;
+          }
+        } catch {}
+        if (acc && acc.numero) {
+          yPosition += 8;
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9);
+          pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+          const detail = `Banco: ${acc.banco_nombre} • Tipo: ${acc.tipo} • Cuenta: ${maskAccountNumber(acc.numero)} • Alias: ${acc.alias}`;
+          pdf.text(detail, 20, yPosition);
+        }
+      }
+    }
+  } catch {}
+
   // Notas
   yPosition += 20;
   pdf.setFontSize(9);
@@ -503,6 +540,43 @@ export const generateInvoicePDFBlob = async (invoiceData: InvoiceData, invoiceNu
   pdf.text('Estado de pago', 150, yPosition);
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
   pdf.text(invoiceData.paymentStatus === 'pagado' ? 'Pagado' : 'A crédito', 170, yPosition);
+
+  // Método de pago (debajo de totales)
+  try {
+    const methodKey = (localStorage.getItem('checkout:selected_method') || '').toLowerCase();
+    const methodMap: Record<string, string> = { visa: 'Visa', mastercard: 'Mastercard', transferencia: 'Transferencia', paypal: 'PayPal', otros: 'Otros' };
+    const methodLabel = methodMap[methodKey];
+    if (methodLabel) {
+      yPosition += 8;
+      pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+      pdf.text('Método de pago', 150, yPosition);
+      pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+      pdf.text(methodLabel, 170, yPosition);
+
+      if (methodKey === 'transferencia') {
+        let acc: any = null;
+        try {
+          const selectedId = localStorage.getItem('checkout:selected_account_id');
+          const raw = localStorage.getItem('payments:cuentas_bancarias');
+          const accounts = raw ? JSON.parse(raw) as any[] : [];
+          if (selectedId) acc = accounts.find(a => a.id === selectedId) || null;
+          if (!acc) {
+            const actives = accounts.filter(a => a.activa);
+            acc = actives.find((a: any) => a.preferida) || actives[0] || null;
+          }
+        } catch {}
+        if (acc && acc.numero) {
+          const { maskAccountNumber } = await import('@/utils/mask');
+          yPosition += 8;
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9);
+          pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+          const detail = `Banco: ${acc.banco_nombre} • Tipo: ${acc.tipo} • Cuenta: ${maskAccountNumber(acc.numero)} • Alias: ${acc.alias}`;
+          pdf.text(detail, 20, yPosition);
+        }
+      }
+    }
+  } catch {}
 
   yPosition += 20;
   pdf.setFontSize(9);

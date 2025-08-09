@@ -271,27 +271,27 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Cobrar con</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {methods.visa && (
-                <Button variant="outline" className="h-12 justify-start" onClick={() => toast({ title: 'Pago con tarjeta', description: 'Continuar al flujo de tarjeta (demo local).' })}>
+                <Button variant="outline" className="h-12 justify-start" onClick={() => { localStorage.setItem('checkout:selected_method', 'visa'); toast({ title: 'Pago con tarjeta', description: 'Continuar al flujo de tarjeta (demo local).' }); }}>
                   <CreditCardIcon className="mr-2 h-5 w-5" /> TC Visa
                 </Button>
               )}
               {methods.mastercard && (
-                <Button variant="outline" className="h-12 justify-start" onClick={() => toast({ title: 'Pago con tarjeta', description: 'Continuar al flujo de tarjeta (demo local).' })}>
+                <Button variant="outline" className="h-12 justify-start" onClick={() => { localStorage.setItem('checkout:selected_method', 'mastercard'); toast({ title: 'Pago con tarjeta', description: 'Continuar al flujo de tarjeta (demo local).' }); }}>
                   <CreditCard className="mr-2 h-5 w-5" /> TC Mastercard
                 </Button>
               )}
               {methods.transferencia && (
-                <Button className="h-12 justify-start" onClick={() => setShowTransfer(true)}>
+                <Button className="h-12 justify-start" onClick={() => { localStorage.setItem('checkout:selected_method', 'transferencia'); const accId = (selectedAccount?.id) || (preferredAccount?.id) || null; if (accId) { localStorage.setItem('checkout:selected_account_id', accId); } else { localStorage.removeItem('checkout:selected_account_id'); } setShowTransfer(true); }}>
                   <Landmark className="mr-2 h-5 w-5" /> Transferencia
                 </Button>
               )}
               {methods.paypal && (
-                <Button variant="outline" className="h-12 justify-start" onClick={() => window.open(paypalUrl, '_blank', 'noopener,noreferrer')}>
+                <Button variant="outline" className="h-12 justify-start" onClick={() => { localStorage.setItem('checkout:selected_method', 'paypal'); window.open(paypalUrl, '_blank', 'noopener,noreferrer'); }}>
                   <LinkIcon className="mr-2 h-5 w-5" /> PayPal
                 </Button>
               )}
               {methods.otros && (
-                <Button variant="outline" className="h-12 justify-start" onClick={() => setOtrosOpen((v) => !v)}>
+                <Button variant="outline" className="h-12 justify-start" onClick={() => { localStorage.setItem('checkout:selected_method', 'otros'); setOtrosOpen((v) => !v); }}>
                   <Wallet className="mr-2 h-5 w-5" /> Otros
                 </Button>
               )}
@@ -348,7 +348,7 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
                         <p className="text-sm font-medium truncate">{acc.banco_nombre}</p>
                         <p className="text-xs text-muted-foreground truncate">{acc.alias} • <span className="capitalize">{acc.tipo}</span> • {maskAccountNumber(acc.numero)}</p>
                       </div>
-                      <Button size="sm" onClick={() => { setSelectedAccountId(acc.id); setOtherAccountsOpen(false); }}>Seleccionar</Button>
+                      <Button size="sm" onClick={() => { setSelectedAccountId(acc.id); localStorage.setItem('checkout:selected_account_id', acc.id); setOtherAccountsOpen(false); }}>Seleccionar</Button>
                     </div>
                   ))}
                 </div>
