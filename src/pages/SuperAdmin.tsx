@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import CompanyForm from "@/components/superadmin/CompanyForm";
 
 const sections = [
   { key: "empresas", label: "Empresas" },
@@ -12,8 +17,27 @@ const sections = [
 
 type SectionKey = typeof sections[number]["key"];
 
+type Company = {
+  id: string;
+  name: string;
+  rnc: string | null;
+  phone: string | null;
+  address: string | null;
+  currency: string;
+  itbis_rate: number;
+  created_at: string;
+  active: boolean;
+  plan: string;
+  limit_invoices_per_month: number | null;
+  limit_users: number | null;
+};
+
 export default function SuperAdmin() {
   const [active, setActive] = useState<SectionKey>("empresas");
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Company | null>(null);
 
   // SEO basics for SPA
   useEffect(() => {
@@ -37,72 +61,116 @@ export default function SuperAdmin() {
     canonical.href = window.location.origin + "/super-admin";
   }, []);
 
-  const content = useMemo(() => {
-    switch (active) {
-      case "empresas":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Empresas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-sm text-muted-foreground">Listado y gestión de compañías (solo visible para Super Admin).</p>
-            </CardContent>
-          </Card>
-        );
-      case "usuarios":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Directorio de Usuarios</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Búsqueda y gestión básica de usuarios.</p>
-            </CardContent>
-          </Card>
-        );
-      case "planes":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Planes y Límites</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Visión general de planes, límites y asignaciones.</p>
-            </CardContent>
-          </Card>
-        );
-      case "auditoria":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Auditoría</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Eventos clave del sistema para control y trazabilidad.</p>
-            </CardContent>
-          </Card>
-        );
-      case "sistema":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuración del sistema</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Parámetros globales y mantenimiento.</p>
-            </CardContent>
-          </Card>
-        );
-      default:
-        return null;
+  const fetchCompanies = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.rpc("su_companies_list");
+    if (!error && data) setCompanies(data as Company[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (active === "empresas") {
+      fetchCompanies();
     }
   }, [active]);
+
+  const handleNew = () => {
+    setEditing(null);
+    setOpen(true);
+  };
+
+  const handleEdit = (c: Company) => {
+    setEditing(c);
+    setOpen(true);
+  };
+
+  const handleToggleActive = async (c: Company) => {
+    await supabase.rpc("su_company_set_active", { _company_id: c.id, _active: !c.active });
+    fetchCompanies();
+  };
+
+  const onSaved = () => {
+    setOpen(false);
+    fetchCompanies();
+  };
+
+  const content = useMemo(() => {
+    if (active !== "empresas") {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle>{sections.find((s) => s.key === active)?.label}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Próximamente…</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Empresas</h2>
+          <Button onClick={handleNew}>Nueva empresa</Button>
+        </div>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre comercial</TableHead>
+                  <TableHead>RNC</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Fecha de creación</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {companies.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell>{c.rnc || "-"}</TableCell>
+                    <TableCell>
+                      <span className={"inline-flex items-center px-2 py-1 rounded text-xs " + (c.active ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300")}>{c.active ? "Activo" : "Inactivo"}</span>
+                    </TableCell>
+                    <TableCell>{c.plan}</TableCell>
+                    <TableCell>{new Date(c.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(c)}>Ver/Editar</Button>
+                      <Button variant="secondary" size="sm" onClick={() => handleToggleActive(c)}>
+                        {c.active ? "Desactivar" : "Activar"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!loading && companies.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-6">Sin empresas</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{editing ? "Editar empresa" : "Nueva empresa"}</DialogTitle>
+            </DialogHeader>
+            <CompanyForm company={editing || undefined} onSaved={onSaved} />
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }, [active, companies, loading, open, editing]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border">
-        <div className="mx-auto max-w-7xl px-4 py-4">
+        <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-semibold">Panel Super Admin</h1>
         </div>
       </header>

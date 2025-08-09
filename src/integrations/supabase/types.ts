@@ -14,40 +14,73 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
+          active: boolean
           address: string | null
           created_at: string
           currency: string
           id: string
           itbis_rate: number
+          limit_invoices_per_month: number | null
+          limit_users: number | null
           name: string
           owner_user_id: string
           phone: string | null
+          plan: string
           rnc: string | null
           updated_at: string
         }
         Insert: {
+          active?: boolean
           address?: string | null
           created_at?: string
           currency?: string
           id?: string
           itbis_rate?: number
+          limit_invoices_per_month?: number | null
+          limit_users?: number | null
           name: string
           owner_user_id: string
           phone?: string | null
+          plan?: string
           rnc?: string | null
           updated_at?: string
         }
         Update: {
+          active?: boolean
           address?: string | null
           created_at?: string
           currency?: string
           id?: string
           itbis_rate?: number
+          limit_invoices_per_month?: number | null
+          limit_users?: number | null
           name?: string
           owner_user_id?: string
           phone?: string | null
+          plan?: string
           rnc?: string | null
           updated_at?: string
         }
@@ -727,6 +760,13 @@ export type Database = {
         Args: { net: number; rate?: number }
         Returns: number
       }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       next_cotizacion_number: {
         Args: { _company_id: string }
         Returns: string
@@ -735,8 +775,76 @@ export type Database = {
         Args: { _company_id: string; _ncf_type: string }
         Returns: string
       }
+      su_companies_list: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          active: boolean
+          address: string | null
+          created_at: string
+          currency: string
+          id: string
+          itbis_rate: number
+          limit_invoices_per_month: number | null
+          limit_users: number | null
+          name: string
+          owner_user_id: string
+          phone: string | null
+          plan: string
+          rnc: string | null
+          updated_at: string
+        }[]
+      }
+      su_company_set_active: {
+        Args: { _company_id: string; _active: boolean }
+        Returns: undefined
+      }
+      su_company_upsert: {
+        Args: {
+          _id: string
+          _name: string
+          _rnc: string
+          _phone: string
+          _address: string
+          _currency: string
+          _itbis_rate: number
+          _active: boolean
+          _plan: string
+          _limit_invoices_per_month: number
+          _limit_users: number
+          _owner_user_id?: string
+        }
+        Returns: {
+          active: boolean
+          address: string | null
+          created_at: string
+          currency: string
+          id: string
+          itbis_rate: number
+          limit_invoices_per_month: number | null
+          limit_users: number | null
+          name: string
+          owner_user_id: string
+          phone: string | null
+          plan: string
+          rnc: string | null
+          updated_at: string
+        }
+      }
+      su_list_ncf_sequences: {
+        Args: { _company_id: string }
+        Returns: {
+          ncf_type: string
+          next_seq: number
+          company_id: string
+        }[]
+      }
+      su_upsert_ncf_sequence: {
+        Args: { _company_id: string; _ncf_type: string; _next_seq: number }
+        Returns: undefined
+      }
     }
     Enums: {
+      app_role: "superadmin"
       company_role: "owner" | "member"
       cotizacion_discount_type: "none" | "percent" | "amount"
       cotizacion_status:
@@ -874,6 +982,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["superadmin"],
       company_role: ["owner", "member"],
       cotizacion_discount_type: ["none", "percent", "amount"],
       cotizacion_status: [
