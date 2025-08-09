@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { BackButton } from '@/components/BackButton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { CompanyProfile } from '@/types/company';
 import { getCompanyProfile, saveCompanyProfile } from '@/utils/companyProfile';
 import {
-  ArrowLeft,
   Building2,
   Phone,
   Mail,
@@ -97,11 +96,7 @@ export const CompanyProfilePage = () => {
     <main className="min-h-screen bg-gradient-subtle">
       <header className="container-responsive pt-6 pb-4">
         <div className="flex items-center gap-3">
-          <Link to="/">
-            <Button variant="outline" size="icon" aria-label="Volver">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+          <BackButton />
           <div className="flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" />
             <h1 className="text-responsive-2xl font-bold">Configuración del perfil de empresa</h1>

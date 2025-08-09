@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/BackButton";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Package, Edit, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Package, Edit, Trash2 } from "lucide-react";
 
 interface Articulo {
   id: number;
@@ -54,14 +55,7 @@ export default function Articulos() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => window.history.back()}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </Button>
+            <BackButton />
             <h1 className="text-3xl font-bold text-gray-900">
               Artículos
             </h1>
