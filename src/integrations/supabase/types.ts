@@ -802,8 +802,29 @@ export type Database = {
           updated_at: string
         }[]
       }
+      su_company_members: {
+        Args: { _company_id: string }
+        Returns: {
+          user_id: string
+          email: string
+          display_name: string
+          role: Database["public"]["Enums"]["company_role"]
+        }[]
+      }
+      su_company_remove_member: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: undefined
+      }
       su_company_set_active: {
         Args: { _company_id: string; _active: boolean }
+        Returns: undefined
+      }
+      su_company_set_member_role: {
+        Args: {
+          _company_id: string
+          _user_id: string
+          _role: Database["public"]["Enums"]["company_role"]
+        }
         Returns: undefined
       }
       su_company_upsert: {
