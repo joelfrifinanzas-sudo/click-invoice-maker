@@ -104,6 +104,8 @@ export const InvoiceForm = ({ onGenerateInvoice, prefill }: InvoiceFormProps) =>
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companyItbisRate, setCompanyItbisRate] = useState(0.18);
+  const [globalDiscountType, setGlobalDiscountType] = useState<'none' | 'percent' | 'amount'>('none');
+  const [globalDiscountValue, setGlobalDiscountValue] = useState<string>('');
   const isMountedRef = useRef(true);
   useEffect(() => {
     return () => { isMountedRef.current = false; };
@@ -438,11 +440,15 @@ export const InvoiceForm = ({ onGenerateInvoice, prefill }: InvoiceFormProps) =>
   };
 
   const calculateTotals = () => {
-    const totals = computeTotals({
+    const model: any = {
       services: formData.services,
       invoiceType: formData.invoiceType,
       ncfType: formData.ncfType,
-    });
+    };
+    const val = parseFloat(globalDiscountValue || '');
+    if (globalDiscountType === 'percent' && isFinite(val) && val > 0) model.globalDiscountPct = val;
+    if (globalDiscountType === 'amount' && isFinite(val) && val > 0) model.globalDiscountAbs = val;
+    const totals = computeTotals(model);
     return {
       subtotal: totals.subtotal,
       itbisAmount: totals.itbis,
@@ -504,7 +510,7 @@ export const InvoiceForm = ({ onGenerateInvoice, prefill }: InvoiceFormProps) =>
       itbisAmount: documentType === 'factura' ? newTotals.itbisAmount : 0,
       total: documentType === 'factura' ? newTotals.total : newTotals.subtotal
     }));
-  }, [formData.services, formData.includeITBIS, documentType]);
+  }, [formData.services, formData.includeITBIS, documentType, globalDiscountType, globalDiscountValue]);
 
   return (
     <div className="space-y-6 w-full">
@@ -1155,9 +1161,46 @@ export const InvoiceForm = ({ onGenerateInvoice, prefill }: InvoiceFormProps) =>
                     </div>
                   </div>
                 )}
-                      
-                      {/* Breakdown */}
-                      <div className="space-y-2 text-sm">
+
+                {/* Descuento global */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-muted/40 rounded-lg">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-medium">Descuento global</Label>
+                    <Select
+                      value={globalDiscountType}
+                      onValueChange={(val: 'none' | 'percent' | 'amount') => {
+                        setGlobalDiscountType(val);
+                        if (val === 'none') setGlobalDiscountValue('');
+                      }}
+                    >
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Tipo de descuento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Sin descuento</SelectItem>
+                        <SelectItem value="percent">Porcentaje (%)</SelectItem>
+                        <SelectItem value="amount">Monto fijo (DOP)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label className="text-sm font-medium">Valor</Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0"
+                      placeholder={globalDiscountType === 'percent' ? 'Ej: 10 para 10%' : 'Ej: 1000.00 DOP'}
+                      value={globalDiscountValue}
+                      onChange={(e) => setGlobalDiscountValue(e.target.value)}
+                      disabled={globalDiscountType === 'none'}
+                      className="h-10 font-mono"
+                    />
+                  </div>
+                </div>
+                        
+                        {/* Breakdown */}
+                        <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
                   <span>{formatCurrency(totals.subtotal)}</span>
