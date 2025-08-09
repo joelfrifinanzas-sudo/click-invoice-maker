@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, FileText, FilePlus2, Users, Package, History, BarChart3, Boxes, Banknote, Building2, Palette, UserCog, CreditCard, type LucideIcon } from "lucide-react";
@@ -52,6 +52,59 @@ export function Header() {
     if (!path) return;
     setAppsOpen(false);
     navigate(path);
+  };
+
+  const desktopGridRef = useRef<HTMLDivElement | null>(null);
+  const mobileGridRef = useRef<HTMLDivElement | null>(null);
+
+  const getColumns = (container: HTMLElement) => {
+    const style = getComputedStyle(container);
+    const cols = style.gridTemplateColumns?.split(" ").filter(Boolean).length || 1;
+    return cols || 1;
+  };
+
+  const focusFirstItem = (container: HTMLElement | null | undefined) => {
+    const firstBtn = container?.querySelector<HTMLButtonElement>('button[data-module-item="true"]');
+    firstBtn?.focus();
+  };
+
+  const handleGridKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
+    const container = e.currentTarget as HTMLElement;
+    const items = Array.from(container.querySelectorAll<HTMLButtonElement>('button[data-module-item="true"]'));
+    if (!items.length) return;
+    const active = document.activeElement as HTMLElement | null;
+    let idx = items.findIndex((b) => b === active || (active ? b.contains(active) : false));
+    if (idx < 0) idx = 0;
+
+    const cols = getColumns(container);
+    let next = idx;
+
+    switch (e.key) {
+      case 'ArrowRight':
+        next = Math.min(idx + 1, items.length - 1);
+        break;
+      case 'ArrowLeft':
+        next = Math.max(idx - 1, 0);
+        break;
+      case 'ArrowDown':
+        next = Math.min(idx + cols, items.length - 1);
+        break;
+      case 'ArrowUp':
+        next = Math.max(idx - cols, 0);
+        break;
+      case 'Enter':
+        if (active && 'click' in active) (active as any).click?.();
+        e.preventDefault();
+        return;
+      case 'Escape':
+        setAppsOpen(false);
+        return;
+      default:
+        return; // do not prevent default for other keys
+    }
+
+    items[next]?.focus();
+    e.preventDefault();
   };
 
   useEffect(() => {
@@ -138,18 +191,25 @@ export function Header() {
             </Button>
 
             <Sheet open={appsOpen} onOpenChange={setAppsOpen}>
-              <SheetContent side="bottom" className="h-[100vh] p-0">
+              <SheetContent side="bottom" className="h-[100vh] p-0" onOpenAutoFocus={(e) => { e.preventDefault(); focusFirstItem(mobileGridRef.current); }}>
                 <div className="flex h-full flex-col">
                   <SheetHeader className="px-4 py-3 border-b">
                     <SheetTitle>Módulos</SheetTitle>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto p-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3">
+                    <div
+                      ref={mobileGridRef as any}
+                      role="grid"
+                      aria-label="Launcher de módulos"
+                      onKeyDown={handleGridKeyDown}
+                      className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3"
+                    >
                       {visibleModules.map(({ label, Icon }) => (
                         <button
                           key={label}
                           type="button"
                           aria-label={label}
+                          data-module-item="true"
                           onClick={() => onModuleClick(label)}
                           className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition"
                         >
@@ -164,7 +224,7 @@ export function Header() {
             </Sheet>
           </>
         ) : (
-          <Popover open={appsOpen} onOpenChange={setAppsOpen}>
+          <Popover open={appsOpen} onOpenChange={setAppsOpen} modal>
             <PopoverTrigger asChild>
               <Button
                 id="testid:hdr-apps"
@@ -188,18 +248,25 @@ export function Header() {
                 </svg>
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-[560px] max-h-[70vh] p-0">
+            <PopoverContent align="end" className="w-[560px] max-h-[70vh] p-0" onOpenAutoFocus={(e) => { e.preventDefault(); focusFirstItem(desktopGridRef.current); }}>
               <div className="p-3 border-b">
                 <p className="text-sm font-medium">Módulos</p>
                 <p className="text-xs text-muted-foreground">Launcher (placeholder)</p>
               </div>
               <div className="p-3 overflow-y-auto">
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3">
+                <div
+                  ref={desktopGridRef as any}
+                  role="grid"
+                  aria-label="Launcher de módulos"
+                  onKeyDown={handleGridKeyDown}
+                  className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3"
+                >
                   {visibleModules.map(({ label, Icon }) => (
                     <button
                       key={label}
                       type="button"
                       aria-label={label}
+                      data-module-item="true"
                       onClick={() => onModuleClick(label)}
                       className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition"
                     >
