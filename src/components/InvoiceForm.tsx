@@ -70,9 +70,10 @@ export interface InvoiceData {
 
 interface InvoiceFormProps {
   onGenerateInvoice: (data: InvoiceData) => void;
+  prefill?: Partial<Pick<InvoiceData, 'clientName' | 'clientId' | 'clientPhone'>>;
 }
 
-export const InvoiceForm = ({ onGenerateInvoice }: InvoiceFormProps) => {
+export const InvoiceForm = ({ onGenerateInvoice, prefill }: InvoiceFormProps) => {
   const [documentType, setDocumentType] = useState<'cotizacion' | 'factura'>('factura');
   const [formData, setFormData] = useState<InvoiceData>({
     clientName: '',
@@ -116,8 +117,16 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     }));
   }, []);
 
-
-  // Generar NCF automáticamente cuando cambie el tipo o los datos del cliente
+  // Prefill client data when provided
+  useEffect(() => {
+    if (!prefill) return;
+    setFormData(prev => ({
+      ...prev,
+      clientName: prefill.clientName ?? prev.clientName,
+      clientId: prefill.clientId ?? prev.clientId,
+      clientPhone: prefill.clientPhone ?? prev.clientPhone,
+    }));
+  }, [prefill]);
   useEffect(() => {
     if (formData.ncfType && formData.services.length > 0) {
       const totalAmount = formData.services.reduce((sum, service) => {

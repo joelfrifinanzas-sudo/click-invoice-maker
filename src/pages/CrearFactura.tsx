@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { InvoiceForm, InvoiceData } from '@/components/InvoiceForm';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { InvoicePreview } from '@/components/InvoicePreview';
@@ -10,6 +10,9 @@ import { BackButton } from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useToast } from '@/hooks/use-toast';
+import { CustomerPickerDialog } from '@/components/CustomerPickerDialog';
+import type { Tables } from '@/integrations/supabase/types';
+import { createDraftInvoice } from '@/data/invoices';
 
 export default function CrearFactura() {
   useScrollToTop();
@@ -18,15 +21,40 @@ export default function CrearFactura() {
   const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState<'factura' | 'cotizacion'>('factura');
+  const [customerDialogOpen, setCustomerDialogOpen] = useState<boolean>(true);
+  const [selectedCustomer, setSelectedCustomer] = useState<Tables<'customers'> | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Open dialog until a customer is chosen
+    if (!selectedCustomer) setCustomerDialogOpen(true);
+  }, [selectedCustomer]);
+
   const handleGenerateInvoice = async (data: InvoiceData) => {
     try {
+      // 1) Persist draft to Supabase with selected customer (non-blocking UX)
+      const itbisRate = data.includeITBIS ? 0.18 : 0;
+      const items = (data.services || []).map((s) => ({
+        description: s.concept,
+        quantity: Number(s.quantity || '1') || 1,
+        unit_price: Number(s.unitPrice || '0') || 0,
+        itbis_rate: itbisRate,
+      }));
+      const { error: dbError } = await createDraftInvoice({
+        items,
+        itbis_rate: itbisRate,
+        customer_id: selectedCustomer?.id ?? null,
+      });
+      if (dbError) {
+        console.warn('No se pudo guardar en la base de datos:', dbError);
+      } else {
+        toast({ title: 'Guardado como borrador', description: 'La factura quedó asociada al cliente.' });
+      }
+
+      // 2) Flujo actual (historial local + navegación)
       const nextInvoiceNumber = getNextInvoiceNumber();
-      // Guardar en historial y obtener ID
       const newId = saveInvoiceToHistory(data, nextInvoiceNumber);
-      // Navegar al detalle
       navigate(`/facturas/${newId}`);
     } catch (error) {
       console.error('Error al guardar/navegar a detalle:', error);
@@ -41,6 +69,12 @@ export default function CrearFactura() {
 
   return (
     <ErrorBoundary>
+      {/* Dialogo para seleccionar/crear cliente */}
+      <CustomerPickerDialog
+        open={customerDialogOpen}
+        onOpenChange={setCustomerDialogOpen}
+        onConfirm={(c) => { setSelectedCustomer(c); setCustomerDialogOpen(false); }}
+      />
       {!showPreview ? (
         <div className="min-h-screen bg-white">
           {/* Back Button */}
@@ -50,7 +84,14 @@ export default function CrearFactura() {
           {/* Form Content */}
           <div className="px-4 py-6">
             {activeTab === 'factura' ? (
-              <InvoiceForm onGenerateInvoice={handleGenerateInvoice} />
+              <InvoiceForm
+                onGenerateInvoice={handleGenerateInvoice}
+                prefill={{
+                  clientName: selectedCustomer?.name,
+                  clientId: selectedCustomer?.rnc || '',
+                  clientPhone: selectedCustomer?.phone || '+1 ',
+                }}
+              />
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
                 <ClipboardList className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
