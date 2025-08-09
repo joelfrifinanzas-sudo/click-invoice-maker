@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Link } from 'react-router-dom';
+import { computeTotals } from '@/utils/totals';
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
   onBack: () => void;
@@ -41,7 +42,8 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
     !address ? 'dirección' : null,
   ].filter(Boolean) as string[];
 
-  const balanceDue = invoiceData.paymentStatus === 'pagado' ? 0 : invoiceData.total;
+  const totals = useMemo(() => computeTotals({ services: invoiceData.services, invoiceType: invoiceData.invoiceType, ncfType: invoiceData.ncfType }), [invoiceData.services, invoiceData.invoiceType, invoiceData.ncfType]);
+  const balanceDue = invoiceData.paymentStatus === 'pagado' ? 0 : totals.total;
   const isMobile = useIsMobile();
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -239,18 +241,18 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
             <div className="w-64 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-800">{formatCurrency(invoiceData.subtotal)}</span>
+                <span className="text-gray-800">{formatCurrency(totals.subtotal)}</span>
               </div>
-              {invoiceData.itbisAmount > 0 && (
+              {totals.itbis > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">ITBIS (18%)</span>
-                  <span className="text-gray-800">{formatCurrency(invoiceData.itbisAmount)}</span>
+                  <span className="text-gray-800">{formatCurrency(totals.itbis)}</span>
                 </div>
               )}
               <div className="border-t border-gray-200 pt-2">
                 <div className="flex justify-between text-lg font-bold">
                   <span className="text-gray-800">Total</span>
-                  <span className="text-gray-800">{formatCurrency(invoiceData.total)}</span>
+                  <span className="text-gray-800">{formatCurrency(totals.total)}</span>
                 </div>
               </div>
               <div className="border-t border-gray-200 pt-2">

@@ -2,6 +2,7 @@ import { InvoiceData } from '@/components/InvoiceForm';
 import { generateInvoicePDFBlob } from './pdfGenerator';
 
 import { logError } from './logger';
+import { computeTotals } from './totals';
 
 // Genera PDF como Blob y realiza el flujo de compartir sin bloquear la SPA
 export const shareInvoiceViaWhatsApp = async (invoiceData: InvoiceData, invoiceNumber: string) => {
@@ -15,9 +16,10 @@ export const shareInvoiceViaWhatsApp = async (invoiceData: InvoiceData, invoiceN
       logError('whatsapp_invalid_phone', { invoiceNumber, phoneRaw }, err);
       throw err;
     }
-    if (!invoiceNumber?.trim() || !Number.isFinite(invoiceData.total) || invoiceData.total <= 0) {
+    const totals = computeTotals(invoiceData);
+    if (!invoiceNumber?.trim() || !Number.isFinite(totals.total) || totals.total <= 0) {
       const err = new Error('Completa los datos de la factura antes de enviar');
-      logError('whatsapp_invalid_invoice_data', { invoiceNumber, total: invoiceData.total }, err);
+      logError('whatsapp_invalid_invoice_data', { invoiceNumber, total: totals.total }, err);
       throw err;
     }
 
@@ -55,7 +57,8 @@ export const shareInvoiceViaWhatsApp = async (invoiceData: InvoiceData, invoiceN
 
 const buildWhatsAppMessage = (invoiceData: InvoiceData, invoiceNumber: string) => {
   const fmt = new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP', minimumFractionDigits: 2 });
-  const totalFmt = fmt.format(invoiceData.total || 0).replace('RD$\u00A0', 'RD$').replace('RD$ ', 'RD$');
+  const totals = computeTotals(invoiceData);
+  const totalFmt = fmt.format(totals.total || 0).replace('RD$\u00A0', 'RD$').replace('RD$ ', 'RD$');
   const lines: string[] = [];
   lines.push(`*FACTURA #${invoiceNumber}*`);
   lines.push('');

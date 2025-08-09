@@ -32,7 +32,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { es } from 'date-fns/locale';
 import { getCompanyProfile } from '@/utils/companyProfile';
-import { NCFType, NCF_TYPES, ALLOWED_NCF_TYPES, determineNCFType, generateNCF, calculateITBIS, calculateSubtotal, calculateTotalWithITBIS } from '@/utils/ncfGenerator';
+import { NCFType, NCF_TYPES, ALLOWED_NCF_TYPES, determineNCFType, generateNCF } from '@/utils/ncfGenerator';
+import { computeTotals } from '@/utils/totals';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { PhoneInput } from '@/components/ui/phone-input';
@@ -402,28 +403,16 @@ const [isSubmitting, setIsSubmitting] = useState(false);
   };
 
   const calculateTotals = () => {
-    const serviceTotal = formData.services.reduce((sum, service) => {
-      const qty = parseFloat((service as any).quantity || '1');
-      const unit = parseFloat((service as any).unitPrice || '0');
-      return sum + (isNaN(qty) || isNaN(unit) ? 0 : qty * unit);
-    }, 0);
-    
-    if (formData.includeITBIS) {
-      const subtotal = calculateSubtotal(serviceTotal);
-      const itbis = calculateITBIS(subtotal);
-      return {
-        subtotal,
-        itbisAmount: itbis,
-        total: serviceTotal
-      };
-    } else {
-      const itbis = calculateITBIS(serviceTotal);
-      return {
-        subtotal: serviceTotal,
-        itbisAmount: itbis,
-        total: calculateTotalWithITBIS(serviceTotal)
-      };
-    }
+    const totals = computeTotals({
+      services: formData.services,
+      invoiceType: formData.invoiceType,
+      ncfType: formData.ncfType,
+    });
+    return {
+      subtotal: totals.subtotal,
+      itbisAmount: totals.itbis,
+      total: totals.total,
+    };
   };
 
   const formatCurrency = (amount: number) => {

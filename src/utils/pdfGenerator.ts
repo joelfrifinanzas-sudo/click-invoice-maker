@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getCompanyProfile } from '@/utils/companyProfile';
 import { maskAccountNumber } from './mask';
+import { computeTotals } from '@/utils/totals';
 
 export const getNextInvoiceNumber = (): string => {
   const lastNumber = localStorage.getItem('last-invoice-number') || '0';
@@ -40,6 +41,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setFont('helvetica');
   let yPosition = 20;
   const pageWidth = pdf.internal.pageSize.getWidth();
+  const totals = computeTotals(invoiceData);
 
   // Header Section - Logo y Company Info (lado izquierdo)
   if (invoiceData.logo) {
@@ -76,8 +78,8 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
     style: 'currency',
     currency: 'DOP'
   });
-  const totalFormatted = currencyFmt.format(invoiceData.total);
-  const balanceDue = invoiceData.paymentStatus === 'pagado' ? 0 : invoiceData.total;
+  const totalFormatted = currencyFmt.format(totals.total);
+  const balanceDue = invoiceData.paymentStatus === 'pagado' ? 0 : totals.total;
   const balanceFormatted = currencyFmt.format(balanceDue);
   
   pdf.setFillColor(grayLight[0], grayLight[1], grayLight[2]);
@@ -216,7 +218,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   // Totales (alineados a la derecha)
   yPosition += 20;
   
-  const subtotalFormatted = formatCurrency(invoiceData.subtotal);
+  const subtotalFormatted = formatCurrency(totals.subtotal);
 
   pdf.setFontSize(9);
   pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
@@ -224,12 +226,12 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
   pdf.text(subtotalFormatted, 170, yPosition);
 
-  if (invoiceData.itbisAmount && invoiceData.itbisAmount > 0) {
+  if (totals.itbis && totals.itbis > 0) {
     yPosition += 8;
     pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
     pdf.text('ITBIS (18%)', 150, yPosition);
     pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
-    pdf.text(formatCurrency(invoiceData.itbisAmount), 170, yPosition);
+    pdf.text(formatCurrency(totals.itbis), 170, yPosition);
   }
 
   yPosition += 8;
@@ -382,6 +384,7 @@ export const generateInvoicePDFBlob = async (invoiceData: InvoiceData, invoiceNu
 
   pdf.setFont('helvetica');
   let yPosition = 20;
+  const totals = computeTotals(invoiceData);
 
   if (invoiceData.logo) {
     try {
@@ -408,8 +411,8 @@ export const generateInvoicePDFBlob = async (invoiceData: InvoiceData, invoiceNu
   pdf.text(`# ${invoiceNumber}`, 140, yPosition + 25);
 
   const currencyFmt = new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' });
-  const totalFormatted = currencyFmt.format(invoiceData.total);
-  const balanceDue = invoiceData.paymentStatus === 'pagado' ? 0 : invoiceData.total;
+  const totalFormatted = currencyFmt.format(totals.total);
+  const balanceDue = invoiceData.paymentStatus === 'pagado' ? 0 : totals.total;
   const balanceFormatted = currencyFmt.format(balanceDue);
 
   pdf.setFillColor(grayLight[0], grayLight[1], grayLight[2]);
@@ -501,19 +504,19 @@ export const generateInvoicePDFBlob = async (invoiceData: InvoiceData, invoiceNu
   });
 
   yPosition += 20;
-  const subtotalFormatted = formatCurrency(invoiceData.subtotal);
+  const subtotalFormatted = formatCurrency(totals.subtotal);
   pdf.setFontSize(9);
   pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
   pdf.text('Subtotal', 150, yPosition);
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
   pdf.text(subtotalFormatted, 170, yPosition);
 
-  if (invoiceData.itbisAmount && invoiceData.itbisAmount > 0) {
+  if (totals.itbis && totals.itbis > 0) {
     yPosition += 8;
     pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
     pdf.text('ITBIS (18%)', 150, yPosition);
     pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
-    pdf.text(formatCurrency(invoiceData.itbisAmount), 170, yPosition);
+    pdf.text(formatCurrency(totals.itbis), 170, yPosition);
   }
 
   yPosition += 8;

@@ -1,4 +1,5 @@
 import { InvoiceData, ServiceItem } from '@/components/InvoiceForm';
+import { computeTotals } from '@/utils/totals';
 
 export interface HistoryInvoice extends InvoiceData {
   invoiceNumber: string;
@@ -10,9 +11,13 @@ const HISTORY_KEY = 'invoice-history';
 
 export const saveInvoiceToHistory = (invoiceData: InvoiceData, invoiceNumber: string): string => {
   const existingHistory = getInvoiceHistory();
+  const totals = computeTotals(invoiceData as any);
   
   const historyInvoice: HistoryInvoice = {
     ...invoiceData,
+    subtotal: totals.subtotal,
+    itbisAmount: totals.itbis,
+    total: totals.total,
     invoiceNumber,
     createdAt: new Date().toISOString(),
     id: `${invoiceNumber}-${Date.now()}`,
