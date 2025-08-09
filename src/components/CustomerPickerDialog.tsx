@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { listCustomers, upsertCustomer } from "@/data/customers";
 import type { Tables } from "@/integrations/supabase/types";
+import { Badge } from "@/components/ui/badge";
 
 export type Customer = Tables<"customers">;
 
@@ -103,7 +104,12 @@ export function CustomerPickerDialog({ open, onOpenChange, onConfirm }: Props) {
                   <li key={c.id} className={cn("p-3 cursor-pointer hover:bg-accent", selectedId === c.id && "bg-accent")}
                       onClick={() => setSelectedId(c.id)}>
                     <div className="font-medium">{c.name}</div>
-                    <div className="text-sm text-muted-foreground">{c.rnc || "Sin RNC"} • {c.phone || "Sin teléfono"}</div>
+                    <div className="text-sm text-muted-foreground">{(c as any).rnc || "Sin RNC"} • {(c as any).phone || "Sin teléfono"}</div>
+                    {(c as any).es_usuario ? (
+                      <div className="mt-1">
+                        <Badge variant="secondary" className="text-[10px]">También es usuario interno</Badge>
+                      </div>
+                    ) : null}
                   </li>
                 ))}
                 {!loading && customers.length === 0 && (

@@ -349,6 +349,7 @@ export type Database = {
           created_at: string
           currency: string
           email: string | null
+          es_usuario: boolean
           id: string
           itbis_rate: number
           name: string
@@ -363,6 +364,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email?: string | null
+          es_usuario?: boolean
           id?: string
           itbis_rate?: number
           name: string
@@ -377,6 +379,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email?: string | null
+          es_usuario?: boolean
           id?: string
           itbis_rate?: number
           name?: string
@@ -890,6 +893,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      mark_customers_as_users: {
+        Args: { _company_id: string }
+        Returns: number
       }
       next_cotizacion_number: {
         Args: { _company_id: string }

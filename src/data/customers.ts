@@ -8,15 +8,35 @@ export type CustomerUpdate = TablesUpdate<"customers">;
 
 export async function listCustomers(params?: { search?: string; limit?: number }): Promise<{ data: Customer[] | null; error: string | null }> {
   try {
-    const query = supabase.from("customers").select("*").order("created_at", { ascending: false });
-    if (params?.search) {
-      query.ilike("name", `%${params.search}%`);
+    const ctx = await getCurrentContext();
+    const companyId = ctx.data?.companyId ?? null;
+
+    if (!companyId) {
+      // Sin contexto de empresa, no retornar datos para evitar mezclar empresas
+      return { data: [], error: null };
+    }
+
+    // Marcar clientes que también son usuarios internos (best-effort, no bloquea)
+    try {
+      await supabase.rpc('mark_customers_as_users', { _company_id: companyId });
+    } catch {}
+
+    let query = supabase
+      .from("customers")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false });
+
+    if (params?.search?.trim()) {
+      const term = params.search.trim();
+      query = query.or(`name.ilike.%${term}%,rnc.ilike.%${term}%,phone.ilike.%${term}%`);
     }
     if (params?.limit) {
-      query.limit(params.limit);
+      query = query.limit(params.limit);
     }
+
     const { data, error } = await query;
-    return { data: data ?? null, error: error?.message ?? null };
+    return { data: data ?? [], error: error?.message ?? null };
   } catch (e: any) {
     return { data: null, error: e?.message ?? "Unknown error" };
   }
