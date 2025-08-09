@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_invites: {
+        Row: {
+          company_id: string
+          created_at: string
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["company_role"]
+          status: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email: string
+          id?: string
+          role?: Database["public"]["Enums"]["company_role"]
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          role?: Database["public"]["Enums"]["company_role"]
+          status?: string
+        }
+        Relationships: []
+      }
       app_plans: {
         Row: {
           created_at: string
@@ -880,6 +907,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      su_assign_cashier_by_domain: {
+        Args: { _company_id: string; _domain: string }
+        Returns: number
+      }
+      su_assign_members: {
+        Args: {
+          _company_id: string
+          _user_ids: string[]
+          _role: Database["public"]["Enums"]["company_role"]
+        }
+        Returns: number
+      }
       su_audit_list: {
         Args: {
           _company_id?: string
@@ -995,6 +1034,10 @@ export type Database = {
           updated_at: string
         }
       }
+      su_invite_or_assign_owner: {
+        Args: { _company_id: string; _owner_email: string }
+        Returns: undefined
+      }
       su_list_ncf_sequences: {
         Args: { _company_id: string }
         Returns: {
@@ -1060,6 +1103,15 @@ export type Database = {
           display_name: string
           phone: string
           companies_count: number
+          last_sign_in_at: string
+        }[]
+      }
+      su_users_without_membership: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          display_name: string
           last_sign_in_at: string
         }[]
       }
