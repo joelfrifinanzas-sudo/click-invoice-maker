@@ -1,16 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/contexts/NavigationContext';
-import {
-  FileText,
-  Users,
-  Star,
-  ClipboardList,
-  CheckCircle,
-  AlertTriangle,
-  Calendar as CalendarIcon,
-  ChevronRight,
-} from 'lucide-react';
+import { FileText, Users, Star, ClipboardList, CheckCircle, AlertTriangle, Calendar as CalendarIcon, ChevronRight } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { getCompanyProfile } from '@/utils/companyProfile';
 import { getInvoiceHistory, HistoryInvoice } from '@/utils/invoiceHistory';
@@ -25,10 +16,11 @@ import { Separator } from '@/components/ui/separator';
 import { es } from 'date-fns/locale';
 import { isSameDay, subDays } from 'date-fns';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-
 export default function Inicio() {
   const navigate = useNavigate();
-  const { markDashboardNavigation } = useNavigation();
+  const {
+    markDashboardNavigation
+  } = useNavigation();
 
   // Perfil actual para saludo
   const profile = useMemo(() => getCompanyProfile(), []);
@@ -54,13 +46,23 @@ export default function Inicio() {
   }, []);
 
   // Acciones rápidas (mismo onClick/navegación)
-  const actions = [
-    { title: 'Nueva factura', icon: FileText, path: '/crear-factura' },
-    { title: 'Clientes', icon: Users, path: '/clientes' },
-    { title: 'Productos', icon: Star, path: '/articulos' },
-    { title: 'Cotizaciones', icon: ClipboardList, path: '/cotizaciones' },
-  ];
-
+  const actions = [{
+    title: 'Nueva factura',
+    icon: FileText,
+    path: '/crear-factura'
+  }, {
+    title: 'Clientes',
+    icon: Users,
+    path: '/clientes'
+  }, {
+    title: 'Productos',
+    icon: Star,
+    path: '/articulos'
+  }, {
+    title: 'Cotizaciones',
+    icon: ClipboardList,
+    path: '/cotizaciones'
+  }];
   function go(path: string) {
     markDashboardNavigation();
     navigate(path);
@@ -68,30 +70,31 @@ export default function Inicio() {
 
   // Últimas facturas (mismo origen de datos)
   const invoices = useMemo<HistoryInvoice[]>(() => {
-    return getInvoiceHistory()
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 10);
+    return getInvoiceHistory().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10);
   }, []);
-
   useEffect(() => {
     const t1 = setTimeout(() => setLoadingInvoices(false), 150);
     const t2 = setTimeout(() => setLoadingProducts(false), 180);
     const t3 = setTimeout(() => setLoadingSummary(false), 200);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, []);
 
   // Productos más vendidos (agregación local a partir de facturas)
-  const COLORS = [
-    'hsl(234 77% 57%)', // Azul primario
-    'hsl(148 50% 46%)', // Verde éxito
-    'hsl(44 100% 48%)', // Amarillo advertencia
-    'hsl(7 80% 56%)',   // Rojo error
-    'hsl(218 10% 65%)', // Gris claro (categorías menores)
-    'hsl(234 77% 57%)',
-    'hsl(148 50% 46%)',
-    'hsl(44 100% 48%)',
-  ];
-
+  const COLORS = ['hsl(234 77% 57%)',
+  // Azul primario
+  'hsl(148 50% 46%)',
+  // Verde éxito
+  'hsl(44 100% 48%)',
+  // Amarillo advertencia
+  'hsl(7 80% 56%)',
+  // Rojo error
+  'hsl(218 10% 65%)',
+  // Gris claro (categorías menores)
+  'hsl(234 77% 57%)', 'hsl(148 50% 46%)', 'hsl(44 100% 48%)'];
   const topProducts = useMemo(() => {
     const agg = new Map<string, number>();
     for (const inv of getInvoiceHistory()) {
@@ -99,15 +102,15 @@ export default function Inicio() {
       for (const s of inv.services as any[]) {
         const qty = parseFloat(s.quantity || '1');
         const unit = parseFloat(s.unitPrice || s.amount || '0');
-        const subtotal = (isNaN(qty) || isNaN(unit)) ? 0 : qty * unit;
+        const subtotal = isNaN(qty) || isNaN(unit) ? 0 : qty * unit;
         const name = s.concept || 'Sin nombre';
         agg.set(name, (agg.get(name) || 0) + subtotal);
       }
     }
-    return Array.from(agg.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
+    return Array.from(agg.entries()).map(([name, value]) => ({
+      name,
+      value
+    })).sort((a, b) => b.value - a.value).slice(0, 8);
   }, []);
 
   // Resumen del día (ventas pagadas hoy, gastos del día desde localStorage opcional)
@@ -115,38 +118,50 @@ export default function Inicio() {
     try {
       const raw = localStorage.getItem('expenses-history');
       if (!raw) return 0;
-      const items = JSON.parse(raw) as { date: string; amount: number }[];
+      const items = JSON.parse(raw) as {
+        date: string;
+        amount: number;
+      }[];
       return items.filter(x => isSameDay(new Date(x.date), date)).reduce((sum, x) => sum + (x.amount || 0), 0);
-    } catch { return 0; }
+    } catch {
+      return 0;
+    }
   }
-
   const summary = useMemo(() => {
-    const sales = getInvoiceHistory()
-      .filter(inv => inv.paymentStatus === 'pagado' && isSameDay(new Date(inv.createdAt), selectedDate))
-      .reduce((sum, inv) => sum + (inv.total || 0), 0);
+    const sales = getInvoiceHistory().filter(inv => inv.paymentStatus === 'pagado' && isSameDay(new Date(inv.createdAt), selectedDate)).reduce((sum, inv) => sum + (inv.total || 0), 0);
     const expenses = getExpensesForDate(selectedDate);
     const profit = sales - expenses;
-
     const prevDate = subDays(selectedDate, 1);
-    const prevSales = getInvoiceHistory()
-      .filter(inv => inv.paymentStatus === 'pagado' && isSameDay(new Date(inv.createdAt), prevDate))
-      .reduce((sum, inv) => sum + (inv.total || 0), 0);
+    const prevSales = getInvoiceHistory().filter(inv => inv.paymentStatus === 'pagado' && isSameDay(new Date(inv.createdAt), prevDate)).reduce((sum, inv) => sum + (inv.total || 0), 0);
     const prevExpenses = getExpensesForDate(prevDate);
     const prevProfit = prevSales - prevExpenses;
-    const pct = prevProfit === 0 ? (profit > 0 ? 100 : 0) : ((profit - prevProfit) / Math.abs(prevProfit)) * 100;
-
-    return { sales, expenses, profit, pct };
+    const pct = prevProfit === 0 ? profit > 0 ? 100 : 0 : (profit - prevProfit) / Math.abs(prevProfit) * 100;
+    return {
+      sales,
+      expenses,
+      profit,
+      pct
+    };
   }, [selectedDate]);
-
-  function getStatus(inv: HistoryInvoice): { label: string; variant: 'default' | 'secondary' | 'destructive' } {
-    if (inv.paymentStatus === 'pagado') return { label: 'Pagada', variant: 'secondary' };
+  function getStatus(inv: HistoryInvoice): {
+    label: string;
+    variant: 'default' | 'secondary' | 'destructive';
+  } {
+    if (inv.paymentStatus === 'pagado') return {
+      label: 'Pagada',
+      variant: 'secondary'
+    };
     const olderThan30 = (Date.now() - new Date(inv.createdAt).getTime()) / (1000 * 60 * 60 * 24) > 30;
-    if (olderThan30) return { label: 'Vencida', variant: 'destructive' };
-    return { label: 'Borrador', variant: 'default' };
+    if (olderThan30) return {
+      label: 'Vencida',
+      variant: 'destructive'
+    };
+    return {
+      label: 'Borrador',
+      variant: 'default'
+    };
   }
-
-  return (
-    <Layout>
+  return <Layout>
       <div className="min-h-screen bg-card border border-border pb-20 text-foreground">
         {/* Encabezado */}
         <div className="container mx-auto px-4 py-6">
@@ -160,16 +175,14 @@ export default function Inicio() {
           {/* Acciones rápidas */}
           <section>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {actions.map((a, i) => (
-                <button key={i} onClick={() => go(a.path)} className="bg-[hsl(var(--btn-primary))] text-[hsl(var(--btn-primary-foreground))] hover:bg-[hsl(var(--btn-primary-hover))] border rounded-xl p-4 shadow-sm hover:shadow-md transition hover-scale text-left">
+              {actions.map((a, i) => <button key={i} onClick={() => go(a.path)} className="bg-[hsl(var(--btn-primary))] text-[hsl(var(--btn-primary-foreground))] hover:bg-[hsl(var(--btn-primary-hover))] border rounded-xl p-4 shadow-sm hover:shadow-md transition hover-scale text-left">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                       <a.icon className="w-5 h-5 text-foreground" />
                     </div>
                     <div className="font-medium">{a.title}</div>
                   </div>
-                </button>
-              ))}
+                </button>)}
             </div>
           </section>
 
@@ -177,24 +190,18 @@ export default function Inicio() {
           <section>
             <Card>
               <CardHeader className="flex-row items-center justify-between">
-                <CardTitle>Últimas facturas</CardTitle>
+                <CardTitle className="text-base">Últimas facturas</CardTitle>
                 <Button variant="ghost" size="sm" onClick={() => go('/historial')}>
                   Ver más <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               </CardHeader>
               <CardContent>
-                {loadingInvoices ? (
-                  <div className="space-y-3">
-                    {[...Array(5)].map((_, i) => (<Skeleton key={i} className="h-12 w-full" />))}
-                  </div>
-                ) : invoices.length === 0 ? (
-                  <p className="text-muted-foreground">No hay facturas aún.</p>
-                ) : (
-                  <div className="divide-y">
-                    {invoices.map((inv) => {
-                      const st = getStatus(inv);
-                      return (
-                        <div key={inv.id} className="py-3 flex items-center justify-between gap-3">
+                {loadingInvoices ? <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                  </div> : invoices.length === 0 ? <p className="text-muted-foreground">No hay facturas aún.</p> : <div className="divide-y">
+                    {invoices.map(inv => {
+                  const st = getStatus(inv);
+                  return <div key={inv.id} className="py-3 flex items-center justify-between gap-3">
                           <div className="min-w-0">
                             <div className="font-medium truncate">{inv.clientName || 'Cliente sin nombre'}</div>
                             <div className="text-sm text-muted-foreground flex flex-wrap gap-2">
@@ -213,11 +220,9 @@ export default function Inicio() {
                               {st.label}
                             </Badge>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        </div>;
+                })}
+                  </div>}
               </CardContent>
             </Card>
           </section>
@@ -226,42 +231,36 @@ export default function Inicio() {
           <section>
             <Card className="lg:bg-white lg:border-[#E5E7EB]">
               <CardHeader>
-                <CardTitle className="text-[#F9FAFB] lg:text-[#1F2937]">Productos más vendidos</CardTitle>
+                <CardTitle className="lg:text-[#1F2937] font-semibold text-slate-700 text-base">Productos más vendidos</CardTitle>
               </CardHeader>
               <CardContent>
-                {loadingProducts ? (
-                  <Skeleton className="h-56 w-full" />
-                ) : topProducts.length === 0 ? (
-                  <p className="text-muted-foreground">Aún no hay ventas registradas.</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                {loadingProducts ? <Skeleton className="h-56 w-full" /> : topProducts.length === 0 ? <p className="text-muted-foreground">Aún no hay ventas registradas.</p> : <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                     <div className="h-56">
                       <ResponsiveContainer>
                         <PieChart>
-                          <Tooltip
-                            formatter={(val: any) => formatMoneyDOP(Number(val))}
-                            labelStyle={{ color: '#D1D5DB' }}
-                            itemStyle={{ color: '#F9FAFB' }}
-                          />
+                          <Tooltip formatter={(val: any) => formatMoneyDOP(Number(val))} labelStyle={{
+                        color: '#D1D5DB'
+                      }} itemStyle={{
+                        color: '#F9FAFB'
+                      }} />
                           <Pie data={topProducts} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} stroke="transparent">
-                            {topProducts.map((_, idx) => (<Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />))}
+                            {topProducts.map((_, idx) => <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />)}
                           </Pie>
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                     <ul className="space-y-2">
-                      {topProducts.map((p, i) => (
-                        <li key={i} className="flex items-center justify-between">
+                      {topProducts.map((p, i) => <li key={i} className="flex items-center justify-between">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="inline-block w-3 h-3 rounded-sm" style={{ background: COLORS[i % COLORS.length] }} />
+                            <span className="inline-block w-3 h-3 rounded-sm" style={{
+                        background: COLORS[i % COLORS.length]
+                      }} />
                             <span className="truncate text-[#D1D5DB] lg:text-[#374151]">{p.name}</span>
                           </div>
                           <span className="font-medium text-[#F9FAFB] lg:text-[#111827]">{formatMoneyDOP(p.value)}</span>
-                        </li>
-                      ))}
+                        </li>)}
                     </ul>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
           </section>
@@ -270,7 +269,7 @@ export default function Inicio() {
           <section>
             <Card>
               <CardHeader className="flex-row items-center justify-between">
-                <CardTitle>Resumen del día</CardTitle>
+                <CardTitle className="text-zinc-800">Resumen del día</CardTitle>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -279,23 +278,14 @@ export default function Inicio() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="p-0" align="end">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(d) => d && setSelectedDate(d)}
-                      locale={es}
-                      initialFocus
-                    />
+                    <Calendar mode="single" selected={selectedDate} onSelect={d => d && setSelectedDate(d)} locale={es} initialFocus />
                   </PopoverContent>
                 </Popover>
               </CardHeader>
               <CardContent>
-                {loadingSummary ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[...Array(3)].map((_, i) => (<Skeleton key={i} className="h-24 w-full" />))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {loadingSummary ? <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+                  </div> : <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-muted rounded-xl p-4">
                       <div className="text-sm text-muted-foreground">Total vendido</div>
                       <div className="text-lg font-bold">{formatMoneyDOP(summary.sales)}</div>
@@ -313,13 +303,11 @@ export default function Inicio() {
                         </span>
                       </div>
                     </div>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
           </section>
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>;
 }
