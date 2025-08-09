@@ -24,7 +24,7 @@ export function useUserRole() {
         setLoading(true);
         const ctx = await getCurrentContext();
         if (!ctx.data) {
-          setRole("cajera");
+          setRole("superadmin");
           setLoading(false);
           return;
         }
@@ -42,7 +42,7 @@ export function useUserRole() {
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message || "Error obteniendo rol");
-        setRole("cajera");
+        setRole("superadmin");
       } finally {
         if (mounted) setLoading(false);
       }
