@@ -30,6 +30,8 @@ import { useIsMobile } from "./hooks/use-mobile";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { RequireAccess } from "./components/RequireAccess";
 import AccessDenied from "./pages/AccessDenied";
+import { RequireSuperAdmin } from "./components/RequireSuperAdmin";
+import SuperAdmin from "./pages/SuperAdmin";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Login from "./pages/Login";
@@ -79,6 +81,7 @@ function AppRoutes() {
       <Route path="/perfil" element={<RequireAccess routeKey="perfil"><Perfil /></RequireAccess>} />
       <Route path="/historial" element={<RequireAccess routeKey="historial"><History /></RequireAccess>} />
       <Route path="/history" element={<RequireAccess routeKey="historial"><History /></RequireAccess>} />
+      <Route path="/super-admin" element={<RequireSuperAdmin><SuperAdmin /></RequireSuperAdmin>} />
       <Route path="/acceso-denegado" element={<AccessDenied />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
