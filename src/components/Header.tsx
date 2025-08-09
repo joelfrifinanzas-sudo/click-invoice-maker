@@ -3,12 +3,13 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, FileText, FilePlus2, Users, Package, History, BarChart3, Boxes, Banknote, Building2, Palette, UserCog, CreditCard, type LucideIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AccountPanelTrigger } from "@/components/AccountPanel";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { hasPermission } from "@/utils/permissions";
+import { useToast } from "@/hooks/use-toast";
 export function Header() {
   const { toggleSidebar } = useSidebar();
   const [time, setTime] = useState<string>("");
@@ -32,6 +33,15 @@ export function Header() {
   ];
 
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const goUsers = () =>
+    toast({
+      title: "Conecta Supabase para gestionar usuarios",
+      description: "Esta sección se habilitará al conectar tu proyecto de Supabase.",
+    });
+  const handleLogout = () => {
+    toast({ title: "Conecta Supabase para habilitar el cierre de sesión" });
+  };
   const routesByLabel: Record<string, string | null> = {
     "Cotizaciones": "/cotizaciones",
     "Nueva factura": "/crear-factura",
@@ -280,20 +290,30 @@ export function Header() {
           </Popover>
         )}
 
-        <AccountPanelTrigger>
-          <button
-            id="testid:hdr-user"
-            className={`rounded-full p-0.5 ring-2 ${statusRingClass} shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
-            aria-label={isOnline ? "Conectado" : "Sin conexión"}
-            title={isOnline ? "Conectado" : "Sin conexión"}
-            type="button"
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="/placeholder.svg" alt="Foto de perfil" />
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
-          </button>
-        </AccountPanelTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              id="testid:hdr-user"
+              className={`rounded-full p-0.5 ring-2 ${statusRingClass} shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
+              aria-label={isOnline ? "Conectado" : "Sin conexión"}
+              title={isOnline ? "Conectado" : "Sin conexión"}
+              type="button"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/placeholder.svg" alt="Foto de perfil" />
+                <AvatarFallback>U</AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuItem onSelect={() => navigate('/perfil-empresa')}>Perfil de la empresa</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate('/configuracion')}>Marca y preferencias</DropdownMenuItem>
+            <DropdownMenuItem onSelect={goUsers}>Gestión de usuarios</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate('/pagos')}>Métodos de pago</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={handleLogout} className="text-destructive focus:text-destructive">Cerrar sesión</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
