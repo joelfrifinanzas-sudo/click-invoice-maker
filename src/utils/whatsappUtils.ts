@@ -80,8 +80,8 @@ const buildWhatsAppMessage = (invoiceData: InvoiceData, invoiceNumber: string) =
         }
       } catch {}
       if (acc && acc.numero) {
-        const mask = (val: string) => { const digits = String(val).replace(/\s+/g, ''); const last4 = digits.slice(-4); return `•••• ${last4}`; };
-        lines.push(`🏦 *Cuenta para pago:* ${acc.banco_nombre} • ${acc.tipo} • ${mask(acc.numero)} (${acc.alias})`);
+        lines.push(`🏦 *Cuenta para transferencia:*`);
+        lines.push(`${acc.banco_nombre} • ${acc.tipo} • ${acc.numero} (${acc.alias})`);
       }
     }
   } catch {}
