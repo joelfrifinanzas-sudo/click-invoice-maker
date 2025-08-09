@@ -19,8 +19,10 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				inter: ['Inter', 'sans-serif'],
-				sans: ['Inter', 'sans-serif'],
+				montserrat: ['Montserrat', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+				poppins: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+				inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+				sans: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
