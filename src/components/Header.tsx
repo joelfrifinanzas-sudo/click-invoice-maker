@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, FileText, FilePlus2, Users, Package, History, BarChart3, Boxes, Banknote, Building2, Palette, UserCog, CreditCard, type LucideIcon } from "lucide-react";
@@ -17,7 +17,7 @@ export function Header() {
   const isMobile = useIsMobile();
   const [appsOpen, setAppsOpen] = useState(false);
 
-  const modules: { label: string; Icon: LucideIcon }[] = [
+  const modules: { label: string; Icon: LucideIcon }[] = useMemo(() => [
     { label: "Cotizaciones", Icon: FileText },
     { label: "Nueva factura", Icon: FilePlus2 },
     { label: "Clientes", Icon: Users },
@@ -30,7 +30,7 @@ export function Header() {
     { label: "Marca y preferencias", Icon: Palette },
     { label: "Gestión de usuarios", Icon: UserCog },
     { label: "Métodos de pago", Icon: CreditCard },
-  ];
+  ], []);
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -56,7 +56,10 @@ export function Header() {
     "Gestión de usuarios": null,
     "Métodos de pago": null,
   };
-  const visibleModules = modules.filter((m) => routesByLabel[m.label] && hasPermission(m.label));
+  const visibleModules = useMemo(() => {
+    if (!appsOpen) return [] as typeof modules;
+    return modules.filter((m) => routesByLabel[m.label] && hasPermission(m.label));
+  }, [appsOpen, modules]);
   const onModuleClick = (label: string) => {
     const path = routesByLabel[label];
     if (!path) return;
@@ -201,7 +204,7 @@ export function Header() {
             </Button>
 
             <Sheet open={appsOpen} onOpenChange={setAppsOpen}>
-              <SheetContent side="bottom" className="h-[100vh] p-0" onOpenAutoFocus={(e) => { e.preventDefault(); focusFirstItem(mobileGridRef.current); }}>
+              <SheetContent side="bottom" className="h-[100vh] p-0 duration-200 data-[state=open]:duration-200 data-[state=closed]:duration-200" onOpenAutoFocus={(e) => { e.preventDefault(); focusFirstItem(mobileGridRef.current); }}>
                 <div className="flex h-full flex-col">
                   <SheetHeader className="px-4 py-3 border-b">
                     <SheetTitle>Módulos</SheetTitle>
@@ -212,7 +215,7 @@ export function Header() {
                       role="grid"
                       aria-label="Launcher de módulos"
                       onKeyDown={handleGridKeyDown}
-                      className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3"
+                      className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3 animate-fade-in"
                     >
                       {visibleModules.map(({ label, Icon }) => (
                         <button
@@ -221,7 +224,7 @@ export function Header() {
                           aria-label={label}
                           data-module-item="true"
                           onClick={() => onModuleClick(label)}
-                          className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition"
+                           className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition-colors duration-200 hover-scale"
                         >
                           <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
                           <span className="text-sm text-foreground text-center">{label}</span>
@@ -269,7 +272,7 @@ export function Header() {
                   role="grid"
                   aria-label="Launcher de módulos"
                   onKeyDown={handleGridKeyDown}
-                  className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3"
+                  className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3 animate-fade-in"
                 >
                   {visibleModules.map(({ label, Icon }) => (
                     <button
@@ -278,7 +281,7 @@ export function Header() {
                       aria-label={label}
                       data-module-item="true"
                       onClick={() => onModuleClick(label)}
-                      className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition"
+                      className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition-colors duration-200 hover-scale"
                     >
                       <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
                       <span className="text-sm text-foreground text-center">{label}</span>
