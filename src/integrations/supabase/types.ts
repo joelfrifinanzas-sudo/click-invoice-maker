@@ -371,6 +371,7 @@ export type Database = {
       }
       users_profiles: {
         Row: {
+          company_id: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -378,6 +379,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           display_name?: string | null
           id: string
@@ -385,13 +387,22 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

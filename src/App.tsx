@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AppConfigProvider } from "./contexts/AppConfigContext";
 import { NavigationProvider } from "./contexts/NavigationContext";
 import { useRoutePersistence } from "./hooks/useRoutePersistence";
@@ -28,7 +28,17 @@ import FacturaDetalle from "./pages/FacturaDetalle";
 import { useIsMobile } from "./hooks/use-mobile";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import Login from "./pages/Login";
+
 const queryClient = new QueryClient();
+
+function ProtectedRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Outlet />;
+}
 
 function AppRoutes() {
   const { restoreLastRoute } = useRoutePersistence();
@@ -40,6 +50,14 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/login" element={<Login />} />
+
+      {/* Protected app area */}
+      <Route path="/app" element={<ProtectedRoute />}>
+        <Route path="inicio" element={<Inicio />} />
+      </Route>
+
+      {/* Existing public routes remain unchanged */}
       <Route path="/" element={<Index />} />
       <Route path="/inicio" element={<Inicio />} />
       <Route path="/cotizaciones" element={<Cotizaciones />} />
@@ -58,7 +76,6 @@ function AppRoutes() {
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/historial" element={<History />} />
       <Route path="/history" element={<History />} />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -78,9 +95,11 @@ const App = () => (
           <Sonner />
           <MobileDetector />
           <ErrorBoundary>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
+            <AuthProvider>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </AuthProvider>
           </ErrorBoundary>
         </TooltipProvider>
       </NavigationProvider>
