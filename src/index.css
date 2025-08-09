@@ -36,6 +36,18 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 234 77% 57%;
 
+    /* Button tokens */
+    --btn-primary: 234 77% 57%; /* #3C4DE6 */
+    --btn-primary-hover: 235 61% 48%; /* #2F3BC4 */
+    --btn-primary-active: 235 64% 42%; /* ~#2632A3 */
+    --btn-primary-foreground: 0 0% 100%;
+
+    --btn-secondary: 206 19% 96%; /* #F4F6F8 */
+    --btn-secondary-hover: 220 14% 91%; /* #E5E7EB */
+    --btn-secondary-active: 220 12% 87%; /* slightly darker */
+    --btn-secondary-foreground: 215 28% 17%; /* #1F2937 */
+    --btn-secondary-border: 220 12% 84%; /* #D1D5DB */
+
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -69,6 +81,18 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 234 77% 57%;
+
+    /* Button tokens (dark uses same to ensure brand consistency & AA) */
+    --btn-primary: 234 77% 57%;
+    --btn-primary-hover: 235 61% 48%;
+    --btn-primary-active: 235 64% 42%;
+    --btn-primary-foreground: 0 0% 100%;
+
+    --btn-secondary: 206 19% 96%;
+    --btn-secondary-hover: 220 14% 91%;
+    --btn-secondary-active: 220 12% 87%;
+    --btn-secondary-foreground: 215 28% 17%;
+    --btn-secondary-border: 220 12% 84%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
