@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Link } from 'react-router-dom';
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
   onBack: () => void;
@@ -80,7 +81,7 @@ export const InvoicePreview = ({ invoiceData, onBack, invoiceNumber }: InvoicePr
       />
       {missingFields.length > 0 && (
         <div className="p-3 rounded border border-amber-300 bg-amber-50 text-amber-900 text-sm">
-          Faltan datos del perfil: {missingFields.join(', ')}. Completa tu perfil para que se incluyan automáticamente en la factura. <a href="/perfil-empresa" className="underline font-medium">Configurar perfil</a>
+          Faltan datos del perfil: {missingFields.join(', ')}. Completa tu perfil para que se incluyan automáticamente en la factura. <Link to="/perfil-empresa" className="underline font-medium">Configurar perfil</Link>
         </div>
       )}
 
