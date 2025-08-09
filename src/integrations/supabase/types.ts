@@ -337,6 +337,38 @@ export type Database = {
           },
         ]
       }
+      user_company: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["company_role"]
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["company_role"]
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["company_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_company_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users_profiles: {
         Row: {
           created_at: string
@@ -375,13 +407,17 @@ export type Database = {
       }
     }
     Functions: {
+      add_owner_membership: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: undefined
+      }
       fn_calc_itbis: {
         Args: { net: number; rate?: number }
         Returns: number
       }
     }
     Enums: {
-      [_ in never]: never
+      company_role: "owner" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -508,6 +544,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      company_role: ["owner", "member"],
+    },
   },
 } as const
