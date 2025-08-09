@@ -51,7 +51,7 @@ export default function Inicio() {
     icon: FileText,
     path: '/crear-factura'
   }, {
-    title: 'Clientes',
+    title: 'Clientes (facturación)',
     icon: Users,
     path: '/clientes'
   }, {

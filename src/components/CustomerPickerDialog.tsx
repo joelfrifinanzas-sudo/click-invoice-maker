@@ -89,11 +89,14 @@ export function CustomerPickerDialog({ open, onOpenChange, onConfirm }: Props) {
 
         {tab === "select" ? (
           <div className="space-y-3">
-            <Input
-              placeholder="Buscar por nombre, RNC o teléfono"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div className="space-y-2">
+              <Input
+                placeholder="Buscar por nombre, RNC o teléfono"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Mostrando solo clientes (facturación)</p>
+            </div>
             <ScrollArea className="h-64 border rounded-md">
               <ul className="divide-y">
                 {customers.map((c) => (

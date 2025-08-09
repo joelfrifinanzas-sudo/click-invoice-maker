@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import UserMembershipsDialog from "./UserMembershipsDialog";
+import { Badge } from "@/components/ui/badge";
 
 export type DirectoryUser = {
   id: string;
@@ -61,7 +62,7 @@ export default function UsersDirectory() {
           <TableBody>
             {rows.map((u) => (
               <TableRow key={u.id}>
-                <TableCell className="font-medium">{u.display_name || "(sin nombre)"}</TableCell>
+                <TableCell className="font-medium flex items-center gap-2">{u.display_name || "(sin nombre)"} <Badge variant="secondary">Con acceso</Badge></TableCell>
                 <TableCell>{u.email || "-"}</TableCell>
                 <TableCell>{u.phone || "-"}</TableCell>
                 <TableCell>{u.companies_count}</TableCell>

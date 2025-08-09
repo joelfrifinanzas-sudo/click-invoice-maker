@@ -227,7 +227,7 @@ export function Header() {
                            className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition-colors duration-200 hover-scale"
                         >
                           <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                          <span className="text-sm text-foreground text-center">{label}</span>
+                          <span className="text-sm text-foreground text-center">{label === 'Clientes' ? 'Clientes (facturación)' : label}</span>
                         </button>
                       ))}
                     </div>
@@ -274,19 +274,19 @@ export function Header() {
                   onKeyDown={handleGridKeyDown}
                   className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3 animate-fade-in"
                 >
-                  {visibleModules.map(({ label, Icon }) => (
-                    <button
-                      key={label}
-                      type="button"
-                      aria-label={label}
-                      data-module-item="true"
-                      onClick={() => onModuleClick(label)}
-                      className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition-colors duration-200 hover-scale"
-                    >
-                      <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                      <span className="text-sm text-foreground text-center">{label}</span>
-                    </button>
-                  ))}
+                    {visibleModules.map(({ label, Icon }) => (
+                      <button
+                        key={label}
+                        type="button"
+                        aria-label={label}
+                        data-module-item="true"
+                        onClick={() => onModuleClick(label)}
+                        className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition-colors duration-200 hover-scale"
+                      >
+                        <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
+                        <span className="text-sm text-foreground text-center">{label === 'Clientes' ? 'Clientes (facturación)' : label}</span>
+                      </button>
+                    ))}
                 </div>
               </div>
             </PopoverContent>

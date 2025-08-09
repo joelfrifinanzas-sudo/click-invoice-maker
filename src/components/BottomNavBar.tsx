@@ -10,7 +10,7 @@ export function BottomNavBar() {
       isCenter: false,
     },
     {
-      label: "Clientes",
+      label: "Clientes (facturación)",
       to: "/clientes",
       icon: Users,
       isCenter: false,

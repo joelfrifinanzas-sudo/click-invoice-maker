@@ -23,7 +23,7 @@ const menuItems = [
     icon: Receipt,
   },
   {
-    title: "Clientes",
+    title: "Clientes (facturación)",
     url: "/clientes",
     icon: Users,
   },

@@ -126,24 +126,17 @@ export function HomeScreenV2() {
 
   const actions = [
     { title: 'Nueva factura', icon: FileText, path: '/crear-factura' },
-    { title: 'Clientes', icon: Users, path: '/clientes' },
+    { title: 'Clientes (facturación)', icon: Users, path: '/clientes' },
     { title: 'Productos', icon: Star, path: '/articulos' },
     { title: 'Cotizaciones', icon: ClipboardList, path: '/cotizaciones' },
   ];
 
   function getQuickActionIconColor(title: string) {
-    switch (title) {
-      case 'Nueva factura':
-        return 'text-primary';
-      case 'Clientes':
-        return 'text-success';
-      case 'Productos':
-        return 'text-secondary';
-      case 'Cotizaciones':
-        return 'text-warning';
-      default:
-        return 'text-foreground';
-    }
+    if (title === 'Nueva factura') return 'text-primary';
+    if (title.startsWith('Clientes')) return 'text-success';
+    if (title === 'Productos') return 'text-secondary';
+    if (title === 'Cotizaciones') return 'text-warning';
+    return 'text-foreground';
   }
 
   function go(path: string) {
