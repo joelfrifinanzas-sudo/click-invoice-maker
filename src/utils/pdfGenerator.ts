@@ -28,6 +28,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   const city = (company.businessCity || '').trim();
   const country = (company.businessCountry || 'República Dominicana').trim();
   const postal = (company.businessPostalCode || '').trim();
+  const phone = (company.businessPhone || '').trim();
   const countryShort = country === 'República Dominicana' ? 'RD' : country;
   const cityLine = [city, countryShort].filter(Boolean).join(', ');
   
@@ -110,6 +111,10 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   }
   if (country) {
     pdf.text(country, 20, yPosition);
+    yPosition += 6;
+  }
+  if (phone) {
+    pdf.text(`Tel: ${phone}`, 20, yPosition);
   }
 
   // Sección de detalles de factura
@@ -157,22 +162,36 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
   pdf.text(dateFormatted, 160, yPosition - 4);
 
-  // Tabla de servicios
-  yPosition += 25;
-  
-  // Header de tabla (fondo gris oscuro)
-  pdf.setFillColor(darkTableHeader[0], darkTableHeader[1], darkTableHeader[2]);
+  // Banda de información: Tipo de factura y NCF
+  const invoiceTypeMap: Record<string, string> = {
+    'fiscal': 'Factura con comprobante fiscal',
+    'gubernamental': 'Comprobante Gubernamental',
+    'consumidor-final': 'Factura de Consumidor Final',
+    'sin-ncf': 'Factura sin comprobante fiscal',
+    'nota-credito': 'Nota de crédito',
+    'nota-debito': 'Nota de débito'
+  };
+  const tipoLabel = invoiceTypeMap[(invoiceData as any).invoiceType] || 'Factura';
+  pdf.setFillColor(239, 246, 255);
   pdf.rect(20, yPosition, 170, 10, 'F');
-  
   pdf.setFontSize(9);
   pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(255, 255, 255); // White text
-  pdf.text('#', 22, yPosition + 6);
-  pdf.text('Artículo & Descripción', 30, yPosition + 6);
-  pdf.text('Cant.', 130, yPosition + 6);
-  pdf.text('Precio unit.', 150, yPosition + 6);
-  pdf.text('Subtotal', 170, yPosition + 6);
-  
+  pdf.setTextColor(30, 64, 175);
+  pdf.text(`Tipo: ${tipoLabel}`, 22, yPosition + 6);
+  pdf.text(`NCF: ${invoiceData.ncf || 'N/A'}`, 120, yPosition + 6);
+
+  // Tabla de servicios
+  yPosition += 15;
+  pdf.setFillColor(darkTableHeader[0], darkTableHeader[1], darkTableHeader[2]);
+  pdf.rect(20, yPosition, 170, 10, 'F');
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(255, 255, 255);
+  pdf.text('Producto/Servicio', 22, yPosition + 6);
+  pdf.text('Precio', 120, yPosition + 6);
+  pdf.text('Cantidad', 145, yPosition + 6);
+  pdf.text('ITBIS', 170, yPosition + 6);
+  pdf.text('Total', 184, yPosition + 6);
   yPosition += 10;
   
   // Servicios
@@ -197,21 +216,31 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
     }
     
     pdf.setFontSize(9);
-    pdf.text((index + 1).toString(), 22, yPosition);
-    
-    // Descripción (puede ser larga)
+    // Descripción
     const description = pdf.splitTextToSize(service.concept, 90);
-    pdf.text(description[0], 30, yPosition);
-    
+    pdf.text(description[0], 22, yPosition);
+
     const qty = parseFloat(((service as any).quantity || '1'));
     const unit = parseFloat(((service as any).unitPrice || (service as any).amount || '0'));
-    const unitFormatted = formatCurrency(unit);
-    const lineSubtotal = (isNaN(qty) || isNaN(unit)) ? 0 : qty * unit;
+    const disc = parseFloat(((service as any).lineDiscountAbs || '0')) || 0;
+    const isExempt = (service as any).isExempt === true;
+    const rateRaw = (service as any).itbisRate;
+    const rate = isExempt ? 0 : (rateRaw != null && rateRaw !== '' ? Number(rateRaw) : 0.18);
 
-    pdf.text((isNaN(qty) ? 0 : qty).toFixed(2), 130, yPosition);
-    pdf.text(unitFormatted, 150, yPosition);
+    const gross = (isNaN(qty) || isNaN(unit)) ? 0 : qty * unit;
+    const net = Math.max(0, gross - Math.max(0, disc));
+    const tax = Math.max(0, net * (isFinite(rate) ? rate : 0.18));
+    const lineTotal = net + tax;
+
+    // Precio
+    pdf.text(formatCurrency(unit), 120, yPosition);
+    // Cantidad
+    pdf.text((isNaN(qty) ? 0 : qty).toFixed(2), 145, yPosition);
+    // ITBIS
+    pdf.text(formatCurrency(tax), 170, yPosition);
+    // Total línea
     pdf.setFont('helvetica', 'bold');
-    pdf.text(formatCurrency(lineSubtotal), 170, yPosition);
+    pdf.text(formatCurrency(lineTotal), 184, yPosition);
     pdf.setFont('helvetica', 'normal');
   });
 
@@ -219,12 +248,22 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   yPosition += 20;
   
   const subtotalFormatted = formatCurrency(totals.subtotal);
+  const grossNet = (totals as any).taxableNet + (totals as any).exemptNet;
+  const discountAmount = Math.max(0, Number(((grossNet || 0) - (totals.subtotal || 0)).toFixed(2)));
 
   pdf.setFontSize(9);
   pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
   pdf.text('Subtotal', 150, yPosition);
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
   pdf.text(subtotalFormatted, 170, yPosition);
+
+  if (discountAmount > 0) {
+    yPosition += 8;
+    pdf.setTextColor(grayMedium[0], grayMedium[1], grayMedium[2]);
+    pdf.text('Descuento', 150, yPosition);
+    pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+    pdf.text(formatCurrency(discountAmount), 170, yPosition);
+  }
 
   if (totals.itbis && totals.itbis > 0) {
     yPosition += 8;
@@ -242,7 +281,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(11);
   pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
-  pdf.text('Total', 150, yPosition);
+  pdf.text('Total Neto', 150, yPosition);
   pdf.text(totalFormatted, 170, yPosition);
 
   yPosition += 8;
@@ -373,6 +412,7 @@ export const generateInvoicePDFBlob = async (invoiceData: InvoiceData, invoiceNu
   const city = (company.businessCity || '').trim();
   const country = (company.businessCountry || 'República Dominicana').trim();
   const postal = (company.businessPostalCode || '').trim();
+  const phone = (company.businessPhone || '').trim();
   const countryShort = country === 'República Dominicana' ? 'RD' : country;
   const cityLine = [city, countryShort].filter(Boolean).join(', ');
 
