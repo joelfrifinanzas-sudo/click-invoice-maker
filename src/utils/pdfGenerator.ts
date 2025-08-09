@@ -269,7 +269,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData, invoiceNumber
       pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
       pdf.text(methodLabel, 170, yPosition);
 
-      if (methodKey === 'transferencia') {
+      if (false) {
         let acc: any = null;
         try {
           const selectedId = localStorage.getItem('checkout:selected_account_id');
@@ -553,7 +553,7 @@ export const generateInvoicePDFBlob = async (invoiceData: InvoiceData, invoiceNu
       pdf.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
       pdf.text(methodLabel, 170, yPosition);
 
-      if (methodKey === 'transferencia') {
+      if (false) {
         let acc: any = null;
         try {
           const selectedId = localStorage.getItem('checkout:selected_account_id');
