@@ -224,9 +224,9 @@ export default function Inicio() {
 
           {/* Productos más vendidos */}
           <section>
-            <Card>
+            <Card className="lg:bg-white lg:border-[#E5E7EB]">
               <CardHeader>
-                <CardTitle className="text-[#F9FAFB]">Productos más vendidos</CardTitle>
+                <CardTitle className="text-[#F9FAFB] lg:text-[#1F2937]">Productos más vendidos</CardTitle>
               </CardHeader>
               <CardContent>
                 {loadingProducts ? (
@@ -254,9 +254,9 @@ export default function Inicio() {
                         <li key={i} className="flex items-center justify-between">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="inline-block w-3 h-3 rounded-sm" style={{ background: COLORS[i % COLORS.length] }} />
-                            <span className="truncate text-[#D1D5DB]">{p.name}</span>
+                            <span className="truncate text-[#D1D5DB] lg:text-[#374151]">{p.name}</span>
                           </div>
-                          <span className="font-medium text-[#F9FAFB]">{formatMoneyDOP(p.value)}</span>
+                          <span className="font-medium text-[#F9FAFB] lg:text-[#111827]">{formatMoneyDOP(p.value)}</span>
                         </li>
                       ))}
                     </ul>
