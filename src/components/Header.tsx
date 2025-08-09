@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, FileText, FilePlus2, Users, Package, History, BarChart3, Boxes, Banknote, Building2, Palette, UserCog, CreditCard, type LucideIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AccountPanelTrigger } from "@/components/AccountPanel";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -13,6 +13,21 @@ export function Header() {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const isMobile = useIsMobile();
   const [appsOpen, setAppsOpen] = useState(false);
+
+  const modules: { label: string; Icon: LucideIcon }[] = [
+    { label: "Cotizaciones", Icon: FileText },
+    { label: "Nueva factura", Icon: FilePlus2 },
+    { label: "Clientes", Icon: Users },
+    { label: "Productos", Icon: Package },
+    { label: "Historial", Icon: History },
+    { label: "Reportes", Icon: BarChart3 },
+    { label: "Inventario", Icon: Boxes },
+    { label: "Pagos", Icon: Banknote },
+    { label: "Perfil de la empresa", Icon: Building2 },
+    { label: "Marca y preferencias", Icon: Palette },
+    { label: "Gestión de usuarios", Icon: UserCog },
+    { label: "Métodos de pago", Icon: CreditCard },
+  ];
 
   useEffect(() => {
     const formatTime = (d: Date) =>
@@ -99,18 +114,24 @@ export function Header() {
 
             <Sheet open={appsOpen} onOpenChange={setAppsOpen}>
               <SheetContent side="bottom" className="h-[100vh] p-0">
-                <SheetHeader className="px-4 py-3 border-b">
-                  <SheetTitle>Módulos</SheetTitle>
-                </SheetHeader>
-                <div className="p-4">
-                  <p className="text-sm text-muted-foreground">Launcher de módulos (placeholder)</p>
-                  <div className="mt-4 grid grid-cols-3 gap-3">
-                    <div className="h-14 rounded-md bg-muted" />
-                    <div className="h-14 rounded-md bg-muted" />
-                    <div className="h-14 rounded-md bg-muted" />
-                    <div className="h-14 rounded-md bg-muted" />
-                    <div className="h-14 rounded-md bg-muted" />
-                    <div className="h-14 rounded-md bg-muted" />
+                <div className="flex h-full flex-col">
+                  <SheetHeader className="px-4 py-3 border-b">
+                    <SheetTitle>Módulos</SheetTitle>
+                  </SheetHeader>
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3">
+                      {modules.map(({ label, Icon }) => (
+                        <button
+                          key={label}
+                          type="button"
+                          aria-label={label}
+                          className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition"
+                        >
+                          <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
+                          <span className="text-sm text-foreground text-center">{label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </SheetContent>
@@ -141,19 +162,24 @@ export function Header() {
                 </svg>
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-0">
+            <PopoverContent align="end" className="w-[560px] max-h-[70vh] p-0">
               <div className="p-3 border-b">
                 <p className="text-sm font-medium">Módulos</p>
                 <p className="text-xs text-muted-foreground">Launcher (placeholder)</p>
               </div>
-              <div className="p-3">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="h-12 rounded-md bg-muted" />
-                  <div className="h-12 rounded-md bg-muted" />
-                  <div className="h-12 rounded-md bg-muted" />
-                  <div className="h-12 rounded-md bg-muted" />
-                  <div className="h-12 rounded-md bg-muted" />
-                  <div className="h-12 rounded-md bg-muted" />
+              <div className="p-3 overflow-y-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3">
+                  {modules.map(({ label, Icon }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      aria-label={label}
+                      className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition"
+                    >
+                      <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
+                      <span className="text-sm text-foreground text-center">{label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
             </PopoverContent>
