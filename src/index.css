@@ -48,6 +48,21 @@
     --btn-secondary-foreground: 215 28% 17%; /* #1F2937 */
     --btn-secondary-border: 220 12% 84%; /* #D1D5DB */
 
+    --btn-success: 148 50% 46%; /* #3BB273 */
+    --btn-success-hover: 149 51% 37%; /* #2E8E5C */
+    --btn-success-active: 149 52% 32%;
+    --btn-success-foreground: 0 0% 100%;
+
+    --btn-warning: 44 100% 48%; /* #F4B400 */
+    --btn-warning-hover: 44 100% 44%; /* #DFA200 */
+    --btn-warning-active: 44 100% 39%;
+    --btn-warning-foreground: 0 0% 100%;
+
+    --btn-destructive: 7 80% 56%; /* #E94B35 */
+    --btn-destructive-hover: 7 64% 47%; /* #C63D2B */
+    --btn-destructive-active: 7 64% 42%;
+    --btn-destructive-foreground: 0 0% 100%;
+
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -93,6 +108,22 @@
     --btn-secondary-active: 220 12% 87%;
     --btn-secondary-foreground: 215 28% 17%;
     --btn-secondary-border: 220 12% 84%;
+
+    --btn-success: 148 50% 46%;
+    --btn-success-hover: 149 51% 37%;
+    --btn-success-active: 149 52% 32%;
+    --btn-success-foreground: 0 0% 100%;
+
+    --btn-warning: 44 100% 48%;
+    --btn-warning-hover: 44 100% 44%;
+    --btn-warning-active: 44 100% 39%;
+    --btn-warning-foreground: 0 0% 100%;
+
+    --btn-destructive: 7 80% 56%;
+    --btn-destructive-hover: 7 64% 47%;
+    --btn-destructive-active: 7 64% 42%;
+    --btn-destructive-foreground: 0 0% 100%;
+
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;

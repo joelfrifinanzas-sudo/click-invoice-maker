@@ -11,15 +11,15 @@ const buttonVariants = cva(
       variant: {
         default: "bg-[hsl(var(--btn-primary))] text-[hsl(var(--btn-primary-foreground))] hover:bg-[hsl(var(--btn-primary-hover))] active:bg-[hsl(var(--btn-primary-active))] shadow-sm hover:shadow-md",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm hover:shadow-md",
+          "bg-[hsl(var(--btn-destructive))] text-[hsl(var(--btn-destructive-foreground))] hover:bg-[hsl(var(--btn-destructive-hover))] active:bg-[hsl(var(--btn-destructive-active))] shadow-sm hover:shadow-md",
         outline:
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground shadow-sm hover:shadow-md",
         secondary:
           "bg-[hsl(var(--btn-secondary))] text-[hsl(var(--btn-secondary-foreground))] border border-[hsl(var(--btn-secondary-border))] hover:bg-[hsl(var(--btn-secondary-hover))] active:bg-[hsl(var(--btn-secondary-active))] shadow-sm hover:shadow-md",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        success: "bg-success text-success-foreground hover:bg-success/90 shadow-sm hover:shadow-md",
-        warning: "bg-warning text-warning-foreground hover:bg-warning/90 shadow-sm hover:shadow-md",
+        success: "bg-[hsl(var(--btn-success))] text-[hsl(var(--btn-success-foreground))] hover:bg-[hsl(var(--btn-success-hover))] active:bg-[hsl(var(--btn-success-active))] shadow-sm hover:shadow-md",
+        warning: "bg-[hsl(var(--btn-warning))] text-[hsl(var(--btn-warning-foreground))] hover:bg-[hsl(var(--btn-warning-hover))] active:bg-[hsl(var(--btn-warning-active))] shadow-sm hover:shadow-md",
       },
       size: {
         default: "h-10 px-4 py-2 min-h-touch",
