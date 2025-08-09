@@ -9,11 +9,11 @@ function mapDbRoleToAppRole(dbRole?: string | null): AppRole {
   if (r === "superadmin") return "superadmin";
   if (r === "admin" || r === "owner" || r === "manager" || r === "supervisor") return "admin";
   if (r === "cashier" || r === "cajera" || r === "member" || r === "user") return "cajera";
-  return "cajera";
+  return "superadmin";
 }
 
 export function useUserRole() {
-  const [role, setRole] = useState<AppRole>("cajera");
+  const [role, setRole] = useState<AppRole>("superadmin");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
