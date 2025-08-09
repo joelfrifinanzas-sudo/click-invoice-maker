@@ -56,19 +56,45 @@ export function Header() {
         </time>
       </div>
 
-      {/* Derecha: Avatar con aro de estado */}
-      <AccountPanelTrigger>
-        <button
-          className={`rounded-full p-0.5 ring-2 ${statusRingClass} shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
-          aria-label={isOnline ? "Conectado" : "Sin conexión"}
-          title={isOnline ? "Conectado" : "Sin conexión"}
+      {/* Derecha: Controles del header */}
+      <div className="flex items-center gap-1.5">
+        <Button
+          id="testid:hdr-apps"
+          variant="ghost"
+          size="icon"
+          aria-label="Módulos"
+          title="Módulos"
+          type="button"
+          className="h-9 w-9 text-[hsl(var(--header-hamburger))]"
         >
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/placeholder.svg" alt="Foto de perfil" />
-            <AvatarFallback>U</AvatarFallback>
-          </Avatar>
-        </button>
-      </AccountPanelTrigger>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="5" r="1.5" />
+            <circle cx="12" cy="5" r="1.5" />
+            <circle cx="19" cy="5" r="1.5" />
+            <circle cx="5" cy="12" r="1.5" />
+            <circle cx="12" cy="12" r="1.5" />
+            <circle cx="19" cy="12" r="1.5" />
+            <circle cx="5" cy="19" r="1.5" />
+            <circle cx="12" cy="19" r="1.5" />
+            <circle cx="19" cy="19" r="1.5" />
+          </svg>
+        </Button>
+
+        <AccountPanelTrigger>
+          <button
+            id="testid:hdr-user"
+            className={`rounded-full p-0.5 ring-2 ${statusRingClass} shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
+            aria-label={isOnline ? "Conectado" : "Sin conexión"}
+            title={isOnline ? "Conectado" : "Sin conexión"}
+            type="button"
+          >
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="/placeholder.svg" alt="Foto de perfil" />
+              <AvatarFallback>U</AvatarFallback>
+            </Avatar>
+          </button>
+        </AccountPanelTrigger>
+      </div>
     </header>
   );
 }
