@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { CustomerPickerDialog } from '@/components/CustomerPickerDialog';
 import type { Tables } from '@/integrations/supabase/types';
 import { createDraftInvoice } from '@/data/invoices';
+import { supabase } from '@/integrations/supabase/client';
+import { getCurrentContext } from '@/data/utils';
 
 export default function CrearFactura() {
   useScrollToTop();
@@ -31,8 +33,42 @@ export default function CrearFactura() {
     if (!selectedCustomer) setCustomerDialogOpen(true);
   }, [selectedCustomer]);
 
+  const checkInvoiceLimit = async () => {
+    try {
+      const ctx = await getCurrentContext();
+      const c = ctx.data;
+      if (!c?.companyId) return; // compat: sin plan ni límites, no bloquear
+      // Leer límites de la empresa
+      const { data: company } = await supabase
+        .from('companies')
+        .select('limit_invoices_per_month')
+        .eq('id', c.companyId)
+        .maybeSingle();
+      const limit = (company as any)?.limit_invoices_per_month as number | null;
+      if (!limit || limit <= 0) return; // compat: sin límite configurado, no avisar
+      // Conteo de facturas del mes
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10);
+      const { count } = await supabase
+        .from('invoices')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', c.companyId)
+        .gte('issue_date', start)
+        .lt('issue_date', end);
+      if ((count || 0) >= limit) {
+        toast({
+          title: 'Límite de facturas alcanzado',
+          description: 'Has alcanzado tu límite mensual. Considera subir de plan para continuar sin restricciones.',
+        });
+      }
+    } catch {}
+  };
+
   const handleGenerateInvoice = async (data: InvoiceData) => {
     try {
+      // Validación de límites (modo compatibilidad: solo aviso, no bloquea)
+      await checkInvoiceLimit();
       // 1) Persist draft to Supabase with selected customer (non-blocking UX)
       const itbisRate = data.includeITBIS ? 0.18 : 0;
       const items = (data.services || []).map((s) => ({

@@ -21,6 +21,7 @@ export type Company = {
   plan?: string;
   limit_invoices_per_month?: number | null;
   limit_users?: number | null;
+  storage_limit_mb?: number | null;
 };
 
 type Member = { user_id: string; email: string | null; display_name: string | null; role: 'owner' | 'member' | 'manager' | 'supervisor' | 'user' | 'cashier' };
@@ -40,10 +41,11 @@ export default function CompanyForm({ company, onSaved }: { company?: Company; o
     plan: company?.plan ?? "free",
     limit_invoices_per_month: company?.limit_invoices_per_month ?? null,
     limit_users: company?.limit_users ?? null,
+    storage_limit_mb: company?.storage_limit_mb ?? null,
   });
 
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'datos' | 'usuarios'>("datos");
+  const [activeTab, setActiveTab] = useState<'datos' | 'usuarios' | 'plan'>("datos");
 
   // NCF state
   const [ncfTypes, setNcfTypes] = useState<{ ncf_type: string; next_seq: number }[]>([]);
@@ -108,6 +110,7 @@ export default function CompanyForm({ company, onSaved }: { company?: Company; o
       _limit_invoices_per_month: form.limit_invoices_per_month,
       _limit_users: form.limit_users,
       _owner_user_id: form.id ? null : ownerId, // solo al crear
+      _storage_limit_mb: form.storage_limit_mb ?? null,
     });
     setSaving(false);
     if (!error) onSaved();
@@ -169,6 +172,14 @@ export default function CompanyForm({ company, onSaved }: { company?: Company; o
     fetchMembers();
   };
 
+  // Plans state
+  const [plans, setPlans] = useState<any[]>([]);
+  useEffect(() => {
+    if (activeTab === 'plan') {
+      supabase.rpc('su_plans_list').then(({ data }) => setPlans((data as any[]) || []));
+    }
+  }, [activeTab]);
+  const selectedPlan = useMemo(() => plans.find((p) => p.name === form.plan) || null, [plans, form.plan]);
   const datosTab = (
     <div className="space-y-6">
       {/* Datos básicos */}
@@ -352,13 +363,57 @@ export default function CompanyForm({ company, onSaved }: { company?: Company; o
     </div>
   );
 
+  const planTab = (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label>Plan</Label>
+          <Select value={form.plan || ''} onValueChange={(v) => setForm((f) => ({ ...f, plan: v }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona un plan" />
+            </SelectTrigger>
+            <SelectContent>
+              {plans.map((p) => (
+                <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {selectedPlan && (
+          <div className="text-sm text-muted-foreground">
+            <p>{selectedPlan.description}</p>
+            <p className="mt-1">Límites por plan: {selectedPlan.limit_invoices_per_month ?? '—'} facturas/mes · {selectedPlan.limit_users ?? '—'} usuarios · {selectedPlan.storage_limit_mb ?? '—'} MB</p>
+          </div>
+        )}
+        <div>
+          <Label htmlFor="limit_invoices_per_month_override">Límite facturas/mes (override)</Label>
+          <Input id="limit_invoices_per_month_override" type="number" value={form.limit_invoices_per_month ?? ''} onChange={(e) => setForm((f) => ({ ...f, limit_invoices_per_month: e.target.value === '' ? null : Number(e.target.value) }))} />
+        </div>
+        <div>
+          <Label htmlFor="limit_users_override">Límite usuarios (override)</Label>
+          <Input id="limit_users_override" type="number" value={form.limit_users ?? ''} onChange={(e) => setForm((f) => ({ ...f, limit_users: e.target.value === '' ? null : Number(e.target.value) }))} />
+        </div>
+        <div>
+          <Label htmlFor="storage_limit_mb">Almacenamiento (MB) override</Label>
+          <Input id="storage_limit_mb" type="number" value={form.storage_limit_mb ?? ''} onChange={(e) => setForm((f) => ({ ...f, storage_limit_mb: e.target.value === '' ? null : Number(e.target.value) }))} />
+        </div>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={onSaved} disabled={saving}>Cerrar</Button>
+        <Button onClick={save} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+      </div>
+    </div>
+  );
+
   return (
     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
       <TabsList>
         <TabsTrigger value="datos">Datos</TabsTrigger>
+        <TabsTrigger value="plan">Plan</TabsTrigger>
         {form.id && <TabsTrigger value="usuarios">Usuarios</TabsTrigger>}
       </TabsList>
       <TabsContent value="datos">{datosTab}</TabsContent>
+      <TabsContent value="plan">{planTab}</TabsContent>
       {form.id && <TabsContent value="usuarios">{usuariosTab}</TabsContent>}
     </Tabs>
   );

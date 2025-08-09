@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json
+          limit_invoices_per_month: number | null
+          limit_users: number | null
+          name: string
+          storage_limit_mb: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          limit_invoices_per_month?: number | null
+          limit_users?: number | null
+          name: string
+          storage_limit_mb?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          limit_invoices_per_month?: number | null
+          limit_users?: number | null
+          name?: string
+          storage_limit_mb?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_user_roles: {
         Row: {
           created_at: string
@@ -50,6 +83,7 @@ export type Database = {
           phone: string | null
           plan: string
           rnc: string | null
+          storage_limit_mb: number | null
           updated_at: string
         }
         Insert: {
@@ -66,6 +100,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           rnc?: string | null
+          storage_limit_mb?: number | null
           updated_at?: string
         }
         Update: {
@@ -82,6 +117,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           rnc?: string | null
+          storage_limit_mb?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -799,6 +835,7 @@ export type Database = {
           phone: string | null
           plan: string
           rnc: string | null
+          storage_limit_mb: number | null
           updated_at: string
         }[]
       }
@@ -828,20 +865,36 @@ export type Database = {
         Returns: undefined
       }
       su_company_upsert: {
-        Args: {
-          _id: string
-          _name: string
-          _rnc: string
-          _phone: string
-          _address: string
-          _currency: string
-          _itbis_rate: number
-          _active: boolean
-          _plan: string
-          _limit_invoices_per_month: number
-          _limit_users: number
-          _owner_user_id?: string
-        }
+        Args:
+          | {
+              _id: string
+              _name: string
+              _rnc: string
+              _phone: string
+              _address: string
+              _currency: string
+              _itbis_rate: number
+              _active: boolean
+              _plan: string
+              _limit_invoices_per_month: number
+              _limit_users: number
+              _owner_user_id?: string
+            }
+          | {
+              _id: string
+              _name: string
+              _rnc: string
+              _phone: string
+              _address: string
+              _currency: string
+              _itbis_rate: number
+              _active: boolean
+              _plan: string
+              _limit_invoices_per_month: number
+              _limit_users: number
+              _owner_user_id?: string
+              _storage_limit_mb?: number
+            }
         Returns: {
           active: boolean
           address: string | null
@@ -856,6 +909,7 @@ export type Database = {
           phone: string | null
           plan: string
           rnc: string | null
+          storage_limit_mb: number | null
           updated_at: string
         }
       }
@@ -865,6 +919,39 @@ export type Database = {
           ncf_type: string
           next_seq: number
           company_id: string
+        }[]
+      }
+      su_plan_upsert: {
+        Args: {
+          _name: string
+          _description: string
+          _limit_invoices_per_month: number
+          _limit_users: number
+          _storage_limit_mb: number
+          _features?: Json
+        }
+        Returns: {
+          created_at: string
+          description: string | null
+          features: Json
+          limit_invoices_per_month: number | null
+          limit_users: number | null
+          name: string
+          storage_limit_mb: number | null
+          updated_at: string
+        }
+      }
+      su_plans_list: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          description: string | null
+          features: Json
+          limit_invoices_per_month: number | null
+          limit_users: number | null
+          name: string
+          storage_limit_mb: number | null
+          updated_at: string
         }[]
       }
       su_upsert_ncf_sequence: {

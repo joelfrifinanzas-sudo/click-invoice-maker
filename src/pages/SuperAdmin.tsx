@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CompanyForm from "@/components/superadmin/CompanyForm";
 import UsersDirectory from "@/components/superadmin/UsersDirectory";
+import PlanCatalog from "@/components/superadmin/PlanCatalog";
 
 const sections = [
   { key: "empresas", label: "Empresas" },
@@ -98,6 +99,9 @@ export default function SuperAdmin() {
   const content = useMemo(() => {
     if (active === "usuarios") {
       return <UsersDirectory />;
+    }
+    if (active === "planes") {
+      return <PlanCatalog />;
     }
     if (active !== "empresas") {
       return (
