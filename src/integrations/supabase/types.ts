@@ -775,6 +775,14 @@ export type Database = {
         Args: { _company_id: string; _ncf_type: string }
         Returns: string
       }
+      su_add_user_to_company: {
+        Args: {
+          _user_id: string
+          _company_id: string
+          _role: Database["public"]["Enums"]["company_role"]
+        }
+        Returns: undefined
+      }
       su_companies_list: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -841,6 +849,25 @@ export type Database = {
       su_upsert_ncf_sequence: {
         Args: { _company_id: string; _ncf_type: string; _next_seq: number }
         Returns: undefined
+      }
+      su_user_memberships: {
+        Args: { _user_id: string }
+        Returns: {
+          company_id: string
+          company_name: string
+          role: Database["public"]["Enums"]["company_role"]
+        }[]
+      }
+      su_users_list: {
+        Args: { _name?: string; _email?: string }
+        Returns: {
+          id: string
+          email: string
+          display_name: string
+          phone: string
+          companies_count: number
+          last_sign_in_at: string
+        }[]
       }
     }
     Enums: {

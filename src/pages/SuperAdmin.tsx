@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CompanyForm from "@/components/superadmin/CompanyForm";
+import UsersDirectory from "@/components/superadmin/UsersDirectory";
 
 const sections = [
   { key: "empresas", label: "Empresas" },
@@ -95,6 +96,9 @@ export default function SuperAdmin() {
   };
 
   const content = useMemo(() => {
+    if (active === "usuarios") {
+      return <UsersDirectory />;
+    }
     if (active !== "empresas") {
       return (
         <Card>
