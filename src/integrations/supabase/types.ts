@@ -47,6 +47,24 @@ export type Database = {
         }
         Relationships: []
       }
+      app_roots: {
+        Row: {
+          created_at: string
+          email: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_user_roles: {
         Row: {
           created_at: string
@@ -1017,6 +1035,10 @@ export type Database = {
           storage_limit_mb: number | null
           updated_at: string
         }[]
+      }
+      su_set_root_email: {
+        Args: { _email: string }
+        Returns: undefined
       }
       su_upsert_ncf_sequence: {
         Args: { _company_id: string; _ncf_type: string; _next_seq: number }
