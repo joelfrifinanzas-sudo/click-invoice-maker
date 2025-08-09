@@ -7,6 +7,7 @@ import { AccountPanelTrigger } from "@/components/AccountPanel";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 export function Header() {
   const { toggleSidebar } = useSidebar();
   const [time, setTime] = useState<string>("");
@@ -28,6 +29,29 @@ export function Header() {
     { label: "Gestión de usuarios", Icon: UserCog },
     { label: "Métodos de pago", Icon: CreditCard },
   ];
+
+  const navigate = useNavigate();
+  const routesByLabel: Record<string, string | null> = {
+    "Cotizaciones": "/cotizaciones",
+    "Nueva factura": "/crear-factura",
+    "Clientes": "/clientes",
+    "Productos": "/articulos",
+    "Historial": "/historial",
+    "Reportes": null,
+    "Inventario": "/inventario",
+    "Pagos": "/pagos",
+    "Perfil de la empresa": "/perfil-empresa",
+    "Marca y preferencias": "/configuracion",
+    "Gestión de usuarios": null,
+    "Métodos de pago": null,
+  };
+  const visibleModules = modules.filter((m) => routesByLabel[m.label]);
+  const onModuleClick = (label: string) => {
+    const path = routesByLabel[label];
+    if (!path) return;
+    setAppsOpen(false);
+    navigate(path);
+  };
 
   useEffect(() => {
     const formatTime = (d: Date) =>
@@ -120,11 +144,12 @@ export function Header() {
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto p-4">
                     <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3">
-                      {modules.map(({ label, Icon }) => (
+                      {visibleModules.map(({ label, Icon }) => (
                         <button
                           key={label}
                           type="button"
                           aria-label={label}
+                          onClick={() => onModuleClick(label)}
                           className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition"
                         >
                           <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
@@ -169,11 +194,12 @@ export function Header() {
               </div>
               <div className="p-3 overflow-y-auto">
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-12 gap-3">
-                  {modules.map(({ label, Icon }) => (
+                  {visibleModules.map(({ label, Icon }) => (
                     <button
                       key={label}
                       type="button"
                       aria-label={label}
+                      onClick={() => onModuleClick(label)}
                       className="col-span-1 xl:col-span-3 rounded-md border bg-card hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-4 flex flex-col items-center justify-center gap-2 transition"
                     >
                       <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
