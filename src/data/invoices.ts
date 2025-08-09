@@ -27,7 +27,7 @@ export async function createDraftInvoice(input: CreateDraftInvoiceInput): Promis
     const invoicePayload: TablesInsert<"invoices"> = {
       owner_user_id: ctx.data.user.id,
       company_id: ctx.data.companyId,
-      status: "draft",
+      status: "pendiente",
       itbis_rate: input.itbis_rate ?? 0.18,
       customer_id: input.customer_id ?? null,
     } as any;
@@ -76,5 +76,17 @@ export async function addPayment(params: { invoiceId: string; amount: number; me
     return { data: data ?? null, error: error?.message ?? null };
   } catch (e: any) {
     return { data: null, error: e?.message ?? "Unknown error" };
+  }
+}
+
+export async function cancelInvoice(invoiceId: string): Promise<{ error: string | null }>{
+  try {
+    const { error } = await supabase
+      .from('invoices')
+      .update({ status: 'anulada' } as TablesInsert<'invoices'>)
+      .eq('id', invoiceId);
+    return { error: error?.message ?? null };
+  } catch (e: any) {
+    return { error: e?.message ?? 'Unknown error' };
   }
 }

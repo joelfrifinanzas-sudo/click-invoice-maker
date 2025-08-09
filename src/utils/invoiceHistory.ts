@@ -5,6 +5,9 @@ export interface HistoryInvoice extends InvoiceData {
   invoiceNumber: string;
   createdAt: string;
   id: string;
+  status?: 'pendiente' | 'anulada' | 'emitida' | 'draft';
+  canceledAt?: string | null;
+  canceledBy?: string | null;
 }
 
 const HISTORY_KEY = 'invoice-history';
@@ -21,6 +24,7 @@ export const saveInvoiceToHistory = (invoiceData: InvoiceData, invoiceNumber: st
     invoiceNumber,
     createdAt: new Date().toISOString(),
     id: `${invoiceNumber}-${Date.now()}`,
+    status: 'pendiente',
   };
 
   const updatedHistory = [historyInvoice, ...existingHistory];
@@ -64,4 +68,32 @@ export const deleteInvoiceFromHistory = (id: string): void => {
 
 export const getInvoiceById = (id: string): HistoryInvoice | undefined => {
   return getInvoiceHistory().find(inv => inv.id === id);
+};
+
+export const updateInvoiceInHistory = (id: string, patch: Partial<HistoryInvoice>): boolean => {
+  const existing = getInvoiceHistory();
+  const idx = existing.findIndex(inv => inv.id === id);
+  if (idx === -1) return false;
+  const inv = existing[idx];
+  if (inv.status && inv.status !== 'pendiente') return false; // solo editable si pendiente
+  const updated = { ...inv, ...patch } as HistoryInvoice;
+  existing[idx] = updated;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(existing));
+  return true;
+};
+
+export const cancelInvoiceInHistory = (id: string, userId?: string): boolean => {
+  const existing = getInvoiceHistory();
+  const idx = existing.findIndex(inv => inv.id === id);
+  if (idx === -1) return false;
+  const inv = existing[idx];
+  if (inv.status === 'anulada') return true;
+  existing[idx] = {
+    ...inv,
+    status: 'anulada',
+    canceledAt: new Date().toISOString(),
+    canceledBy: userId || null,
+  } as HistoryInvoice;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(existing));
+  return true;
 };

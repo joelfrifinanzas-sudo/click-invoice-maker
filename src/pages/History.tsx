@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { History, Download, Eye, ArrowLeft, Trash2, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getInvoiceHistory, deleteInvoiceFromHistory, type HistoryInvoice } from '@/utils/invoiceHistory';
+import { getInvoiceHistory, deleteInvoiceFromHistory, type HistoryInvoice, cancelInvoiceInHistory } from '@/utils/invoiceHistory';
 import { generateInvoicePDF } from '@/utils/pdfGenerator';
 import { InvoicePreview } from '@/components/InvoicePreview';
 import { format } from 'date-fns';
@@ -148,20 +148,23 @@ const HistoryPage = () => {
                           </p>
                         </div>
 
-                        {/* Total amount */}
-                        <div className="pt-2">
+                        {/* Total amount and status */}
+                        <div className="pt-2 flex items-center justify-between">
                           <p className="text-2xl font-bold text-primary">
                             {formatCurrency(invoice.total.toString())}
                           </p>
+                          <Badge variant={invoice.status === 'anulada' ? 'destructive' : 'secondary'}>
+                            {invoice.status ? invoice.status.toUpperCase() : 'PENDIENTE'}
+                          </Badge>
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex gap-3 pt-4 border-t">
+                        <div className="flex flex-wrap gap-3 pt-4 border-t">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleViewInvoice(invoice)}
-                            className="flex-1"
+                            className="flex-1 min-w-[120px]"
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             Ver
@@ -170,11 +173,26 @@ const HistoryPage = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleDownloadPDF(invoice)}
-                            className="flex-1"
+                            className="flex-1 min-w-[120px]"
+                            disabled={invoice.status === 'anulada'}
+                            title={invoice.status === 'anulada' ? 'Factura anulada: no facturable' : ''}
                           >
                             <Download className="w-4 h-4 mr-2" />
                             PDF
                           </Button>
+                          {invoice.status !== 'anulada' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                cancelInvoiceInHistory(invoice.id, undefined);
+                                setInvoices(getInvoiceHistory());
+                              }}
+                              className="flex-1 min-w-[120px]"
+                            >
+                              Anular
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"

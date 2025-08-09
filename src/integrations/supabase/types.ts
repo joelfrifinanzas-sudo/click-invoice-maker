@@ -407,6 +407,8 @@ export type Database = {
       }
       invoices: {
         Row: {
+          canceled_at: string | null
+          canceled_by: string | null
           company_id: string
           created_at: string
           currency: string
@@ -424,6 +426,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          canceled_at?: string | null
+          canceled_by?: string | null
           company_id: string
           created_at?: string
           currency?: string
@@ -441,6 +445,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          canceled_at?: string | null
+          canceled_by?: string | null
           company_id?: string
           created_at?: string
           currency?: string
