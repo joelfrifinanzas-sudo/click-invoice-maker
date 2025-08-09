@@ -1,4 +1,8 @@
 {
   "buildCommand": "pnpm build",
-  "installCommand": "pnpm install --frozen-lockfile"
+  "installCommand": "pnpm install --frozen-lockfile",
+  "env": {
+    "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+  }
 }
+
