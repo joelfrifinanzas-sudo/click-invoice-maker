@@ -105,6 +105,13 @@ export type Database = {
             referencedRelation: "v_cotizacion_totales"
             referencedColumns: ["cotizacion_id"]
           },
+          {
+            foreignKeyName: "fk_cotizacion_items_product"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cotizaciones: {
@@ -171,7 +178,22 @@ export type Database = {
           valor_descuento?: number
           vence_el?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_cotizaciones_company"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_cotizaciones_customer"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -250,6 +272,30 @@ export type Database = {
         }
         Relationships: []
       }
+      empresa_facturacion_config: {
+        Row: {
+          company_id: string
+          created_at: string
+          ncf_prefix: string
+          next_invoice_seq: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          ncf_prefix?: string
+          next_invoice_seq?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          ncf_prefix?: string
+          next_invoice_seq?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -292,6 +338,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_invoice_items_invoice"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoice_items_invoice"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_totals"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "fk_invoice_items_product"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoice_items_invoice_id_fkey"
             columns: ["invoice_id"]
             isOneToOne: false
@@ -324,6 +391,8 @@ export type Database = {
           id: string
           issue_date: string
           itbis_rate: number
+          ncf: string | null
+          ncf_sequence: number | null
           notes: string | null
           number: string | null
           owner_user_id: string
@@ -339,6 +408,8 @@ export type Database = {
           id?: string
           issue_date?: string
           itbis_rate?: number
+          ncf?: string | null
+          ncf_sequence?: number | null
           notes?: string | null
           number?: string | null
           owner_user_id: string
@@ -354,6 +425,8 @@ export type Database = {
           id?: string
           issue_date?: string
           itbis_rate?: number
+          ncf?: string | null
+          ncf_sequence?: number | null
           notes?: string | null
           number?: string | null
           owner_user_id?: string
@@ -361,6 +434,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_invoices_company"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_customer"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoices_company_id_fkey"
             columns: ["company_id"]
@@ -415,6 +502,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_payments_invoice"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_payments_invoice"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_totals"
+            referencedColumns: ["invoice_id"]
+          },
           {
             foreignKeyName: "payments_invoice_id_fkey"
             columns: ["invoice_id"]
