@@ -5,13 +5,15 @@ import { Header } from "@/components/Header";
 import { BottomNavBar } from "@/components/BottomNavBar";
 import { useAutoHideHeader } from "@/hooks/useAutoHideHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BackButton } from "@/components/BackButton";
 
 interface LayoutProps {
   children: ReactNode;
   showSidebar?: boolean;
+  hideBackButton?: boolean;
 }
 
-export function Layout({ children, showSidebar = true }: LayoutProps) {
+export function Layout({ children, showSidebar = true, hideBackButton = false }: LayoutProps) {
   const mainRef = useRef<HTMLElement | null>(null);
   useAutoHideHeader({ containerRef: mainRef });
   const isMobile = useIsMobile();
@@ -22,6 +24,11 @@ export function Layout({ children, showSidebar = true }: LayoutProps) {
       <div className="min-h-screen w-full flex main-layout">
         {shouldShowSidebar && <AppSidebar />}
         <Header />
+        {!hideBackButton && (
+          <div className="fixed top-2 left-14 z-header">
+            <BackButton />
+          </div>
+        )}
         
         <div className="flex-1 flex flex-col overflow-visible">
           {/* Main Content */}

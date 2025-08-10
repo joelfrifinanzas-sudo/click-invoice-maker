@@ -10,7 +10,7 @@ interface ModuleHeaderProps {
 export function ModuleHeader({ 
   title, 
   description, 
-  showBackButton = true, 
+  showBackButton = false, 
   className = '' 
 }: ModuleHeaderProps) {
   return (

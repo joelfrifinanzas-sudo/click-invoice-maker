@@ -36,6 +36,9 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 234 77% 57%;
 
+    /* Component tokens */
+    --back-button: 186 100% 33%;
+
     /* Button tokens */
     --btn-primary: 234 77% 57%; /* #3C4DE6 */
     --btn-primary-hover: 235 61% 48%; /* #2F3BC4 */

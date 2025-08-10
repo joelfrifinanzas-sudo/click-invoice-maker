@@ -1,32 +1,40 @@
-import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 
 interface BackButtonProps {
   className?: string;
   fallbackRoute?: string;
+  label?: string;
 }
 
-export function BackButton({ className = '', fallbackRoute = '/inicio' }: BackButtonProps) {
+export function BackButton({ className = '', fallbackRoute = '/inicio', label = 'Volver' }: BackButtonProps) {
   const navigate = useNavigate();
 
-  const handleBack = () => {
+  const goBack = () => {
     if (window.history.length > 1) {
-      navigate(-1);
+      window.history.back();
     } else {
       navigate(fallbackRoute, { replace: true });
     }
   };
 
+  const onKeyDown = (e: any) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      goBack();
+    }
+  };
+
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleBack}
-      aria-label="Volver"
-      className={`p-2 rounded-full transition-colors ${className}`}
+    <button
+      type="button"
+      role="button"
+      aria-label="Volver a la página anterior"
+      onClick={goBack}
+      onKeyDown={onKeyDown}
+      className={`inline-flex items-center gap-1 px-2 py-1 min-h-11 text-[hsl(var(--back-button,186_100%_33%))] font-medium text-base hover:underline cursor-pointer select-none rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
     >
-      <ArrowLeft className="w-5 h-5 text-muted-foreground" />
-    </Button>
+      <span aria-hidden="true" className="text-[18px] leading-none">‹</span>
+      <span>{label}</span>
+    </button>
   );
 }
