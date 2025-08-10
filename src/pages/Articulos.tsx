@@ -1,13 +1,26 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BackButton } from "@/components/BackButton";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Package, Edit, Trash2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Package, Edit, Trash2, Barcode, ImagePlus, X, ChevronDown } from "lucide-react";
+import { formatMoneyDOP } from "@/utils/formatters";
+import { listProducts, upsertProduct } from "@/data/products";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
-interface Articulo {
+interface ArticuloCardItem {
   id: number;
   nombre: string;
   precio: number;
@@ -15,40 +28,239 @@ interface Articulo {
   stock: number;
 }
 
+const moneyToNumber = (v: string): number => {
+  if (!v) return 0;
+  const cleaned = v
+    .replace(/[^0-9,\.]/g, "")
+    .replace(/,/g, ".");
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+};
+
+const schema = z.object({
+  nombre: z.string().min(1, "Requerido").max(150, "Máximo 150 caracteres"),
+  codigoBarras: z.string().optional().or(z.literal("")).transform(v => v?.trim() ?? ""),
+  vendePor: z.enum(["unidad", "granel"]).default("unidad"),
+  precioCosto: z.string().optional(),
+  precioVenta: z.string().min(1, "Requerido"),
+  precioMayoreo: z.string().optional(),
+  categoria: z.string().optional(),
+  usaInventario: z.boolean().default(false),
+  cantidadMinima: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
+
 export default function Articulos() {
   useScrollToTop();
-  
-  const [articulos, setArticulos] = useState<Articulo[]>([
-    { id: 1, nombre: "Consultoría", precio: 100.00, categoria: "Servicio", stock: 999 },
-    { id: 2, nombre: "Desarrollo Web", precio: 500.00, categoria: "Servicio", stock: 999 },
-    { id: 3, nombre: "Producto A", precio: 25.50, categoria: "Producto", stock: 50 },
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Demo list stays as is (no DB changes to listing)
+  const [articulos, setArticulos] = useState<ArticuloCardItem[]>([
+    { id: 1, nombre: "Consultoría", precio: 100.0, categoria: "Servicio", stock: 999 },
+    { id: 2, nombre: "Desarrollo Web", precio: 500.0, categoria: "Servicio", stock: 999 },
+    { id: 3, nombre: "Producto A", precio: 25.5, categoria: "Producto", stock: 50 },
   ]);
 
   const [showForm, setShowForm] = useState(false);
-  const [nuevoArticulo, setNuevoArticulo] = useState({
-    nombre: "",
-    precio: "",
-    categoria: "",
-    stock: "",
+
+  // Categories local list (client-side only)
+  const [categorias, setCategorias] = useState<string[]>(["Servicio", "Producto", "Insumo"]);
+  const [newCategoryOpen, setNewCategoryOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  // Image upload state (client-side only)
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  // Barcode image input (for BarcodeDetector)
+  const barcodeFileRef = useRef<HTMLInputElement | null>(null);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: "onChange",
+    defaultValues: {
+      nombre: "",
+      codigoBarras: "",
+      vendePor: "unidad",
+      precioCosto: "",
+      precioVenta: "",
+      precioMayoreo: "",
+      categoria: "",
+      usaInventario: false,
+      cantidadMinima: "",
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const articulo: Articulo = {
-      id: Date.now(),
-      nombre: nuevoArticulo.nombre,
-      precio: parseFloat(nuevoArticulo.precio),
-      categoria: nuevoArticulo.categoria,
-      stock: parseInt(nuevoArticulo.stock),
-    };
-    setArticulos([...articulos, articulo]);
-    setNuevoArticulo({ nombre: "", precio: "", categoria: "", stock: "" });
-    setShowForm(false);
-  };
+  const errorsCount = Object.keys(form.formState.errors).length;
+
+  useEffect(() => {
+    document.title = "Artículos | Nuevo producto";
+  }, []);
+
+  const nombreLength = form.watch("nombre")?.length ?? 0;
+  const usaInventario = form.watch("usaInventario");
+  const cantidadMinima = form.watch("cantidadMinima");
+  const ventaNum = moneyToNumber(form.watch("precioVenta") || "0");
+  const isSubmitDisabled = !form.formState.isValid || ventaNum <= 0 || (usaInventario && (!cantidadMinima || Number(cantidadMinima) <= 0));
 
   const eliminarArticulo = (id: number) => {
-    setArticulos(articulos.filter(a => a.id !== id));
+    setArticulos((prev) => prev.filter((a) => a.id !== id));
   };
+
+  const handleImageChange = (file: File | null) => {
+    if (!file) {
+      setImageFile(null);
+      setImagePreview(null);
+      return;
+    }
+    if (!/(png|jpg|jpeg)$/i.test(file.type)) {
+      toast({ title: "Formato no soportado", description: "Solo JPG o PNG", variant: "destructive" });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Archivo muy grande", description: "Máximo 2MB", variant: "destructive" });
+      return;
+    }
+    setImageFile(file);
+    const url = URL.createObjectURL(file);
+    setImagePreview(url);
+  };
+
+  const onScanBarcodeClick = async () => {
+    const hasDetector = typeof (window as any).BarcodeDetector !== "undefined";
+    if (!hasDetector) {
+      toast({ title: "Escáner no disponible", description: "Ingrese el código manualmente" });
+      return;
+    }
+    barcodeFileRef.current?.click();
+  };
+
+  const onBarcodeFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const imgBitmap = await createImageBitmap(file);
+      const Detector = (window as any).BarcodeDetector;
+      const detector = new Detector({ formats: ["code_128", "ean_13", "upc_a", "qr_code"] });
+      const results = await detector.detect(imgBitmap);
+      if (results && results[0]?.rawValue) {
+        form.setValue("codigoBarras", results[0].rawValue, { shouldValidate: true, shouldDirty: true });
+        toast({ title: "Código detectado", description: results[0].rawValue });
+      } else {
+        toast({ title: "No se detectó código", description: "Prueba otra foto o ingresa manualmente" });
+      }
+    } catch (err) {
+      toast({ title: "Error al escanear", description: "Intenta nuevamente", variant: "destructive" });
+    } finally {
+      if (barcodeFileRef.current) barcodeFileRef.current.value = "";
+    }
+  };
+
+  // Currency helpers for inputs
+  const handleMoneyChange = (field: keyof Pick<FormValues, "precioCosto" | "precioVenta" | "precioMayoreo">) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value;
+      // Keep digits and separators, then reformat
+      const num = moneyToNumber(raw);
+      const formatted = raw === "" ? "" : formatMoneyDOP(num);
+      form.setValue(field, formatted, { shouldValidate: true, shouldDirty: true });
+    };
+
+  const handleMoneyBlur = (field: keyof Pick<FormValues, "precioCosto" | "precioVenta" | "precioMayoreo">) =>
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const num = moneyToNumber(e.target.value);
+      form.setValue(field, num ? formatMoneyDOP(num) : "", { shouldValidate: true, shouldDirty: true });
+    };
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const pendingSubmitRef = useRef<FormValues | null>(null);
+
+  const validateBeforeSave = async (values: FormValues) => {
+    const venta = moneyToNumber(values.precioVenta || "0");
+    const costo = moneyToNumber(values.precioCosto || "0");
+
+    // Required checks
+    if (!values.nombre?.trim()) return false;
+    if (!venta || venta <= 0) return false;
+    if (values.usaInventario && (!values.cantidadMinima || Number(values.cantidadMinima) <= 0)) return false;
+
+    // Warn if venta < costo
+    if (costo > 0 && venta < costo) {
+      pendingSubmitRef.current = values;
+      setConfirmOpen(true);
+      return false; // wait for confirmation
+    }
+    return true;
+  };
+
+  const doSubmit = async (values: FormValues) => {
+    try {
+      // DB uniqueness check for barcode -> map to sku
+      const barcode = values.codigoBarras?.trim();
+      if (barcode) {
+        const { data: existing, error } = await listProducts({ limit: 200 });
+        if (error) {
+          toast({ title: "Error verificando código", description: error, variant: "destructive" });
+          return;
+        }
+        const dup = (existing ?? []).some((p) => (p.sku ?? "").trim() === barcode);
+        if (dup) {
+          toast({ title: "Código de barras ya registrado", description: "Usa otro código", variant: "destructive" });
+          return;
+        }
+      }
+
+      const unitPrice = moneyToNumber(values.precioVenta || "0");
+      const { data, error } = await upsertProduct({
+        name: values.nombre.trim(),
+        unit_price: unitPrice,
+        currency: "DOP",
+        sku: barcode || null as any,
+        active: true,
+      });
+      if (error) {
+        toast({ title: "No se pudo guardar", description: error, variant: "destructive" });
+        return;
+      }
+
+      toast({ title: "Producto guardado", description: data?.name });
+      setShowForm(false);
+      form.reset();
+      setImageFile(null);
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+
+      // Optionally add to local list to reflect change visually
+      setArticulos((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          nombre: values.nombre.trim(),
+          precio: unitPrice,
+          categoria: values.categoria || "-",
+          stock: 0,
+        },
+      ]);
+    } catch (e: any) {
+      toast({ title: "Error", description: e?.message ?? "Error desconocido", variant: "destructive" });
+    }
+  };
+
+  const onSubmit = async (values: FormValues) => {
+    const ok = await validateBeforeSave(values);
+    if (ok) await doSubmit(values);
+  };
+
+  const confirmProceed = async () => {
+    const vals = pendingSubmitRef.current;
+    setConfirmOpen(false);
+    if (vals) await doSubmit(vals);
+    pendingSubmitRef.current = null;
+  };
+
+  const isCantidadMinimaInvalid = usaInventario && (!cantidadMinima || Number(cantidadMinima) === 0);
 
   return (
     <div className="container mx-auto p-6 pb-20">
@@ -56,9 +268,7 @@ export default function Articulos() {
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
             <BackButton />
-            <h1 className="text-3xl font-bold text-gray-900">
-              Artículos
-            </h1>
+            <h1 className="text-3xl font-bold text-foreground">Artículos</h1>
           </div>
           <Button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
@@ -72,101 +282,279 @@ export default function Articulos() {
               <CardTitle>Agregar Nuevo Artículo</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nombre">Nombre</Label>
-                  <Input
-                    id="nombre"
-                    value={nuevoArticulo.nombre}
-                    onChange={(e) => setNuevoArticulo({...nuevoArticulo, nombre: e.target.value})}
-                    required
-                  />
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" aria-live="polite">
+                {/* Error live region */}
+                <div role="status" aria-live="polite" className="sr-only">
+                  {errorsCount > 0 ? `Hay ${errorsCount} errores en el formulario` : "Formulario sin errores"}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="precio">Precio</Label>
-                  <Input
-                    id="precio"
-                    type="number"
-                    step="0.01"
-                    value={nuevoArticulo.precio}
-                    onChange={(e) => setNuevoArticulo({...nuevoArticulo, precio: e.target.value})}
-                    required
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Nombre / Descripción */}
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label htmlFor="nombre">Nombre / Descripción</Label>
+                    <Input
+                      id="nombre"
+                      maxLength={150}
+                      aria-describedby="nombre-counter"
+                      {...form.register("nombre")}
+                    />
+                    <div id="nombre-counter" className="text-xs text-muted-foreground text-right">
+                      {nombreLength}/150
+                    </div>
+                  </div>
+
+                  {/* Código de barras */}
+                  <div className="space-y-2">
+                    <Label htmlFor="codigoBarras">Código de barras</Label>
+                    <div className="flex gap-2">
+                      <Input id="codigoBarras" placeholder="Escanea o escribe" {...form.register("codigoBarras")}/>
+                      <Button type="button" variant="secondary" onClick={onScanBarcodeClick} aria-label="Escanear código">
+                        <Barcode className="w-4 h-4" />
+                      </Button>
+                      <input ref={barcodeFileRef} type="file" accept="image/*" className="hidden" onChange={onBarcodeFileSelected} capture="environment"/>
+                    </div>
+                  </div>
+
+                  {/* Se vende */}
+                  <div className="space-y-2">
+                    <Label>Se vende</Label>
+                    <ToggleGroup
+                      type="single"
+                      value={form.watch("vendePor")}
+                      onValueChange={(v) => v && form.setValue("vendePor", v as any, { shouldDirty: true })}
+                      className="w-full"
+                    >
+                      <ToggleGroupItem value="unidad" className="flex-1" aria-label="Por unidad">
+                        Por unidad
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="granel" className="flex-1" aria-label="A granel">
+                        A granel
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+
+                  {/* Precios */}
+                  <div className="space-y-2">
+                    <Label htmlFor="precioCosto">Precio costo</Label>
+                    <Input
+                      id="precioCosto"
+                      inputMode="decimal"
+                      placeholder="RD$ 0.00"
+                      value={form.watch("precioCosto") ?? ""}
+                      onChange={handleMoneyChange("precioCosto")}
+                      onBlur={handleMoneyBlur("precioCosto")}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="precioVenta">Precio venta</Label>
+                    <Input
+                      id="precioVenta"
+                      required
+                      inputMode="decimal"
+                      placeholder="RD$ 0.00"
+                      value={form.watch("precioVenta") ?? ""}
+                      onChange={handleMoneyChange("precioVenta")}
+                      onBlur={handleMoneyBlur("precioVenta")}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="precioMayoreo">Precio mayoreo (opcional)</Label>
+                    <Input
+                      id="precioMayoreo"
+                      inputMode="decimal"
+                      placeholder="RD$ 0.00"
+                      value={form.watch("precioMayoreo") ?? ""}
+                      onChange={handleMoneyChange("precioMayoreo")}
+                      onBlur={handleMoneyBlur("precioMayoreo")}
+                    />
+                  </div>
+
+                  {/* Categoría combobox */}
+                  <div className="space-y-2">
+                    <Label>Categoría</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" className="w-full justify-between">
+                          {form.watch("categoria") ? form.watch("categoria") : "Selecciona categoría"}
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+                        <Command>
+                          <CommandInput placeholder="Buscar categoría..." />
+                          <CommandEmpty>Sin resultados.</CommandEmpty>
+                          <CommandGroup>
+                            {categorias.map((c) => (
+                              <CommandItem key={c} onSelect={() => form.setValue("categoria", c, { shouldDirty: true })}>
+                                {c}
+                              </CommandItem>
+                            ))}
+                            <CommandItem onSelect={() => setNewCategoryOpen(true)}>+ Crear nueva categoría</CommandItem>
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Inventario */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label htmlFor="usaInventario">Usa inventario</Label>
+                      <Switch id="usaInventario" checked={usaInventario} onCheckedChange={(v) => form.setValue("usaInventario", v, { shouldDirty: true })} />
+                    </div>
+                    {usaInventario && (
+                      <div className="space-y-2">
+                        <Label htmlFor="cantidadMinima">Cantidad mínima</Label>
+                        <Input
+                          id="cantidadMinima"
+                          inputMode="numeric"
+                          value={form.watch("cantidadMinima") ?? ""}
+                          onChange={(e) => form.setValue("cantidadMinima", e.target.value.replace(/[^0-9]/g, ""), { shouldDirty: true, shouldValidate: true })}
+                          className={isCantidadMinimaInvalid ? "border-destructive" : undefined}
+                        />
+                        {isCantidadMinimaInvalid && (
+                          <p className="text-xs text-destructive">Debe ser mayor a 0</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Imagen */}
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label>Imagen (opcional)</Label>
+                    {!imagePreview ? (
+                      <div className="flex items-center gap-3">
+                        <label className="inline-flex items-center">
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg"
+                            className="hidden"
+                            onChange={(e) => handleImageChange(e.target.files?.[0] ?? null)}
+                          />
+                          <Button type="button" variant="outline" className="gap-2">
+                            <ImagePlus className="w-4 h-4" /> Subir imagen
+                          </Button>
+                        </label>
+                        <p className="text-xs text-muted-foreground">JPG/PNG, máx. 2MB</p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-4">
+                        <img src={imagePreview} alt="Vista previa del producto" className="h-16 w-16 rounded-md object-cover border" />
+                        <Button type="button" variant="ghost" className="gap-2" onClick={() => handleImageChange(null)}>
+                          <X className="w-4 h-4" /> Quitar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="categoria">Categoría</Label>
-                  <Input
-                    id="categoria"
-                    value={nuevoArticulo.categoria}
-                    onChange={(e) => setNuevoArticulo({...nuevoArticulo, categoria: e.target.value})}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="stock">Stock</Label>
-                  <Input
-                    id="stock"
-                    type="number"
-                    value={nuevoArticulo.stock}
-                    onChange={(e) => setNuevoArticulo({...nuevoArticulo, stock: e.target.value})}
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2 lg:col-span-4 flex gap-2">
-                  <Button type="submit">Guardar</Button>
-                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                    Cancelar
+
+                {/* Alert when venta < costo */}
+                {moneyToNumber(form.watch("precioCosto") || "0") > 0 && moneyToNumber(form.watch("precioVenta") || "0") > 0 && moneyToNumber(form.watch("precioVenta") || "0") < moneyToNumber(form.watch("precioCosto") || "0") && (
+                  <Alert variant="default">
+                    <AlertDescription>
+                      El precio de venta es menor que el costo. Se te pedirá confirmación al guardar.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitDisabled || form.formState.isSubmitting}>
+                    Guardar producto
                   </Button>
+                  <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => navigate("/articulos")}>Cancelar</Button>
                 </div>
               </form>
             </CardContent>
           </Card>
         )}
 
+        {/* Listado existente */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {articulos.map((articulo) => (
             <Card key={articulo.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Package className="w-5 h-5 text-blue-600" />
-                    <h3 className="font-semibold text-gray-900">{articulo.nombre}</h3>
+                    <Package className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold text-foreground">{articulo.nombre}</h3>
                   </div>
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" className="w-8 h-8 p-0">
                       <Edit className="w-3 h-3" />
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="w-8 h-8 p-0 text-red-600 hover:text-red-700"
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="w-8 h-8 p-0 text-destructive"
                       onClick={() => eliminarArticulo(articulo.id)}
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Precio:</span>
-                    <span className="font-medium">${articulo.precio.toFixed(2)}</span>
+                    <span className="text-muted-foreground">Precio:</span>
+                    <span className="font-medium">{formatMoneyDOP(articulo.precio)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Categoría:</span>
+                    <span className="text-muted-foreground">Categoría:</span>
                     <span>{articulo.categoria}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Stock:</span>
-                    <span className={articulo.stock > 10 ? "text-green-600" : "text-orange-600"}>
-                      {articulo.stock}
-                    </span>
+                    <span className="text-muted-foreground">Stock:</span>
+                    <span className={articulo.stock > 10 ? "text-green-600" : "text-orange-600"}>{articulo.stock}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+
+        {/* Confirm dialog */}
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Precio de venta menor al costo</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">¿Deseas continuar de todos modos?</p>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+              <Button onClick={confirmProceed}>Sí, continuar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Crear categoría */}
+        <Dialog open={newCategoryOpen} onOpenChange={setNewCategoryOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nueva categoría</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="new-category">Nombre</Label>
+              <Input id="new-category" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setNewCategoryOpen(false)}>Cancelar</Button>
+              <Button
+                onClick={() => {
+                  const name = newCategoryName.trim();
+                  if (!name) return;
+                  setCategorias((prev) => Array.from(new Set([...prev, name])));
+                  form.setValue("categoria", name, { shouldDirty: true });
+                  setNewCategoryName("");
+                  setNewCategoryOpen(false);
+                }}
+              >
+                Crear
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
