@@ -99,6 +99,15 @@ export default function Login() {
     e.preventDefault();
     setErrorMsg(null);
 
+    // Server-side precheck (rate limit)
+    try {
+      const pre = await supabase.functions.invoke('login-guard', { body: { action: 'precheck', email } });
+      if (!pre.error && (pre.data as any)?.blocked) {
+        setErrorMsg("Demasiados intentos. Intenta en 5 min.");
+        return;
+      }
+    } catch {}
+
     if (showCaptcha && !captcha.solved) {
       if (!captcha.verify()) {
         setErrorMsg("Por favor resuelve el captcha para continuar");
@@ -111,6 +120,7 @@ export default function Login() {
     setSubmitting(false);
     if (error) {
       pushAttempt(email);
+      try { await supabase.functions.invoke('login-guard', { body: { action: 'record', email, success: false } }); } catch {}
       setErrorMsg(mapError(error.message));
       return;
     }
@@ -121,9 +131,11 @@ export default function Login() {
     if (status && status.toLowerCase() === "suspended") {
       await supabase.auth.signOut();
       setErrorMsg("Cuenta suspendida");
+      try { await supabase.functions.invoke('login-guard', { body: { action: 'record', email, success: false } }); } catch {}
       return;
     }
 
+    try { await supabase.functions.invoke('login-guard', { body: { action: 'record', email, success: true } }); } catch {}
     try { await supabase.rpc("touch_login"); } catch {}
     clearAttempts(email);
     toast({ title: "Sesión iniciada" });
@@ -132,6 +144,16 @@ export default function Login() {
 
   async function handleMagicLink() {
     setErrorMsg(null);
+
+    // Server-side precheck (rate limit)
+    try {
+      const pre = await supabase.functions.invoke('login-guard', { body: { action: 'precheck', email } });
+      if (!pre.error && (pre.data as any)?.blocked) {
+        setErrorMsg("Demasiados intentos. Intenta en 5 min.");
+        return;
+      }
+    } catch {}
+
     setMagicSending(true);
     const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signInWithOtp({
@@ -140,8 +162,10 @@ export default function Login() {
     });
     setMagicSending(false);
     if (error) {
+      try { await supabase.functions.invoke('login-guard', { body: { action: 'record', email, success: false } }); } catch {}
       setErrorMsg(mapError(error.message));
     } else {
+      try { await supabase.functions.invoke('login-guard', { body: { action: 'record', email, success: true } }); } catch {}
       toast({ title: "Enlace enviado", description: "Revisa tu correo para iniciar sesión." });
     }
   }
