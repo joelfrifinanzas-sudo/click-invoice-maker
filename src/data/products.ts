@@ -6,12 +6,18 @@ export type Product = Tables<"products">;
 export type ProductInsert = TablesInsert<"products">;
 export type ProductUpdate = TablesUpdate<"products">;
 
-export async function listProducts(params?: { search?: string; limit?: number; activeOnly?: boolean }): Promise<{ data: Product[] | null; error: string | null }> {
+export async function listProducts(params?: { search?: string; limit?: number; activeOnly?: boolean; page?: number }): Promise<{ data: Product[] | null; error: string | null }> {
   try {
     const query = supabase.from("products").select("*").order("created_at", { ascending: false });
     if (params?.search) query.ilike("name", `%${params.search}%`);
     if (params?.activeOnly) query.eq("active", true);
-    if (params?.limit) query.limit(params.limit);
+    if (typeof params?.page === 'number' && params?.limit) {
+      const from = params.page * params.limit;
+      const to = from + params.limit - 1;
+      query.range(from, to);
+    } else if (params?.limit) {
+      query.limit(params.limit);
+    }
     const { data, error } = await query;
     return { data: data ?? null, error: error?.message ?? null };
   } catch (e: any) {

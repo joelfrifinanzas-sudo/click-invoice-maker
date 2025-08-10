@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Package, Edit, Trash2, Barcode, ImagePlus, X, ChevronDown } from "lucide-react";
 import { formatMoneyDOP } from "@/utils/formatters";
 import { listProducts, upsertProduct } from "@/data/products";
+import type { Product } from "@/data/products";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -27,6 +28,7 @@ interface ArticuloCardItem {
   categoria: string;
   stock: number;
 }
+
 
 const moneyToNumber = (v: string): number => {
   if (!v) return 0;
@@ -56,12 +58,13 @@ export default function Articulos() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Demo list stays as is (no DB changes to listing)
-  const [articulos, setArticulos] = useState<ArticuloCardItem[]>([
-    { id: 1, nombre: "Consultoría", precio: 100.0, categoria: "Servicio", stock: 999 },
-    { id: 2, nombre: "Desarrollo Web", precio: 500.0, categoria: "Servicio", stock: 999 },
-    { id: 3, nombre: "Producto A", precio: 25.5, categoria: "Producto", stock: 50 },
-  ]);
+  // Remote products list (Supabase)
+  const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState(0);
+  const pageSize = 12;
+  const [hasNext, setHasNext] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   const [showForm, setShowForm] = useState(false);
 
@@ -105,8 +108,32 @@ export default function Articulos() {
   const ventaNum = moneyToNumber(form.watch("precioVenta") || "0");
   const isSubmitDisabled = !form.formState.isValid || ventaNum <= 0 || (usaInventario && (!cantidadMinima || Number(cantidadMinima) <= 0));
 
-  const eliminarArticulo = (id: number) => {
-    setArticulos((prev) => prev.filter((a) => a.id !== id));
+  // Load products from Supabase with simple pagination (overfetch by 1)
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await listProducts({ search: search || undefined, activeOnly: true, page, limit: pageSize + 1 });
+      if (error) {
+        toast({ title: "Error cargando productos", description: error, variant: "destructive" });
+        return;
+      }
+      const rows = data ?? [];
+      setHasNext(rows.length > pageSize);
+      setProducts(rows.slice(0, pageSize));
+    } catch (e: any) {
+      toast({ title: "Error", description: e?.message ?? "Error desconocido", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search]);
+
+  const eliminarArticulo = (id: string) => {
+    setProducts((prev) => prev.filter((a) => a.id !== id));
   };
 
   const handleImageChange = (file: File | null) => {
@@ -232,17 +259,9 @@ export default function Articulos() {
       if (imagePreview) URL.revokeObjectURL(imagePreview);
       setImagePreview(null);
 
-      // Optionally add to local list to reflect change visually
-      setArticulos((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          nombre: values.nombre.trim(),
-          precio: unitPrice,
-          categoria: values.categoria || "-",
-          stock: 0,
-        },
-      ]);
+      // Refresh list from first page to show newest product
+      setPage(0);
+      await loadProducts();
     } catch (e: any) {
       toast({ title: "Error", description: e?.message ?? "Error desconocido", variant: "destructive" });
     }
@@ -265,15 +284,27 @@ export default function Articulos() {
   return (
     <div className="container mx-auto p-6 pb-20">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 gap-3">
           <div className="flex items-center gap-4">
             <BackButton />
             <h1 className="text-3xl font-bold text-foreground">Artículos</h1>
           </div>
-          <Button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Nuevo Artículo
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Input
+              placeholder="Buscar productos..."
+              className="w-full sm:w-64"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              aria-label="Buscar productos"
+            />
+            <Button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Nuevo Artículo
+            </Button>
+          </div>
         </div>
 
         {showForm && (
@@ -470,15 +501,15 @@ export default function Articulos() {
           </Card>
         )}
 
-        {/* Listado existente */}
+        {/* Listado desde Supabase */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {articulos.map((articulo) => (
-            <Card key={articulo.id} className="hover:shadow-md transition-shadow">
+          {products.map((p) => (
+            <Card key={p.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Package className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">{articulo.nombre}</h3>
+                    <h3 className="font-semibold text-foreground">{p.name}</h3>
                   </div>
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" className="w-8 h-8 p-0">
@@ -488,7 +519,7 @@ export default function Articulos() {
                       size="sm"
                       variant="ghost"
                       className="w-8 h-8 p-0 text-destructive"
-                      onClick={() => eliminarArticulo(articulo.id)}
+                      onClick={() => eliminarArticulo(p.id)}
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
@@ -498,20 +529,30 @@ export default function Articulos() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Precio:</span>
-                    <span className="font-medium">{formatMoneyDOP(articulo.precio)}</span>
+                    <span className="font-medium">{formatMoneyDOP(Number(p.unit_price || 0))}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Categoría:</span>
-                    <span>{articulo.categoria}</span>
+                    <span>-</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Stock:</span>
-                    <span className={articulo.stock > 10 ? "text-green-600" : "text-orange-600"}>{articulo.stock}</span>
+                    <span className={"text-muted-foreground"}>-</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Paginación */}
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <Button variant="outline" disabled={page === 0 || loading} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+            Anterior
+          </Button>
+          <Button variant="outline" disabled={!hasNext || loading} onClick={() => setPage((p) => p + 1)}>
+            Siguiente
+          </Button>
         </div>
 
         {/* Confirm dialog */}
