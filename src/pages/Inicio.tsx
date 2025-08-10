@@ -161,7 +161,7 @@ export default function Inicio() {
       variant: 'default'
     };
   }
-  return <Layout>
+  return <Layout hideBackButton>
       <div className="min-h-screen bg-card border border-border pb-20 text-foreground">
         {/* Encabezado */}
         <div className="container mx-auto px-4 py-6">
