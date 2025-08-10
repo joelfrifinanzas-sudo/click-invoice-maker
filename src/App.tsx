@@ -20,6 +20,8 @@ import CotizacionPublic from "./pages/CotizacionPublic";
 import Facturas from "./pages/Facturas";
 import CrearFactura from "./pages/CrearFactura";
 import Clientes from "./pages/Clientes";
+import ClientesNuevo from "./pages/ClientesNuevo";
+import ClienteDetalle from "./pages/ClienteDetalle";
 import Inventario from "./pages/Inventario";
 import Articulos from "./pages/Articulos";
 import Creditos from "./pages/Creditos";
@@ -70,6 +72,8 @@ function AppRoutes() {
       <Route path="/facturas" element={<RequireAccess routeKey="facturas"><Facturas /></RequireAccess>} />
       <Route path="/crear-factura" element={<RequireAccess routeKey="crear-factura"><CrearFactura /></RequireAccess>} />
       <Route path="/clientes" element={<RequireAccess routeKey="clientes"><Clientes /></RequireAccess>} />
+      <Route path="/clientes/nuevo" element={<RequireAccess routeKey="clientes-nuevo"><ClientesNuevo /></RequireAccess>} />
+      <Route path="/clientes/:id" element={<RequireAccess routeKey="clientes-detalle"><ClienteDetalle /></RequireAccess>} />
       <Route path="/inventario" element={<RequireAccess routeKey="inventario"><Inventario /></RequireAccess>} />
       <Route path="/articulos" element={<RequireAccess routeKey="articulos"><Articulos /></RequireAccess>} />
       <Route path="/creditos" element={<RequireAccess routeKey="creditos"><Creditos /></RequireAccess>} />

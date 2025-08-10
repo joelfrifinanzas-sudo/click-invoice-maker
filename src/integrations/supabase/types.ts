@@ -146,6 +146,74 @@ export type Database = {
         }
         Relationships: []
       }
+      clients: {
+        Row: {
+          activo: boolean
+          apellido: string | null
+          created_at: string
+          documento: string | null
+          email: string | null
+          es_contribuyente: boolean
+          id: string
+          nombre_empresa: string | null
+          nombre_pila: string | null
+          nombre_visualizacion: string
+          notas: string | null
+          pais_tel: string
+          saludo: string | null
+          telefono_laboral: string | null
+          telefono_movil: string | null
+          tenant_id: string
+          tipo_cliente: Database["public"]["Enums"]["client_type"]
+        }
+        Insert: {
+          activo?: boolean
+          apellido?: string | null
+          created_at?: string
+          documento?: string | null
+          email?: string | null
+          es_contribuyente?: boolean
+          id?: string
+          nombre_empresa?: string | null
+          nombre_pila?: string | null
+          nombre_visualizacion: string
+          notas?: string | null
+          pais_tel?: string
+          saludo?: string | null
+          telefono_laboral?: string | null
+          telefono_movil?: string | null
+          tenant_id: string
+          tipo_cliente: Database["public"]["Enums"]["client_type"]
+        }
+        Update: {
+          activo?: boolean
+          apellido?: string | null
+          created_at?: string
+          documento?: string | null
+          email?: string | null
+          es_contribuyente?: boolean
+          id?: string
+          nombre_empresa?: string | null
+          nombre_pila?: string | null
+          nombre_visualizacion?: string
+          notas?: string | null
+          pais_tel?: string
+          saludo?: string | null
+          telefono_laboral?: string | null
+          telefono_movil?: string | null
+          tenant_id?: string
+          tipo_cliente?: Database["public"]["Enums"]["client_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           active: boolean
@@ -1122,6 +1190,28 @@ export type Database = {
           last_sign_in_at: string
         }[]
       }
+      upsert_client: {
+        Args: { payload: Json }
+        Returns: {
+          activo: boolean
+          apellido: string | null
+          created_at: string
+          documento: string | null
+          email: string | null
+          es_contribuyente: boolean
+          id: string
+          nombre_empresa: string | null
+          nombre_pila: string | null
+          nombre_visualizacion: string
+          notas: string | null
+          pais_tel: string
+          saludo: string | null
+          telefono_laboral: string | null
+          telefono_movil: string | null
+          tenant_id: string
+          tipo_cliente: Database["public"]["Enums"]["client_type"]
+        }
+      }
     }
     Enums: {
       app_role: "superadmin"
@@ -1133,6 +1223,7 @@ export type Database = {
         | "role_changed"
         | "company_activated"
         | "company_deactivated"
+      client_type: "Empresarial" | "Individuo"
       company_role: "owner" | "member"
       cotizacion_discount_type: "none" | "percent" | "amount"
       cotizacion_status:
@@ -1280,6 +1371,7 @@ export const Constants = {
         "company_activated",
         "company_deactivated",
       ],
+      client_type: ["Empresarial", "Individuo"],
       company_role: ["owner", "member"],
       cotizacion_discount_type: ["none", "percent", "amount"],
       cotizacion_status: [
