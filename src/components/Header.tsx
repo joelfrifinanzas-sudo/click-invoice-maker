@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentContext } from "@/data/utils";
 import { getCurrentCompany } from "@/data/companyDb";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/contexts/AuthContext";
 export function Header() {
   const { toggleSidebar } = useSidebar();
   const [time, setTime] = useState<string>("");
@@ -85,15 +87,18 @@ export function Header() {
     { label: "Métodos de pago", Icon: CreditCard },
   ], []);
 
+  const { role } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signOut } = useAuth();
   const goUsers = () =>
     toast({
       title: "Conecta Supabase para gestionar usuarios",
       description: "Esta sección se habilitará al conectar tu proyecto de Supabase.",
     });
-  const handleLogout = () => {
-    toast({ title: "Conecta Supabase para habilitar el cierre de sesión" });
+  const handleLogout = async () => {
+    try { await signOut(); } catch {}
+    navigate('/login', { replace: true });
   };
   const routesByLabel: Record<string, string | null> = {
     "Cotizaciones": "/cotizaciones",
@@ -111,8 +116,10 @@ export function Header() {
   };
   const visibleModules = useMemo(() => {
     if (!appsOpen) return [] as typeof modules;
-    return modules.filter((m) => routesByLabel[m.label] && hasPermission(m.label));
-  }, [appsOpen, modules]);
+    if (role === 'superadmin' || role === 'admin') return modules.filter((m) => routesByLabel[m.label]);
+    if (role === 'cajera') return modules.filter((m) => !['Perfil de la empresa','Marca y preferencias','Gestión de usuarios','Métodos de pago','Reportes'].includes(m.label));
+    return [{ label: 'Clientes', Icon: Users }] as any; // show minimal for cliente
+  }, [appsOpen, modules, role]);
   const onModuleClick = (label: string) => {
     const path = routesByLabel[label];
     if (!path) return;
@@ -397,10 +404,21 @@ export function Header() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
-            <DropdownMenuItem onSelect={() => navigate('/perfil-empresa')}>Perfil de la empresa</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => navigate('/configuracion')}>Marca y preferencias</DropdownMenuItem>
-            <DropdownMenuItem onSelect={goUsers}>Gestión de usuarios</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => navigate('/pagos')}>Métodos de pago</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate('/perfil')}>Perfil</DropdownMenuItem>
+            {(role === 'superadmin' || role === 'admin') && (
+              <>
+                <DropdownMenuItem onSelect={() => navigate('/perfil-empresa')}>Perfil de la empresa</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => navigate('/configuracion')}>Marca y preferencias</DropdownMenuItem>
+              </>
+            )}
+            {(role === 'superadmin' || role === 'admin') && (
+              <>
+                <DropdownMenuItem onSelect={goUsers}>Gestión de usuarios</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => navigate('/pagos')}>Métodos de pago</DropdownMenuItem>
+              </>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => navigate('/login')} >Cambiar contraseña</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout} className="text-destructive focus:text-destructive">Cerrar sesión</DropdownMenuItem>
           </DropdownMenuContent>

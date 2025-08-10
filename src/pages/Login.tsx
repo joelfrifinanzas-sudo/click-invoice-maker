@@ -139,7 +139,15 @@ export default function Login() {
     try { await supabase.rpc("touch_login"); } catch {}
     clearAttempts(email);
     toast({ title: "Sesión iniciada" });
-    navigate("/app/inicio", { replace: true });
+
+    // Redirección por rol
+    const role = (auth.user?.user_metadata as any)?.role as string | undefined;
+    const target = role === 'super_admin' ? '/admin/tenants'
+      : role === 'admin' ? '/inicio'
+      : role === 'cajera' ? '/crear-factura'
+      : role === 'cliente' ? '/portal'
+      : '/inicio';
+    navigate(target, { replace: true });
   }
 
   async function handleMagicLink() {

@@ -37,6 +37,8 @@ import SuperAdmin from "./pages/SuperAdmin";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Login from "./pages/Login";
+import { RequireClient } from "./components/RequireClient";
+import { InactivityLogout } from "./components/security/InactivityLogout";
 
 const queryClient = new QueryClient();
 
@@ -64,7 +66,7 @@ function AppRoutes() {
         <Route path="inicio" element={<Inicio />} />
       </Route>
 
-      {/* Existing public routes remain unchanged */}
+      {/* Public & RBAC routes */}
       <Route path="/" element={<Index />} />
       <Route path="/inicio" element={<RequireAccess routeKey="inicio"><Inicio /></RequireAccess>} />
       <Route path="/cotizaciones" element={<RequireAccess routeKey="cotizaciones"><Cotizaciones /></RequireAccess>} />
@@ -85,7 +87,14 @@ function AppRoutes() {
       <Route path="/perfil" element={<RequireAccess routeKey="perfil"><Perfil /></RequireAccess>} />
       <Route path="/historial" element={<RequireAccess routeKey="historial"><History /></RequireAccess>} />
       <Route path="/history" element={<RequireAccess routeKey="historial"><History /></RequireAccess>} />
+
+      {/* Super Admin area */}
       <Route path="/super-admin" element={<RequireSuperAdmin><SuperAdmin /></RequireSuperAdmin>} />
+      <Route path="/admin/tenants" element={<RequireSuperAdmin><SuperAdmin /></RequireSuperAdmin>} />
+
+      {/* Client portal */}
+      <Route path="/portal" element={<RequireClient><div style={{padding:'4rem 1rem'}}><h1 className="text-2xl font-semibold">Portal del cliente</h1><p className="text-muted-foreground mt-2">Aquí verás tus facturas, cotizaciones y pagos.</p></div></RequireClient>} />
+
       <Route path="/acceso-denegado" element={<AccessDenied />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

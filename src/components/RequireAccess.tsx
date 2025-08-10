@@ -22,6 +22,15 @@ export function RequireAccess({ routeKey, children }: PropsWithChildren<{ routeK
   }, []);
 
   if (loading) return null;
+
+  // Block all non-portal routes for client role
+  const storedRole = (() => {
+    try { return (JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.user?.user_metadata?.role as string | undefined) || undefined; } catch { return undefined; }
+  })();
+  if (storedRole === 'cliente') {
+    return <Navigate to="/acceso-denegado" state={{ from: location.pathname }} replace />;
+  }
+
   const allowed = canAccess(routeKey, { role: role as AppRole, companyId });
   if (!allowed) {
     return <Navigate to="/acceso-denegado" state={{ from: location.pathname }} replace />;

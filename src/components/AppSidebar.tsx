@@ -10,32 +10,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { FileText, Receipt, Users, Package } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 
-const menuItems = [
-  {
-    title: "Cotizaciones",
-    url: "/cotizaciones",
-    icon: FileText,
-  },
-  {
-    title: "Facturas",
-    url: "/facturas", 
-    icon: Receipt,
-  },
-  {
-    title: "Clientes",
-    url: "/clientes",
-    icon: Users,
-  },
-  {
-    title: "Inventario",
-    url: "/inventario",
-    icon: Package,
-  },
+const baseItems = [
+  { title: "Cotizaciones", url: "/cotizaciones", icon: FileText },
+  { title: "Facturas", url: "/facturas", icon: Receipt },
+  { title: "Clientes", url: "/clientes", icon: Users },
+  { title: "Inventario", url: "/inventario", icon: Package },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { role } = useUserRole();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -53,7 +39,12 @@ export function AppSidebar() {
         <SidebarGroup className="px-2 py-4">
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
-              {menuItems.map((item) => (
+              {(() => {
+                if (role === 'superadmin' || role === 'admin') return baseItems;
+                if (role === 'cajera') return baseItems.filter(i => i.title !== 'Inventario');
+                // cliente: no sidebar
+                return [] as typeof baseItems;
+              })().map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="h-12">
                     <NavLink 
