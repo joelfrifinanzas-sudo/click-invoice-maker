@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export type Company = {
   id?: string;
@@ -64,6 +65,7 @@ export default function CompanyForm({ company, onSaved }: { company?: Company; o
   // Owner selection for new company
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerId, setOwnerId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Load NCFs for existing company
   useEffect(() => {
@@ -95,25 +97,69 @@ export default function CompanyForm({ company, onSaved }: { company?: Company; o
 
   const onToggle = (checked: boolean) => setForm((f) => ({ ...f, active: checked }));
 
-  const save = async () => {
+  // Submit handler with validation & normalization
+  const parseItbis = (v: any) => {
+    let n = typeof v === 'string' ? parseFloat(v) : Number(v);
+    if (!Number.isFinite(n)) return NaN;
+    if (n > 1 && n <= 100) n = n / 100; // allow 18 -> 0.18
+    return n;
+  };
+  const formatPhoneDO = (raw: string): string => {
+    const trimmed = (raw || '').trim();
+    if (!trimmed) return '';
+    if (/^\+1(809|829|849)\d{7}$/.test(trimmed)) return trimmed;
+    const digits = trimmed.replace(/\D/g, '');
+    if (digits.length === 11 && digits.startsWith('1') && /^(809|829|849)/.test(digits.slice(1, 4))) return `+${digits}`;
+    if (digits.length === 10 && /^(809|829|849)/.test(digits.slice(0, 3))) return `+1${digits}`;
+    return trimmed;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (saving) return;
+
+    // Clean values
+    const name = (form.name || '').trim();
+    const rnc = (form.rnc || '').trim().toUpperCase();
+    const currency = (form.currency || '').trim().toUpperCase();
+    let itbis = parseItbis(form.itbis_rate ?? 0.18);
+    const plan = (form.plan || '').trim();
+    const phone = formatPhoneDO(form.phone || '');
+    const address = (form.address || '').trim();
+    const isNew = !form.id;
+    const ownerEmailTrim = (ownerEmail || '').trim();
+
+    // Validations
+    if (!name) { toast({ title: 'Falta nombre comercial', description: 'Ingresa el nombre de la empresa.', variant: 'destructive' }); return; }
+    if (!currency) { toast({ title: 'Falta moneda', description: 'Selecciona la moneda.', variant: 'destructive' }); return; }
+    if (!Number.isFinite(itbis)) { toast({ title: 'ITBIS inválido', description: 'Ingresa un valor como 0.18 o 18%.', variant: 'destructive' }); return; }
+    if (itbis < 0 || itbis > 0.18) { toast({ title: 'ITBIS fuera de rango', description: 'El ITBIS debe estar entre 0 y 0.18.', variant: 'destructive' }); return; }
+    if (!plan) { toast({ title: 'Falta plan', description: 'Selecciona el plan.', variant: 'destructive' }); return; }
+    if (isNew && !ownerEmailTrim) { toast({ title: 'Falta email del propietario', description: 'Ingresa el email del propietario.', variant: 'destructive' }); return; }
+
     setSaving(true);
     const { error } = await supabase.rpc("su_company_upsert", {
       _id: form.id ?? null,
-      _name: form.name,
-      _rnc: form.rnc ?? null,
-      _phone: form.phone ?? null,
-      _address: form.address ?? null,
-      _currency: form.currency ?? "DOP",
-      _itbis_rate: form.itbis_rate ?? 0.18,
+      _name: name,
+      _rnc: rnc || null,
+      _phone: phone || null,
+      _address: address || null,
+      _currency: currency || "DOP",
+      _itbis_rate: itbis,
       _active: form.active ?? true,
-      _plan: form.plan ?? "free",
+      _plan: plan,
       _limit_invoices_per_month: form.limit_invoices_per_month,
       _limit_users: form.limit_users,
       _owner_user_id: form.id ? null : ownerId, // solo al crear
       _storage_limit_mb: form.storage_limit_mb ?? null,
     });
     setSaving(false);
-    if (!error) onSaved();
+
+    if (error) {
+      toast({ title: 'No se pudo guardar', description: error.message || 'Intenta nuevamente.', variant: 'destructive' });
+      return;
+    }
+    onSaved();
   };
 
   // NCF helpers
@@ -273,8 +319,8 @@ export default function CompanyForm({ company, onSaved }: { company?: Company; o
       )}
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button variant="secondary" onClick={onSaved} disabled={saving}>Cerrar</Button>
-        <Button onClick={save} disabled={saving}>{saving ? "Guardando..." : "Guardar"}</Button>
+        <Button type="button" variant="secondary" onClick={onSaved} disabled={saving}>Cerrar</Button>
+        <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar"}</Button>
       </div>
     </div>
   );
@@ -399,22 +445,24 @@ export default function CompanyForm({ company, onSaved }: { company?: Company; o
         </div>
       </div>
       <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={onSaved} disabled={saving}>Cerrar</Button>
-        <Button onClick={save} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+        <Button type="button" variant="secondary" onClick={onSaved} disabled={saving}>Cerrar</Button>
+        <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
       </div>
     </div>
   );
 
   return (
-    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-      <TabsList>
-        <TabsTrigger value="datos">Datos</TabsTrigger>
-        <TabsTrigger value="plan">Plan</TabsTrigger>
-        {form.id && <TabsTrigger value="usuarios">Usuarios</TabsTrigger>}
-      </TabsList>
-      <TabsContent value="datos">{datosTab}</TabsContent>
-      <TabsContent value="plan">{planTab}</TabsContent>
-      {form.id && <TabsContent value="usuarios">{usuariosTab}</TabsContent>}
-    </Tabs>
+    <form onSubmit={handleSubmit}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+        <TabsList>
+          <TabsTrigger value="datos">Datos</TabsTrigger>
+          <TabsTrigger value="plan">Plan</TabsTrigger>
+          {form.id && <TabsTrigger value="usuarios">Usuarios</TabsTrigger>}
+        </TabsList>
+        <TabsContent value="datos">{datosTab}</TabsContent>
+        <TabsContent value="plan">{planTab}</TabsContent>
+        {form.id && <TabsContent value="usuarios">{usuariosTab}</TabsContent>}
+      </Tabs>
+    </form>
   );
 }
