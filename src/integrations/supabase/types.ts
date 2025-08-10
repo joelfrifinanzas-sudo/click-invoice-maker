@@ -867,24 +867,36 @@ export type Database = {
           company_id: string | null
           created_at: string
           display_name: string | null
+          global_role: Database["public"]["Enums"]["global_role"] | null
           id: string
+          last_login: string | null
           phone: string | null
+          status: Database["public"]["Enums"]["account_status"]
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
           company_id?: string | null
           created_at?: string
           display_name?: string | null
+          global_role?: Database["public"]["Enums"]["global_role"] | null
           id: string
+          last_login?: string | null
           phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
           company_id?: string | null
           created_at?: string
           display_name?: string | null
+          global_role?: Database["public"]["Enums"]["global_role"] | null
           id?: string
+          last_login?: string | null
           phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -939,6 +951,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      compute_global_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["global_role"]
+      }
       cotizacion_mark_viewed: {
         Args: { _public_id: string }
         Returns: undefined
@@ -962,6 +978,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      jwt_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      jwt_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       mark_customers_as_users: {
         Args: { _company_id: string }
         Returns: number
@@ -972,6 +996,10 @@ export type Database = {
       }
       next_ncf: {
         Args: { _company_id: string; _ncf_type: string }
+        Returns: string
+      }
+      resolve_tenant_id: {
+        Args: { _user_id: string }
         Returns: string
       }
       su_add_user_to_company: {
@@ -1190,6 +1218,18 @@ export type Database = {
           last_sign_in_at: string
         }[]
       }
+      sync_my_claims: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      sync_user_claims: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
+      touch_login: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       upsert_client: {
         Args: { payload: Json }
         Returns: {
@@ -1214,6 +1254,7 @@ export type Database = {
       }
     }
     Enums: {
+      account_status: "active" | "suspended"
       app_role: "superadmin"
       audit_event_type:
         | "auth_login"
@@ -1234,6 +1275,7 @@ export type Database = {
         | "rechazada"
         | "vencida"
         | "facturada"
+      global_role: "super_admin" | "admin" | "cajera" | "cliente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1361,6 +1403,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_status: ["active", "suspended"],
       app_role: ["superadmin"],
       audit_event_type: [
         "auth_login",
@@ -1383,6 +1426,7 @@ export const Constants = {
         "vencida",
         "facturada",
       ],
+      global_role: ["super_admin", "admin", "cajera", "cliente"],
     },
   },
 } as const
