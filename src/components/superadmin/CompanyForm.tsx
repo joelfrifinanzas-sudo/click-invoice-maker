@@ -138,28 +138,48 @@ export default function CompanyForm({ company, onSaved }: { company?: Company; o
     if (isNew && !ownerEmailTrim) { toast({ title: 'Falta email del propietario', description: 'Ingresa el email del propietario.', variant: 'destructive' }); return; }
 
     setSaving(true);
-    const { error } = await supabase.rpc("su_company_upsert", {
-      _id: form.id ?? null,
-      _name: name,
-      _rnc: rnc || null,
-      _phone: phone || null,
-      _address: address || null,
-      _currency: currency || "DOP",
-      _itbis_rate: itbis,
-      _active: form.active ?? true,
-      _plan: plan,
-      _limit_invoices_per_month: form.limit_invoices_per_month,
-      _limit_users: form.limit_users,
-      _owner_user_id: form.id ? null : ownerId, // solo al crear
-      _storage_limit_mb: form.storage_limit_mb ?? null,
-    });
-    setSaving(false);
+    try {
+      const args: any = {
+        _id: form.id ?? null,
+        _name: name,
+        _rnc: rnc || null,
+        _phone: phone || null,
+        _address: address || null,
+        _currency: currency || "DOP",
+        _itbis_rate: itbis,
+        _active: form.active ?? true,
+        _plan: plan,
+        _limit_invoices_per_month: form.limit_invoices_per_month,
+        _limit_users: form.limit_users,
+        _storage_limit_mb: form.storage_limit_mb ?? null,
+      };
+      // Only send owner on creation and when we actually have a user id
+      if (!form.id && ownerId) args._owner_user_id = ownerId;
 
-    if (error) {
-      toast({ title: 'No se pudo guardar', description: error.message || 'Intenta nuevamente.', variant: 'destructive' });
-      return;
+      let { error } = await supabase.rpc("su_company_upsert", args);
+
+      // If we got an auth/profile-related error, try to sync claims and retry once
+      if (error && /company_id/i.test(error.message || "")) {
+        await supabase.rpc('sync_my_claims');
+        const retry = await supabase.rpc("su_company_upsert", args);
+        error = retry.error;
+      }
+
+      if (error) {
+        toast({
+          title: 'No se pudo guardar',
+          description: error.message?.replace(/Missing company_id in profile/i, 'Contexto de empresa no asignado al usuario actual') || 'Intenta nuevamente.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      onSaved();
+    } catch (e: any) {
+      toast({ title: 'No se pudo guardar', description: e?.message || 'Error inesperado', variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
-    onSaved();
   };
 
   // NCF helpers
