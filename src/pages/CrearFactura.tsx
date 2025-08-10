@@ -10,8 +10,8 @@ import { BackButton } from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useToast } from '@/hooks/use-toast';
-import { CustomerPickerDialog } from '@/components/CustomerPickerDialog';
-import type { Tables } from '@/integrations/supabase/types';
+import { ClientPickerDialog } from '@/components/clients/ClientPickerDialog';
+import { Client } from '@/data/clients';
 import { createDraftInvoice } from '@/data/invoices';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentContext } from '@/data/utils';
@@ -23,15 +23,14 @@ export default function CrearFactura() {
   const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState<'factura' | 'cotizacion'>('factura');
-  const [customerDialogOpen, setCustomerDialogOpen] = useState<boolean>(true);
-  const [selectedCustomer, setSelectedCustomer] = useState<Tables<'customers'> | null>(null);
+const [clientDialogOpen, setClientDialogOpen] = useState<boolean>(true);
+const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Open dialog until a customer is chosen
-    if (!selectedCustomer) setCustomerDialogOpen(true);
-  }, [selectedCustomer]);
+useEffect(() => {
+  if (!selectedClient) setClientDialogOpen(true);
+}, [selectedClient]);
 
   const checkInvoiceLimit = async () => {
     try {
@@ -77,10 +76,10 @@ export default function CrearFactura() {
         unit_price: Number(s.unitPrice || '0') || 0,
         itbis_rate: itbisRate,
       }));
-      const { error: dbError } = await createDraftInvoice({
+const { error: dbError } = await createDraftInvoice({
         items,
         itbis_rate: itbisRate,
-        customer_id: selectedCustomer?.id ?? null,
+        customer_id: null, // TODO: migrar a client_id si se requiere persistir a tabla clients
       });
       if (dbError) {
         console.warn('No se pudo guardar en la base de datos:', dbError);
@@ -106,10 +105,10 @@ export default function CrearFactura() {
   return (
     <ErrorBoundary>
       {/* Dialogo para seleccionar/crear cliente */}
-      <CustomerPickerDialog
-        open={customerDialogOpen}
-        onOpenChange={setCustomerDialogOpen}
-        onConfirm={(c) => { setSelectedCustomer(c); setCustomerDialogOpen(false); }}
+<ClientPickerDialog
+        open={clientDialogOpen}
+        onOpenChange={setClientDialogOpen}
+        onConfirm={(c) => { setSelectedClient(c); setClientDialogOpen(false); }}
       />
       {!showPreview ? (
         <div className="min-h-screen bg-white">
@@ -120,12 +119,16 @@ export default function CrearFactura() {
           {/* Form Content */}
           <div className="px-4 py-6">
             {activeTab === 'factura' ? (
-              <InvoiceForm
+<InvoiceForm
                 onGenerateInvoice={handleGenerateInvoice}
                 prefill={{
-                  clientName: selectedCustomer?.name,
-                  clientId: selectedCustomer?.rnc || '',
-                  clientPhone: selectedCustomer?.phone || '+1 ',
+                  clientName: selectedClient?.nombre_visualizacion,
+                  clientId: selectedClient?.documento || '',
+                  clientPhone: selectedClient?.telefono_movil || selectedClient?.telefono_laboral || '+1 ',
+                }}
+                selectedClientHint={{
+                  requiresFiscal: !!selectedClient?.es_contribuyente,
+                  defaultConsumerFinal: selectedClient?.tipo_cliente === 'Individuo' && !selectedClient?.documento,
                 }}
               />
             ) : (

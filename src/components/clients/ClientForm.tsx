@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { ChevronsUpDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { lookupRncName } from "@/utils/rncLookup";
 
 const schema = z.object({
   id: z.string().uuid().optional(),
@@ -68,6 +69,7 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
   const nombreEmpresa = form.watch("nombre_empresa") || "";
   const nombrePila = form.watch("nombre_pila") || "";
   const apellido = form.watch("apellido") || "";
+  const documento = form.watch("documento") || "";
 
   const suggestions = React.useMemo(() => {
     const list: string[] = [];
@@ -78,6 +80,7 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
   }, [tipo, nombreEmpresa, nombrePila, apellido]);
 
   const [comboOpen, setComboOpen] = React.useState(false);
+  const debounceRef = React.useRef<number | null>(null);
 
   async function onSubmit(values: z.infer<typeof schema>) {
     // Extra validations for documento depending on tipo
@@ -105,6 +108,34 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
     toast({ title: "Cliente guardado", description: data.nombre_visualizacion });
     onSaved?.(data, savingAction);
   }
+
+  // Autocompletar desde CSV público con caché 24h
+  const tryAutocomplete = React.useCallback(async () => {
+    const doc = (form.getValues("documento") || "").trim();
+    if (!doc) return;
+    const isEmp = form.getValues("tipo_cliente") === "Empresarial";
+    if (!isEmp) return; // solo RNC
+    const r = validateRNC(doc);
+    if (!r.isValid) return;
+    const { name } = await lookupRncName(doc);
+    if (name) {
+      const nv = form.getValues("nombre_visualizacion");
+      form.setValue("nombre_empresa", name, { shouldDirty: true });
+      if (!nv) form.setValue("nombre_visualizacion", name, { shouldDirty: true });
+      form.setValue("es_contribuyente", true, { shouldDirty: true });
+      toast({ title: "Datos autocompletados", description: name });
+    }
+  }, [form, toast]);
+
+  const onDocumentoBlur = () => {
+    window.setTimeout(() => { tryAutocomplete(); }, 0);
+  };
+
+  React.useEffect(() => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => { tryAutocomplete(); }, 600) as unknown as number;
+    return () => { if (debounceRef.current) window.clearTimeout(debounceRef.current); };
+  }, [documento, tryAutocomplete]);
 
   const documentoPlaceholder = tipo === "Empresarial" ? "RNC" : "Cédula";
 
@@ -260,7 +291,7 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
               <FormItem>
                 <FormLabel>Documento</FormLabel>
                 <FormControl>
-                  <Input placeholder={documentoPlaceholder} {...field} />
+                  <Input placeholder={documentoPlaceholder} {...field} onBlur={onDocumentoBlur} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

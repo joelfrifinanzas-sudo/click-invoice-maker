@@ -73,9 +73,10 @@ export interface InvoiceData {
 interface InvoiceFormProps {
   onGenerateInvoice: (data: InvoiceData) => void;
   prefill?: Partial<Pick<InvoiceData, 'clientName' | 'clientId' | 'clientPhone'>>;
+  selectedClientHint?: { requiresFiscal?: boolean; defaultConsumerFinal?: boolean };
 }
 
-export const InvoiceForm = ({ onGenerateInvoice, prefill }: InvoiceFormProps) => {
+export const InvoiceForm = ({ onGenerateInvoice, prefill, selectedClientHint }: InvoiceFormProps) => {
   const [documentType, setDocumentType] = useState<'cotizacion' | 'factura'>('factura');
   const [formData, setFormData] = useState<InvoiceData>({
     clientName: '',
@@ -133,7 +134,7 @@ export const InvoiceForm = ({ onGenerateInvoice, prefill }: InvoiceFormProps) =>
     }));
   }, []);
 
-  // Prefill client data when provided
+// Prefill client data when provided
   useEffect(() => {
     if (!prefill) return;
     setFormData(prev => ({
@@ -143,6 +144,22 @@ export const InvoiceForm = ({ onGenerateInvoice, prefill }: InvoiceFormProps) =>
       clientPhone: prefill.clientPhone ?? prev.clientPhone,
     }));
   }, [prefill]);
+
+  // Ajustar tipo de factura según cliente seleccionado
+  useEffect(() => {
+    if (!selectedClientHint) return;
+    if (selectedClientHint.requiresFiscal) {
+      // Fiscal
+      setFormData(prev => ({ ...prev, invoiceType: 'fiscal', ncfType: 'B01' }));
+      (async () => { const { data } = await getNextNCF('B01'); if (data) setFormData(prev => ({ ...prev, ncf: data })); })();
+    } else if (selectedClientHint.defaultConsumerFinal) {
+      setFormData(prev => ({ ...prev, invoiceType: 'consumidor-final', ncfType: 'B02' }));
+      (async () => { const { data } = await getNextNCF('B02'); if (data) setFormData(prev => ({ ...prev, ncf: data })); })();
+    } else {
+      // Sin NCF por defecto
+      setFormData(prev => ({ ...prev, invoiceType: 'sin-ncf', ncfType: 'NONE', ncf: generateNCF('NONE') }));
+    }
+  }, [selectedClientHint]);
   useEffect(() => {
     // Solo autogenerar para facturas internas (sin NCF fiscal)
     if (formData.ncfType === 'NONE' && formData.services.length > 0) {
