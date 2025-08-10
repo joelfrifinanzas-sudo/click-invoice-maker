@@ -146,6 +146,30 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_login_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          ip: string | null
+          ok: boolean
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          ip?: string | null
+          ok?: boolean
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          ip?: string | null
+          ok?: boolean
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           activo: boolean
@@ -950,6 +974,23 @@ export type Database = {
           _details?: Json
         }
         Returns: undefined
+      }
+      auth_log_attempt: {
+        Args: { _email: string; _ip: string; _ok: boolean }
+        Returns: undefined
+      }
+      auth_rate_limit_check: {
+        Args: {
+          _email: string
+          _ip: string
+          _window_mins?: number
+          _max_attempts?: number
+        }
+        Returns: {
+          blocked: boolean
+          failures: number
+          retry_after_seconds: number
+        }[]
       }
       compute_global_role: {
         Args: { _user_id: string }
