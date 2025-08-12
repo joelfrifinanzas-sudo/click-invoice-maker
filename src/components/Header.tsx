@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Menu, FileText, FilePlus2, Users, Package, History, BarChart3, Boxes, Banknote, Building2, Palette, UserCog, CreditCard, type LucideIcon } from "lucide-react";
+import { Menu, FileText, FilePlus2, Users, Package, History, BarChart3, Boxes, Banknote, Building2, Palette, UserCog, CreditCard, Landmark, type LucideIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -81,6 +81,7 @@ export function Header() {
     { label: "Reportes", Icon: BarChart3 },
     { label: "Inventario", Icon: Boxes },
     { label: "Pagos", Icon: Banknote },
+    { label: "Perfil del negocio", Icon: Landmark },
     { label: "Perfil de la empresa", Icon: Building2 },
     { label: "Marca y preferencias", Icon: Palette },
     { label: "Gestión de usuarios", Icon: UserCog },
@@ -109,6 +110,7 @@ export function Header() {
     "Reportes": null,
     "Inventario": "/inventario",
     "Pagos": "/pagos",
+    "Perfil del negocio": "/perfil-negocio",
     "Perfil de la empresa": "/perfil-empresa",
     "Marca y preferencias": "/configuracion",
     "Gestión de usuarios": null,
@@ -117,7 +119,7 @@ export function Header() {
   const visibleModules = useMemo(() => {
     if (!appsOpen) return [] as typeof modules;
     if (role === 'superadmin' || role === 'admin') return modules.filter((m) => routesByLabel[m.label]);
-    if (role === 'cajera') return modules.filter((m) => !['Perfil de la empresa','Marca y preferencias','Gestión de usuarios','Métodos de pago','Reportes'].includes(m.label));
+    if (role === 'cajera') return modules.filter((m) => !['Perfil del negocio','Perfil de la empresa','Marca y preferencias','Gestión de usuarios','Métodos de pago','Reportes'].includes(m.label));
     return [{ label: 'Clientes', Icon: Users }] as any; // show minimal for cliente
   }, [appsOpen, modules, role]);
   const onModuleClick = (label: string) => {

@@ -18,6 +18,7 @@ export type RouteKey =
   | 'plan-pro'
   | 'contactos'
   | 'perfil-empresa'
+  | 'perfil-negocio'
   | 'configuracion'
   | 'perfil'
   | 'historial';
@@ -29,10 +30,10 @@ export type UserContext = {
 
 // Route metadata: which routes are company-scoped and required minimum role
 const companyRoutes = new Set<RouteKey>([
-  'crear-factura', 'facturas', 'clientes', 'clientes-nuevo', 'clientes-detalle', 'articulos', 'pagos', 'historial', 'perfil-empresa', 'configuracion'
+  'crear-factura', 'facturas', 'clientes', 'clientes-nuevo', 'clientes-detalle', 'articulos', 'pagos', 'historial', 'perfil-empresa', 'perfil-negocio', 'configuracion'
 ]);
 
-const adminOnly = new Set<RouteKey>(['perfil-empresa', 'configuracion', 'clientes-nuevo', 'clientes-detalle']);
+const adminOnly = new Set<RouteKey>(['perfil-empresa', 'perfil-negocio', 'configuracion', 'clientes-nuevo', 'clientes-detalle']);
 
 export function canAccess(route: RouteKey, user: UserContext): boolean {
   // 1) Global superadmin override

@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Inicio from "./pages/Inicio";
 import History from "./pages/History";
 import { CompanyProfilePage } from "./pages/CompanyProfile";
+import { BusinessProfilePage } from "./pages/PerfilNegocio";
 import PlanPro from "./pages/PlanPro";
 import Contactos from "./pages/Contactos";
 import Configuracion from "./pages/Configuracion";
@@ -85,6 +86,7 @@ function AppRoutes() {
       <Route path="/plan-pro" element={<RequireAccess routeKey="plan-pro"><PlanPro /></RequireAccess>} />
       <Route path="/contactos" element={<RequireAccess routeKey="contactos"><Contactos /></RequireAccess>} />
       <Route path="/perfil-empresa" element={<RequireAccess routeKey="perfil-empresa"><CompanyProfilePage /></RequireAccess>} />
+      <Route path="/perfil-negocio" element={<RequireAccess routeKey="perfil-negocio"><BusinessProfilePage /></RequireAccess>} />
       <Route path="/configuracion" element={<RequireAccess routeKey="configuracion"><Configuracion /></RequireAccess>} />
       <Route path="/perfil" element={<RequireAccess routeKey="perfil"><Perfil /></RequireAccess>} />
       <Route path="/historial" element={<RequireAccess routeKey="historial"><History /></RequireAccess>} />
