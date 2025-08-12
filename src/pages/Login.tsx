@@ -25,6 +25,9 @@ export default function Login() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+  const [loginWithPassword, setLoginWithPassword] = useState(false);
 
   useEffect(() => {
     document.title = mode === "signup" ? "Crear cuenta | App" : "Iniciar sesión | App";
@@ -85,14 +88,16 @@ export default function Login() {
     setErrorMsg(null);
     setSending(true);
     try {
+      if (!email) throw new Error("Ingresa un correo válido");
+      if (!password || password.length < 6) throw new Error("La contraseña debe tener al menos 6 caracteres");
+      if (password !== password2) throw new Error("Las contraseñas no coinciden");
       try { localStorage.setItem("auth:last_email", email); } catch {}
       const redirectUrl = `${window.location.origin}/auth/callback`;
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signUp({
         email,
+        password,
         options: {
-          shouldCreateUser: true,
           emailRedirectTo: redirectUrl,
-          // Enviar código OTP por correo (además del magic link según config)
           data: { first_name: firstName, last_name: lastName, phone },
         },
       });
@@ -100,7 +105,7 @@ export default function Login() {
 
       lastSentAt.current = Date.now();
       setSent(true);
-      toast({ title: "Enlace enviado", description: "Revisa tu correo y haz clic en el enlace para confirmar." });
+      toast({ title: "Confirma tu correo", description: "Te enviamos un enlace para activar tu cuenta." });
     } catch (e: any) {
       const msg = e?.message || "Error desconocido";
       setErrorMsg(msg);
@@ -210,6 +215,31 @@ export default function Login() {
     }
   }
 
+  async function signInWithPassword() {
+    setErrorMsg(null);
+    setSending(true);
+    try {
+      if (!email || !password) throw new Error("Ingresa correo y contraseña");
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      const sess = await supabase.auth.getSession();
+      const u = sess.data.session?.user;
+      if (u) {
+        await ensureAccountSetup(u.id, u.email);
+      }
+
+      toast({ title: "Sesión iniciada", description: "Bienvenido." });
+      navigate("/app/inicio", { replace: true });
+    } catch (e: any) {
+      const msg = e?.message || "No se pudo iniciar sesión";
+      setErrorMsg(msg);
+      toast({ title: "Error", description: msg, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  }
+
   const onResend = async () => {
     const now = Date.now();
     if (now - lastSentAt.current < 22000) {
@@ -235,11 +265,16 @@ export default function Login() {
             setEmail={setEmail}
             code={code}
             setCode={setCode}
+            password={password}
+            setPassword={setPassword}
+            usePassword={loginWithPassword}
+            setUsePassword={setLoginWithPassword}
             sending={sending}
             sent={sent}
             errorMsg={errorMsg}
             onSubmit={sendLoginLink}
             onVerify={verifyLoginCode}
+            onPasswordLogin={signInWithPassword}
             onResend={onResend}
           />
         </TabsContent>
@@ -254,8 +289,10 @@ export default function Login() {
             setPhone={setPhone}
             email={email}
             setEmail={setEmail}
-            code={code}
-            setCode={setCode}
+            password={password}
+            setPassword={setPassword}
+            password2={password2}
+            setPassword2={setPassword2}
             sending={sending}
             sent={sent}
             errorMsg={errorMsg}
@@ -267,7 +304,7 @@ export default function Login() {
       </Tabs>
 
       <Separator className="my-6" />
-      <p className="text-xs text-muted-foreground">Te enviaremos un enlace seguro al correo. No pediremos contraseña.</p>
+      <p className="text-xs text-muted-foreground">Puedes iniciar sesión con código o contraseña. Si estás creando cuenta, confirma desde el enlace del correo.</p>
     </main>
   );
 }
@@ -277,24 +314,64 @@ function AuthEmailForm({
   setEmail,
   code,
   setCode,
+  password,
+  setPassword,
+  usePassword,
+  setUsePassword,
   sending,
   sent,
   errorMsg,
   onSubmit,
   onVerify,
+  onPasswordLogin,
   onResend,
 }: {
   email: string;
   setEmail: (v: string) => void;
   code: string;
   setCode: (v: string) => void;
+  password: string;
+  setPassword: (v: string) => void;
+  usePassword: boolean;
+  setUsePassword: (v: boolean) => void;
   sending: boolean;
   sent: boolean;
   errorMsg: string | null;
   onSubmit: () => void | Promise<void>;
   onVerify: () => void | Promise<void>;
+  onPasswordLogin: () => void | Promise<void>;
   onResend: () => void | Promise<void>;
 }) {
+  if (usePassword) {
+    return (
+      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onPasswordLogin(); }}>
+        <div>
+          <label htmlFor="email" className="text-sm font-medium">Correo electrónico</label>
+          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
+        </div>
+        <div>
+          <label htmlFor="password" className="text-sm font-medium">Contraseña</label>
+          <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1" />
+        </div>
+
+        {errorMsg && (
+          <div role="alert" aria-live="polite" className="text-sm text-destructive">{errorMsg}</div>
+        )}
+
+        <Button type="submit" className="w-full" disabled={sending || !email || password.length < 6}>
+          {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Iniciar sesión
+        </Button>
+
+        <div className="text-center">
+          <button type="button" onClick={() => setUsePassword(false)} className="text-xs underline disabled:opacity-50" disabled={sending}>
+            Usar código por correo
+          </button>
+        </div>
+      </form>
+    );
+  }
+
   return (
     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (sent) onVerify(); else onSubmit(); }}>
       <div>
@@ -328,10 +405,17 @@ function AuthEmailForm({
         {sent ? "Verificar código" : "Enviar código"}
       </Button>
 
-      <div className="text-center">
-        <button type="button" onClick={onResend} className="text-xs underline disabled:opacity-50" disabled={sending}>
-          Reenviar {sent ? "código" : "enlace/código"}
-        </button>
+      <div className="text-center space-y-2">
+        <div>
+          <button type="button" onClick={onResend} className="text-xs underline disabled:opacity-50" disabled={sending}>
+            Reenviar {sent ? "código" : "enlace/código"}
+          </button>
+        </div>
+        <div>
+          <button type="button" onClick={() => setUsePassword(true)} className="text-xs underline disabled:opacity-50" disabled={sending}>
+            Usar contraseña
+          </button>
+        </div>
       </div>
     </form>
   );
@@ -346,8 +430,10 @@ function SignupForm({
   setPhone,
   email,
   setEmail,
-  code,
-  setCode,
+  password,
+  setPassword,
+  password2,
+  setPassword2,
   sending,
   sent,
   errorMsg,
@@ -363,8 +449,10 @@ function SignupForm({
   setPhone: (v: string) => void;
   email: string;
   setEmail: (v: string) => void;
-  code: string;
-  setCode: (v: string) => void;
+  password: string;
+  setPassword: (v: string) => void;
+  password2: string;
+  setPassword2: (v: string) => void;
   sending: boolean;
   sent: boolean;
   errorMsg: string | null;
@@ -402,6 +490,17 @@ function SignupForm({
             <label htmlFor="phone" className="text-sm font-medium">Número de celular</label>
             <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="mt-1" />
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="password1" className="text-sm font-medium">Contraseña</label>
+              <Input id="password1" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1" />
+            </div>
+            <div>
+              <label htmlFor="password2" className="text-sm font-medium">Confirmar contraseña</label>
+              <Input id="password2" type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} required className="mt-1" />
+            </div>
+          </div>
         </>
       )}
 
@@ -416,9 +515,9 @@ function SignupForm({
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={sending || !email || sent}>
+      <Button type="submit" className="w-full" disabled={sending || !email || password.length < 6 || password !== password2 || sent}>
         {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {sent ? "Enlace enviado" : "Enviar enlace"}
+        {sent ? "Enlace enviado" : "Crear cuenta"}
       </Button>
 
       <div className="text-center">
