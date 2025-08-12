@@ -86,10 +86,12 @@ export default function Login() {
     setSending(true);
     try {
       try { localStorage.setItem("auth:last_email", email); } catch {}
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
+          emailRedirectTo: redirectUrl,
           // Enviar código OTP por correo (además del magic link según config)
           data: { first_name: firstName, last_name: lastName, phone },
         },
