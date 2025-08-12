@@ -979,6 +979,32 @@ export type Database = {
       }
     }
     Views: {
+      profiles: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_cotizacion_totales: {
         Row: {
           cotizacion_id: string | null
@@ -1072,6 +1098,10 @@ export type Database = {
         Returns: boolean
       }
       is_company_member: {
+        Args: { _company_id: string }
+        Returns: boolean
+      }
+      is_company_super_admin: {
         Args: { _company_id: string }
         Returns: boolean
       }
