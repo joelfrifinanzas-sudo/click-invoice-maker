@@ -163,7 +163,8 @@ export default function Login() {
     } catch {}
 
     setMagicSending(true);
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/auth/callback`;
+    try { localStorage.setItem("auth:last_email", email); } catch {}
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectUrl },

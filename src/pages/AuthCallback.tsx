@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 function parseHash(hash: string) {
   const h = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -17,17 +19,28 @@ function parseHash(hash: string) {
 export default function AuthCallback() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [status, setStatus] = useState<string>("Procesando autenticación...");
+  const [err, setErr] = useState<string | null>(null);
+  const [email, setEmail] = useState<string>(() => {
+    try { return localStorage.getItem("auth:last_email") || ""; } catch { return ""; }
+  });
+  const [resending, setResending] = useState(false);
   const { access_token, refresh_token, error } = useMemo(() => parseHash(location.hash), [location.hash]);
 
   useEffect(() => {
-    // Basic SEO for this transitional page
+    // Basic SEO + noindex for this transitional page
     const prevTitle = document.title;
     document.title = "Auth Callback – Iniciando sesión";
-    const meta = document.createElement("meta");
-    meta.name = "description";
-    meta.content = "Confirmación de email y autenticación por enlace mágico.";
-    document.head.appendChild(meta);
+    const metaDesc = document.createElement("meta");
+    metaDesc.name = "description";
+    metaDesc.content = "Confirmación de email y autenticación por enlace mágico.";
+    document.head.appendChild(metaDesc);
+
+    const metaRobots = document.createElement("meta");
+    metaRobots.name = "robots";
+    metaRobots.content = "noindex,nofollow";
+    document.head.appendChild(metaRobots);
 
     const link = document.createElement("link");
     link.rel = "canonical";
@@ -36,7 +49,8 @@ export default function AuthCallback() {
 
     return () => {
       document.title = prevTitle;
-      document.head.removeChild(meta);
+      document.head.removeChild(metaDesc);
+      document.head.removeChild(metaRobots);
       document.head.removeChild(link);
     };
   }, []);
@@ -44,45 +58,94 @@ export default function AuthCallback() {
   useEffect(() => {
     let cancelled = false;
 
+    const ensureCompanyProfile = async (userId: string, userEmail?: string | null) => {
+      const { data: profile } = await supabase
+        .from("users_profiles")
+        .select("company_id")
+        .eq("id", userId)
+        .maybeSingle();
+
+      let companyId = profile?.company_id as string | null | undefined;
+
+      if (!companyId) {
+        const defaultName = (userEmail?.split("@")[0] || "Mi Empresa").slice(0, 80);
+        const { data: company } = await supabase
+          .from("companies")
+          .insert({ owner_user_id: userId, name: defaultName })
+          .select("id")
+          .maybeSingle();
+        companyId = company?.id ?? null;
+
+        if (companyId) {
+          await supabase
+            .from("users_profiles")
+            .upsert({ id: userId, company_id: companyId })
+            .select("company_id")
+            .maybeSingle()
+            .then(() => {});
+          try {
+            await supabase.rpc("add_owner_membership", { _company_id: companyId, _user_id: userId });
+          } catch {}
+        }
+      }
+
+      try { await supabase.rpc("sync_my_claims"); } catch {}
+      try { await supabase.rpc("touch_login"); } catch {}
+    };
+
     const proceed = async () => {
       try {
-        if (error) {
-          setStatus(`Error de autenticación: ${error}`);
-          setTimeout(() => navigate("/login", { replace: true }), 2000);
-          return;
+        const sessRes = await supabase.auth.getSession();
+        let session = sessRes.data.session;
+
+        if (!session) {
+          if (error) throw new Error(error);
+          if (access_token && refresh_token) {
+            const { data, error: setErr } = await supabase.auth.setSession({ access_token, refresh_token });
+            if (setErr) throw setErr;
+            session = data.session;
+          }
         }
 
-        if (access_token && refresh_token) {
-          // Set the session directly from the hash params
-          const { data, error: setErr } = await supabase.auth.setSession({ access_token, refresh_token });
-          if (setErr) throw setErr;
-          if (!data.session) throw new Error("No se pudo establecer la sesión");
-          // Touch profile/claims
-          try { await supabase.rpc("touch_login"); } catch { /* ignore */ }
-          setStatus("¡Autenticado! Redirigiendo...");
-          setTimeout(() => navigate("/app/inicio", { replace: true }), 300);
-          return;
+        if (!session?.user) {
+          throw new Error("Enlace inválido o expirado");
         }
 
-        // Fallback: if no tokens in hash, check existing session
-        const { data: sess } = await supabase.auth.getSession();
-        if (sess.session) {
-          try { await supabase.rpc("touch_login"); } catch { /* ignore */ }
-          setStatus("Sesión encontrada. Redirigiendo...");
-          setTimeout(() => navigate("/app/inicio", { replace: true }), 300);
-        } else {
-          setStatus("No se encontró sesión. Redirigiendo al inicio de sesión...");
-          setTimeout(() => navigate("/login", { replace: true }), 800);
-        }
+        if (cancelled) return;
+
+        setStatus("Sincronizando tu cuenta...");
+        await ensureCompanyProfile(session.user.id, session.user.email);
+
+        if (cancelled) return;
+        setStatus("¡Autenticado! Redirigiendo...");
+        setTimeout(() => navigate("/app/inicio", { replace: true }), 300);
       } catch (e: any) {
-        setStatus(`Error: ${e?.message || "Fallo desconocido"}`);
-        setTimeout(() => navigate("/login", { replace: true }), 1200);
+        const msg = e?.message || "Fallo desconocido";
+        setErr(msg);
+        setStatus(`Error: ${msg}`);
+        toast({ title: "Enlace inválido o expirado", description: msg, variant: "destructive" });
       }
     };
 
     proceed();
     return () => { cancelled = true; };
-  }, [access_token, refresh_token, error, navigate]);
+  }, [access_token, refresh_token, error, navigate, toast]);
+
+  const handleResend = async () => {
+    if (!email) return;
+    setResending(true);
+    try {
+      try { localStorage.setItem("auth:last_email", email); } catch {}
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectUrl } });
+      if (error) throw error;
+      toast({ title: "Enlace enviado", description: "Revisa tu correo para continuar." });
+    } catch (e: any) {
+      toast({ title: "No se pudo enviar el enlace", description: e?.message || "Intenta de nuevo más tarde", variant: "destructive" });
+    } finally {
+      setResending(false);
+    }
+  };
 
   return (
     <main className="min-h-screen w-full flex items-center justify-center p-6">
@@ -92,6 +155,16 @@ export default function AuthCallback() {
         </div>
         <h1 className="text-xl font-semibold">Autenticando…</h1>
         <p className="text-muted-foreground">{status}</p>
+        {err && (
+          <div className="space-y-2">
+            <p className="text-sm">Intentar de nuevo con: <strong>{email || "(sin correo guardado)"}</strong></p>
+            <div className="flex items-center justify-center">
+              <Button onClick={handleResend} disabled={!email || resending}>
+                {resending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Reenviar enlace
+              </Button>
+            </div>
+          </div>
+        )}
       </section>
     </main>
   );
