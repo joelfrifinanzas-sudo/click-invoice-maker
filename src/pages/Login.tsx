@@ -428,12 +428,6 @@ function SignupForm({
         <div role="alert" aria-live="polite" className="text-sm text-destructive">{errorMsg}</div>
       )}
 
-      {sent && (
-        <div className="space-y-2">
-          <p className="text-sm">Hemos enviado un enlace de confirmación a tu correo. Ábrelo para completar el registro.</p>
-          <p className="text-xs text-muted-foreground">Si no lo ves, revisa spam o promociones.</p>
-        </div>
-      )}
 
       <Button type="submit" className="w-full" disabled={sending || !email || password.length < 6 || password !== password2 || sent}>
         {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
