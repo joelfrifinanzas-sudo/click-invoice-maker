@@ -2,7 +2,7 @@
 // Accepts POST { email, password, role }
 // Creates a Supabase auth user with email confirmed and stores role in user_metadata
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // CORS headers for browser access
 const corsHeaders = {
