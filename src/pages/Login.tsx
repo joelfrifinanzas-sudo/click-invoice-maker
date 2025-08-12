@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 export default function Login() {
   const { user } = useAuth();
@@ -19,6 +20,10 @@ export default function Login() {
   const [sent, setSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const lastSentAt = useRef<number>(0);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
 
   useEffect(() => {
     document.title = mode === "signup" ? "Crear cuenta | App" : "Iniciar sesión | App";
@@ -80,19 +85,49 @@ export default function Login() {
     setSending(true);
     try {
       try { localStorage.setItem("auth:last_email", email); } catch {}
-      const redirectUrl = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: redirectUrl, shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          // Enviar código OTP por correo (además del magic link según config)
+          data: { first_name: firstName, last_name: lastName, phone },
+        },
       });
       if (error) throw error;
+
       lastSentAt.current = Date.now();
       setSent(true);
-      toast({ title: "Enlace enviado", description: "Revisa tu correo para confirmar tu cuenta." });
+      toast({ title: "Código enviado", description: "Revisa tu correo e ingresa el código de 6 dígitos." });
     } catch (e: any) {
       const msg = e?.message || "Error desconocido";
       setErrorMsg(msg);
       toast({ title: "Error", description: msg, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function verifySignupCode() {
+    setErrorMsg(null);
+    setSending(true);
+    try {
+      if (!email || !code || code.length < 6) throw new Error("Ingresa el código completo");
+      // Intento 1: verificar como 'email'
+      let { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' as any });
+      if (error) {
+        // Intento 2 (fallback): verificar como 'signup'
+        const res2 = await supabase.auth.verifyOtp({ email, token: code, type: 'signup' as any });
+        data = res2.data; error = res2.error;
+      }
+      if (error) throw error;
+
+      // Guardar metadatos del usuario
+      await supabase.auth.updateUser({ data: { first_name: firstName, last_name: lastName, phone } });
+      toast({ title: "Cuenta verificada", description: "Sesión iniciada correctamente." });
+    } catch (e: any) {
+      const msg = e?.message || "Código inválido o expirado";
+      setErrorMsg(msg);
+      toast({ title: "No se pudo verificar", description: msg, variant: "destructive" });
     } finally {
       setSending(false);
     }
@@ -130,13 +165,22 @@ export default function Login() {
         </TabsContent>
 
         <TabsContent value="signup" className="mt-0">
-          <AuthEmailForm
+          <SignupForm
+            firstName={firstName}
+            setFirstName={setFirstName}
+            lastName={lastName}
+            setLastName={setLastName}
+            phone={phone}
+            setPhone={setPhone}
             email={email}
             setEmail={setEmail}
+            code={code}
+            setCode={setCode}
             sending={sending}
             sent={sent}
             errorMsg={errorMsg}
             onSubmit={sendSignupLink}
+            onVerify={verifySignupCode}
             onResend={onResend}
           />
         </TabsContent>
@@ -189,3 +233,107 @@ function AuthEmailForm({
     </form>
   );
 }
+
+function SignupForm({
+  firstName,
+  setFirstName,
+  lastName,
+  setLastName,
+  phone,
+  setPhone,
+  email,
+  setEmail,
+  code,
+  setCode,
+  sending,
+  sent,
+  errorMsg,
+  onSubmit,
+  onVerify,
+  onResend,
+}: {
+  firstName: string;
+  setFirstName: (v: string) => void;
+  lastName: string;
+  setLastName: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
+  email: string;
+  setEmail: (v: string) => void;
+  code: string;
+  setCode: (v: string) => void;
+  sending: boolean;
+  sent: boolean;
+  errorMsg: string | null;
+  onSubmit: () => void | Promise<void>;
+  onVerify: () => void | Promise<void>;
+  onResend: () => void | Promise<void>;
+}) {
+  return (
+    <form
+      className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (sent) onVerify(); else onSubmit();
+      }}
+    >
+      {!sent && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="firstName" className="text-sm font-medium">Nombre</label>
+              <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="mt-1" />
+            </div>
+            <div>
+              <label htmlFor="lastName" className="text-sm font-medium">Apellidos</label>
+              <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="mt-1" />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="email2" className="text-sm font-medium">Correo electrónico</label>
+            <Input id="email2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
+          </div>
+
+          <div>
+            <label htmlFor="phone" className="text-sm font-medium">Número de celular</label>
+            <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="mt-1" />
+          </div>
+        </>
+      )}
+
+      {errorMsg && (
+        <div role="alert" aria-live="polite" className="text-sm text-destructive">{errorMsg}</div>
+      )}
+
+      {sent && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Código de verificación</label>
+          <InputOTP maxLength={6} value={code} onChange={setCode}>
+            <InputOTPGroup>
+              <InputOTPSlot index={0} />
+              <InputOTPSlot index={1} />
+              <InputOTPSlot index={2} />
+              <InputOTPSlot index={3} />
+              <InputOTPSlot index={4} />
+              <InputOTPSlot index={5} />
+            </InputOTPGroup>
+          </InputOTP>
+          <p className="text-xs text-muted-foreground">Ingresa el código de 6 dígitos enviado a tu correo.</p>
+        </div>
+      )}
+
+      <Button type="submit" className="w-full" disabled={sending || !email || (sent && code.length < 6)}>
+        {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {sent ? "Verificar y crear cuenta" : "Crear cuenta"}
+      </Button>
+
+      <div className="text-center">
+        <button type="button" onClick={onResend} className="text-xs underline disabled:opacity-50" disabled={sending}>
+          Reenviar {sent ? "código" : "enlace/código"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
