@@ -42,8 +42,9 @@ export default function UsuariosPermisos() {
   const [search, setSearch] = useState("");
 
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<Role>("CLIENTE");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createPassword, setCreatePassword] = useState("");
+  const [createRole, setCreateRole] = useState<"admin" | "supervisor" | "cajera">("cajera");
   const [sending, setSending] = useState(false);
 
   const canManage = myRole === "superadmin" || myRole === "admin";
@@ -148,34 +149,38 @@ export default function UsuariosPermisos() {
     }
   };
 
-  const onInvite = async () => {
-    if (!companyId || !inviteEmail) return;
+  const handleCreateUser = async () => {
+    if (!canManage) return;
+    const email = createEmail.trim().toLowerCase();
+    const password = createPassword;
+    const role = createRole;
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!emailValid) {
+      toast({ title: "Email inválido", description: "Revisa el formato del correo", variant: "destructive" });
+      return;
+    }
+    if (!password || password.length < 8) {
+      toast({ title: "Contraseña inválida", description: "Mínimo 8 caracteres", variant: "destructive" });
+      return;
+    }
     setSending(true);
     try {
-      // Upsert invitación
-      const { error: upErr } = await supabase
-        .from("company_members")
-        .upsert({ company_id: companyId, email: inviteEmail.toLowerCase(), role: inviteRole, status: "invited" }, { onConflict: "company_id,email" });
-      if (upErr) throw upErr;
-
-      // Enviar enlace mágico
-      const redirectUrl = `${window.location.origin}/auth/callback`;
-      const { error } = await supabase.auth.signInWithOtp({ email: inviteEmail, options: { shouldCreateUser: true, emailRedirectTo: redirectUrl } });
+      const { data, error } = await supabase.functions.invoke("admin-create-user", {
+        body: { email, password, role },
+      });
       if (error) throw error;
-
-      toast({ title: "Invitación enviada", description: `Se envió enlace a ${inviteEmail}` });
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: "Usuario creado con éxito", description: email });
       setInviteOpen(false);
-      setInviteEmail("");
-      setInviteRole("CLIENTE");
-      setPage(0);
-      void fetchMembers();
+      setCreateEmail("");
+      setCreatePassword("");
+      setCreateRole("cajera");
     } catch (e: any) {
-      toast({ title: "No se pudo invitar", description: e?.message || "Intente más tarde", variant: "destructive" });
+      toast({ title: "No se pudo crear", description: e?.message || "Intente más tarde", variant: "destructive" });
     } finally {
       setSending(false);
     }
   };
-
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
 
   return (
@@ -201,28 +206,32 @@ export default function UsuariosPermisos() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Enviar invitación</DialogTitle>
+                  <DialogTitle>Crear usuario</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 py-2">
                   <div className="space-y-1">
                     <label className="text-sm">Correo electrónico</label>
-                    <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="usuario@correo.com" />
+                    <Input type="email" value={createEmail} onChange={(e) => setCreateEmail(e.target.value)} placeholder="usuario@correo.com" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm">Contraseña</label>
+                    <Input type="password" value={createPassword} onChange={(e) => setCreatePassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-sm">Rol</label>
-                    <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as Role)}>
+                    <Select value={createRole} onValueChange={(v) => setCreateRole(v as "admin" | "supervisor" | "cajera")}>
                       <SelectTrigger><SelectValue placeholder="Selecciona rol" /></SelectTrigger>
                       <SelectContent>
-                        {ROLES.map((r) => (
-                          <SelectItem key={r} value={r}>{r}</SelectItem>
-                        ))}
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="supervisor">Supervisor</SelectItem>
+                        <SelectItem value="cajera">Cajera</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={onInvite} disabled={!canManage || sending || !inviteEmail}>
-                    {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enviar invitación
+                  <Button onClick={handleCreateUser} disabled={!canManage || sending || !createEmail || !createPassword}>
+                    {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Confirmar
                   </Button>
                 </DialogFooter>
               </DialogContent>
