@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Client, ClientType, upsertClient } from "@/data/clients";
+import { Client, ClientType } from "@/data/clients";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentContext } from "@/data/utils";
 import { useToast } from "@/hooks/use-toast";
 import { validateCedula, validateRNC } from "@/utils/validationUtils";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -103,10 +105,32 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
 
     try {
       setSaving(true);
-      const { data, error } = await upsertClient(values as any);
+      const ctx = await getCurrentContext();
+      if (!ctx.data) throw new Error(ctx.error || 'No autenticado');
+
+      const payload = {
+        owner_id: ctx.data.user.id,
+        tenant_id: ctx.data.companyId,
+        tipo_cliente: values.tipo_cliente,
+        saludo: values.saludo || null,
+        nombre_pila: values.nombre_pila || null,
+        apellido: values.apellido || null,
+        nombre_empresa: values.nombre_empresa || null,
+        nombre_visualizacion: values.nombre_visualizacion,
+        email: values.email || null,
+        telefono_laboral: values.telefono_laboral || null,
+        telefono_movil: values.telefono_movil || null,
+        pais_tel: values.pais_tel || 'DO',
+        documento: values.documento || null,
+        es_contribuyente: !!values.es_contribuyente,
+        notas: values.notas || null,
+        activo: values.activo !== false,
+      } as any;
+
+      const { data, error } = await supabase.from("clients").insert(payload).select("*").maybeSingle();
       if (error || !data) {
         console.error("Client save failed", error);
-        toast({ title: "No se pudo guardar", description: error || "Verifique los campos requeridos", variant: "destructive" });
+        toast({ title: "No se pudo guardar", description: error?.message ?? "Verifique los campos requeridos", variant: "destructive" });
         return;
       }
       toast({ title: "Cliente guardado", description: data.nombre_visualizacion });

@@ -15,7 +15,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Package, Edit, Trash2, Barcode, ImagePlus, X, ChevronDown } from "lucide-react";
 import { formatMoneyDOP } from "@/utils/formatters";
-import { listProducts, upsertProduct } from "@/data/products";
+import { listProducts } from "@/data/products";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentContext } from "@/data/utils";
 import type { Product } from "@/data/products";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -240,16 +242,24 @@ export default function Articulos() {
       }
 
       const unitPrice = moneyToNumber(values.precioVenta || "0");
-      const { data, error } = await upsertProduct({
+      const ctx = await getCurrentContext();
+      if (!ctx.data) {
+        toast({ title: "No se pudo guardar", description: ctx.error || "No autenticado", variant: "destructive" });
+        return;
+      }
+      const { data, error } = await supabase.from("products").insert({
         name: values.nombre.trim(),
-        unit_price: unitPrice,
         currency: "DOP",
-        sku: barcode || null as any,
+        itbis_rate: 0.18,
+        unit_price: unitPrice,
         active: true,
-      });
+        owner_user_id: ctx.data.user.id,
+        company_id: ctx.data.companyId,
+        sku: (barcode || null) as any,
+      }).select("*").maybeSingle();
       if (error) {
         console.error("Product save failed", error);
-        toast({ title: "No se pudo guardar", description: error, variant: "destructive" });
+        toast({ title: "No se pudo guardar", description: error.message, variant: "destructive" });
         return;
       }
 
