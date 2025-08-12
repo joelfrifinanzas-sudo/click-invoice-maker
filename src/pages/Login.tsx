@@ -263,19 +263,11 @@ export default function Login() {
           <AuthEmailForm
             email={email}
             setEmail={setEmail}
-            code={code}
-            setCode={setCode}
             password={password}
             setPassword={setPassword}
-            usePassword={loginWithPassword}
-            setUsePassword={setLoginWithPassword}
             sending={sending}
-            sent={sent}
             errorMsg={errorMsg}
-            onSubmit={sendLoginLink}
-            onVerify={verifyLoginCode}
             onPasswordLogin={signInWithPassword}
-            onResend={onResend}
           />
         </TabsContent>
 
@@ -304,7 +296,7 @@ export default function Login() {
       </Tabs>
 
       <Separator className="my-6" />
-      <p className="text-xs text-muted-foreground">Puedes iniciar sesión con código o contraseña. Si estás creando cuenta, confirma desde el enlace del correo.</p>
+      <p className="text-xs text-muted-foreground">Inicia sesión con tu correo y contraseña. Para nuevas cuentas, confirma desde el enlace enviado a tu correo.</p>
     </main>
   );
 }
@@ -312,111 +304,39 @@ export default function Login() {
 function AuthEmailForm({
   email,
   setEmail,
-  code,
-  setCode,
   password,
   setPassword,
-  usePassword,
-  setUsePassword,
   sending,
-  sent,
   errorMsg,
-  onSubmit,
-  onVerify,
   onPasswordLogin,
-  onResend,
 }: {
   email: string;
   setEmail: (v: string) => void;
-  code: string;
-  setCode: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
-  usePassword: boolean;
-  setUsePassword: (v: boolean) => void;
   sending: boolean;
-  sent: boolean;
   errorMsg: string | null;
-  onSubmit: () => void | Promise<void>;
-  onVerify: () => void | Promise<void>;
   onPasswordLogin: () => void | Promise<void>;
-  onResend: () => void | Promise<void>;
 }) {
-  if (usePassword) {
-    return (
-      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onPasswordLogin(); }}>
-        <div>
-          <label htmlFor="email" className="text-sm font-medium">Correo electrónico</label>
-          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
-        </div>
-        <div>
-          <label htmlFor="password" className="text-sm font-medium">Contraseña</label>
-          <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1" />
-        </div>
-
-        {errorMsg && (
-          <div role="alert" aria-live="polite" className="text-sm text-destructive">{errorMsg}</div>
-        )}
-
-        <Button type="submit" className="w-full" disabled={sending || !email || password.length < 6}>
-          {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Iniciar sesión
-        </Button>
-
-        <div className="text-center">
-          <button type="button" onClick={() => setUsePassword(false)} className="text-xs underline disabled:opacity-50" disabled={sending}>
-            Usar código por correo
-          </button>
-        </div>
-      </form>
-    );
-  }
-
   return (
-    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (sent) onVerify(); else onSubmit(); }}>
+    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onPasswordLogin(); }}>
       <div>
         <label htmlFor="email" className="text-sm font-medium">Correo electrónico</label>
         <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
+      </div>
+      <div>
+        <label htmlFor="password" className="text-sm font-medium">Contraseña</label>
+        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1" />
       </div>
 
       {errorMsg && (
         <div role="alert" aria-live="polite" className="text-sm text-destructive">{errorMsg}</div>
       )}
 
-      {sent && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Código de verificación</label>
-          <InputOTP maxLength={6} value={code} onChange={setCode}>
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
-          <p className="text-xs text-muted-foreground">Ingresa el código de 6 dígitos enviado a tu correo.</p>
-        </div>
-      )}
-
-      <Button type="submit" className="w-full" disabled={sending || !email || (sent && code.length < 6)}>
+      <Button type="submit" className="w-full" disabled={sending || !email || password.length < 6}>
         {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {sent ? "Verificar código" : "Enviar código"}
+        Iniciar sesión
       </Button>
-
-      <div className="text-center space-y-2">
-        <div>
-          <button type="button" onClick={onResend} className="text-xs underline disabled:opacity-50" disabled={sending}>
-            Reenviar {sent ? "código" : "enlace/código"}
-          </button>
-        </div>
-        <div>
-          <button type="button" onClick={() => setUsePassword(true)} className="text-xs underline disabled:opacity-50" disabled={sending}>
-            Usar contraseña
-          </button>
-        </div>
-      </div>
     </form>
   );
 }
