@@ -243,8 +243,9 @@ export default function Articulos() {
 
       const unitPrice = moneyToNumber(values.precioVenta || "0");
       const ctx = await getCurrentContext();
-      if (!ctx.data) {
-        toast({ title: "No se pudo guardar", description: ctx.error || "No autenticado", variant: "destructive" });
+      if (!ctx.data || !ctx.data.companyId) {
+        const desc = ctx.error?.includes('Missing company_id') ? 'Selecciona o crea una empresa para continuar.' : (ctx.error || 'No autenticado');
+        toast({ title: ctx.error?.includes('Missing company_id') ? 'Completa empresa' : 'No se pudo guardar', description: desc, variant: "destructive" });
         return;
       }
       const { data, error } = await supabase.from("products").insert({

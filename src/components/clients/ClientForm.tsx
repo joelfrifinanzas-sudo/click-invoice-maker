@@ -107,7 +107,10 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
     try {
       setSaving(true);
       const ctx = await getCurrentContext();
-      if (!ctx.data) throw new Error(ctx.error || 'No autenticado');
+      if (!ctx.data || !ctx.data.companyId) {
+        toast({ title: "Completa empresa", description: "Selecciona o crea una empresa para continuar.", variant: "destructive" });
+        return;
+      }
 
       const payload = {
         owner_id: ctx.data.user.id,

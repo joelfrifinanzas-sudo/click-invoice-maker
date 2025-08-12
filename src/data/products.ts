@@ -28,7 +28,7 @@ export async function listProducts(params?: { search?: string; limit?: number; a
 export async function upsertProduct(input: Partial<ProductInsert & ProductUpdate> & { id?: string }): Promise<{ data: Product | null; error: string | null }> {
   try {
     const ctx = await getCurrentContext();
-    if (!ctx.data) return { data: null, error: ctx.error };
+    if (!ctx.data || !ctx.data.companyId) return { data: null, error: "Completa empresa" };
 
     const payload: ProductInsert & Partial<ProductUpdate> = {
       name: input.name ?? "",

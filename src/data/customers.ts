@@ -55,7 +55,7 @@ export async function upsertCustomer(input: Partial<CustomerInsert & CustomerUpd
   try {
     // Ensure owner_user_id and company_id
     const ctx = await getCurrentContext();
-    if (!ctx.data) return { data: null, error: ctx.error };
+    if (!ctx.data || !ctx.data.companyId) return { data: null, error: "Completa empresa" };
 
     const payload: CustomerInsert & Partial<CustomerUpdate> = {
       name: input.name ?? "",
