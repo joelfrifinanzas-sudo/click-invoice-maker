@@ -183,6 +183,7 @@ export type Database = {
           nombre_pila: string | null
           nombre_visualizacion: string
           notas: string | null
+          owner_id: string | null
           pais_tel: string
           saludo: string | null
           telefono_laboral: string | null
@@ -202,6 +203,7 @@ export type Database = {
           nombre_pila?: string | null
           nombre_visualizacion: string
           notas?: string | null
+          owner_id?: string | null
           pais_tel?: string
           saludo?: string | null
           telefono_laboral?: string | null
@@ -221,6 +223,7 @@ export type Database = {
           nombre_pila?: string | null
           nombre_visualizacion?: string
           notas?: string | null
+          owner_id?: string | null
           pais_tel?: string
           saludo?: string | null
           telefono_laboral?: string | null
@@ -813,6 +816,7 @@ export type Database = {
           id: string
           itbis_rate: number
           name: string
+          owner_id: string | null
           owner_user_id: string
           sku: string | null
           unit_price: number
@@ -826,6 +830,7 @@ export type Database = {
           id?: string
           itbis_rate?: number
           name: string
+          owner_id?: string | null
           owner_user_id: string
           sku?: string | null
           unit_price?: number
@@ -839,6 +844,7 @@ export type Database = {
           id?: string
           itbis_rate?: number
           name?: string
+          owner_id?: string | null
           owner_user_id?: string
           sku?: string | null
           unit_price?: number
@@ -1289,6 +1295,7 @@ export type Database = {
           nombre_pila: string | null
           nombre_visualizacion: string
           notas: string | null
+          owner_id: string | null
           pais_tel: string
           saludo: string | null
           telefono_laboral: string | null
