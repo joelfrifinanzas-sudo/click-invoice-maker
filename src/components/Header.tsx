@@ -82,8 +82,6 @@ export function Header() {
     { label: "Inventario", Icon: Boxes },
     { label: "Pagos", Icon: Banknote },
     { label: "Perfil del negocio", Icon: Landmark },
-    { label: "Perfil de la empresa", Icon: Building2 },
-    { label: "Marca y preferencias", Icon: Palette },
     { label: "Gestión de usuarios", Icon: UserCog },
     { label: "Métodos de pago", Icon: CreditCard },
   ], []);
