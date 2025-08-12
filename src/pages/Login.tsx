@@ -107,16 +107,40 @@ export default function Login() {
     }
   }
 
+  async function verifyLoginCode() {
+    setErrorMsg(null);
+    setSending(true);
+    try {
+      if (!email || !code || code.length < 6) throw new Error("Ingresa el código completo");
+      // Intento 1: verificar como 'magiclink' (sign in)
+      let { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'magiclink' as any });
+      if (error) {
+        // Intento 2 (fallback): verificar como 'email'
+        const res2 = await supabase.auth.verifyOtp({ email, token: code, type: 'email' as any });
+        data = res2.data; error = res2.error;
+      }
+      if (error) throw error;
+
+      toast({ title: "Código verificado", description: "Sesión iniciada correctamente." });
+    } catch (e: any) {
+      const msg = e?.message || "Código inválido o expirado";
+      setErrorMsg(msg);
+      toast({ title: "No se pudo verificar", description: msg, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function verifySignupCode() {
     setErrorMsg(null);
     setSending(true);
     try {
       if (!email || !code || code.length < 6) throw new Error("Ingresa el código completo");
-      // Intento 1: verificar como 'email'
-      let { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' as any });
+      // Intento 1: verificar como 'signup'
+      let { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'signup' as any });
       if (error) {
-        // Intento 2 (fallback): verificar como 'signup'
-        const res2 = await supabase.auth.verifyOtp({ email, token: code, type: 'signup' as any });
+        // Intento 2 (fallback): verificar como 'email'
+        const res2 = await supabase.auth.verifyOtp({ email, token: code, type: 'email' as any });
         data = res2.data; error = res2.error;
       }
       if (error) throw error;
@@ -156,10 +180,13 @@ export default function Login() {
           <AuthEmailForm
             email={email}
             setEmail={setEmail}
+            code={code}
+            setCode={setCode}
             sending={sending}
             sent={sent}
             errorMsg={errorMsg}
             onSubmit={sendLoginLink}
+            onVerify={verifyLoginCode}
             onResend={onResend}
           />
         </TabsContent>
@@ -195,22 +222,28 @@ export default function Login() {
 function AuthEmailForm({
   email,
   setEmail,
+  code,
+  setCode,
   sending,
   sent,
   errorMsg,
   onSubmit,
+  onVerify,
   onResend,
 }: {
   email: string;
   setEmail: (v: string) => void;
+  code: string;
+  setCode: (v: string) => void;
   sending: boolean;
   sent: boolean;
   errorMsg: string | null;
   onSubmit: () => void | Promise<void>;
+  onVerify: () => void | Promise<void>;
   onResend: () => void | Promise<void>;
 }) {
   return (
-    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (sent) onVerify(); else onSubmit(); }}>
       <div>
         <label htmlFor="email" className="text-sm font-medium">Correo electrónico</label>
         <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
@@ -220,14 +253,31 @@ function AuthEmailForm({
         <div role="alert" aria-live="polite" className="text-sm text-destructive">{errorMsg}</div>
       )}
 
-      <Button type="submit" className="w-full" disabled={sending || !email || sent}>
+      {sent && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Código de verificación</label>
+          <InputOTP maxLength={6} value={code} onChange={setCode}>
+            <InputOTPGroup>
+              <InputOTPSlot index={0} />
+              <InputOTPSlot index={1} />
+              <InputOTPSlot index={2} />
+              <InputOTPSlot index={3} />
+              <InputOTPSlot index={4} />
+              <InputOTPSlot index={5} />
+            </InputOTPGroup>
+          </InputOTP>
+          <p className="text-xs text-muted-foreground">Ingresa el código de 6 dígitos enviado a tu correo.</p>
+        </div>
+      )}
+
+      <Button type="submit" className="w-full" disabled={sending || !email || (sent && code.length < 6)}>
         {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {sent ? "Revisa tu correo" : "Enviar enlace"}
+        {sent ? "Verificar código" : "Enviar enlace/código"}
       </Button>
 
       <div className="text-center">
         <button type="button" onClick={onResend} className="text-xs underline disabled:opacity-50" disabled={sending}>
-          Reenviar enlace
+          Reenviar {sent ? "código" : "enlace/código"}
         </button>
       </div>
     </form>
