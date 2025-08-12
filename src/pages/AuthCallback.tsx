@@ -88,16 +88,23 @@ export default function AuthCallback() {
             .from("users_profiles")
             .upsert({ id: userId, company_id: companyId })
             .select("company_id")
-            .maybeSingle()
-            .then(() => {});
-          try {
-            await supabase.rpc("add_owner_membership", { _company_id: companyId, _user_id: userId });
-          } catch {}
+            .maybeSingle();
         }
       }
 
-      try { await supabase.rpc("sync_my_claims"); } catch {}
       try { await supabase.rpc("touch_login"); } catch {}
+      return companyId ?? null;
+    };
+
+    const ensureMembershipRole = async (companyId: string, userEmail?: string | null) => {
+      if (!companyId) return null;
+      try {
+        const { data, error } = await supabase.rpc("cm_bootstrap_membership", { _company_id: companyId, _email: userEmail ?? null });
+        if (error) throw error;
+        return data as any;
+      } catch {
+        return null;
+      }
     };
 
     const proceed = async () => {
@@ -125,9 +132,21 @@ export default function AuthCallback() {
         if (cancelled) return;
 
         setStatus("Sincronizando tu cuenta...");
-        await ensureCompanyProfile(session.user.id, session.user.email);
+        const companyId = await ensureCompanyProfile(session.user.id, session.user.email);
 
         if (cancelled) return;
+        if (companyId) {
+          setStatus("Aplicando permisos...");
+          await ensureMembershipRole(companyId, session.user.email);
+          try { await supabase.rpc("sync_my_claims"); } catch {}
+          try {
+            const { data: auth2 } = await supabase.auth.getUser();
+            const role = (auth2.user?.user_metadata as any)?.role ?? null;
+            try { localStorage.setItem("app:company_id", companyId); } catch {}
+            try { if (role) localStorage.setItem("app:role", role); } catch {}
+          } catch {}
+        }
+
         setStatus("¡Autenticado! Redirigiendo...");
         setTimeout(() => navigate("/inicio", { replace: true }), 300);
       } catch (e: any) {

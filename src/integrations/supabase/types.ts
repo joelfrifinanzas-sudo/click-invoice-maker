@@ -1062,6 +1062,18 @@ export type Database = {
           retry_after_seconds: number
         }[]
       }
+      cm_bootstrap_membership: {
+        Args: { _company_id: string; _email: string }
+        Returns: {
+          company_id: string
+          created_at: string
+          email: string
+          id: string
+          role: string
+          status: string
+          user_id: string | null
+        }
+      }
       compute_global_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["global_role"]
