@@ -118,7 +118,7 @@ export default function AuthCallback() {
 
         if (cancelled) return;
         setStatus("¡Autenticado! Redirigiendo...");
-        setTimeout(() => navigate("/app/inicio", { replace: true }), 300);
+        setTimeout(() => navigate("/inicio", { replace: true }), 300);
       } catch (e: any) {
         const msg = e?.message || "Fallo desconocido";
         setErr(msg);

@@ -40,10 +40,9 @@ export default function Login() {
 
   if (user) return <Navigate to="/app/inicio" replace />;
 
-  async function sendMagicLink() {
+  async function sendLoginLink() {
     setErrorMsg(null);
 
-    // Server-side precheck (rate limit)
     try {
       const pre = await supabase.functions.invoke("login-guard", { body: { action: "precheck", email } });
       if (!pre.error && (pre.data as any)?.blocked) {
@@ -58,19 +57,42 @@ export default function Login() {
       const redirectUrl = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: redirectUrl },
+        options: { emailRedirectTo: redirectUrl, shouldCreateUser: true },
       });
       if (error) throw error;
 
       lastSentAt.current = Date.now();
       setSent(true);
       toast({ title: "Enlace enviado", description: "Revisa tu correo para continuar." });
-      // Record success (best-effort)
       try { await supabase.functions.invoke("login-guard", { body: { action: "record", email, success: true } }); } catch {}
     } catch (e: any) {
-      setErrorMsg(e?.message || "Error desconocido");
-      // Record failure (best-effort)
+      const msg = e?.message || "Error desconocido";
+      setErrorMsg(msg);
+      toast({ title: "Error", description: msg, variant: "destructive" });
       try { await supabase.functions.invoke("login-guard", { body: { action: "record", email, success: false } }); } catch {}
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function sendSignupLink() {
+    setErrorMsg(null);
+    setSending(true);
+    try {
+      try { localStorage.setItem("auth:last_email", email); } catch {}
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const { error } = await supabase.auth.signUp({
+        email,
+        options: { emailRedirectTo: redirectUrl },
+      } as any);
+      if (error) throw error;
+      lastSentAt.current = Date.now();
+      setSent(true);
+      toast({ title: "Enlace enviado", description: "Revisa tu correo para confirmar tu cuenta." });
+    } catch (e: any) {
+      const msg = e?.message || "Error desconocido";
+      setErrorMsg(msg);
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setSending(false);
     }
@@ -82,7 +104,7 @@ export default function Login() {
       toast({ title: "Espera unos segundos", description: `Puedes reenviar en ${canResendIn}s.` });
       return;
     }
-    await sendMagicLink();
+    if (mode === "signup") await sendSignupLink(); else await sendLoginLink();
   };
 
   return (
@@ -102,7 +124,7 @@ export default function Login() {
             sending={sending}
             sent={sent}
             errorMsg={errorMsg}
-            onSubmit={sendMagicLink}
+            onSubmit={sendLoginLink}
             onResend={onResend}
           />
         </TabsContent>
@@ -114,7 +136,7 @@ export default function Login() {
             sending={sending}
             sent={sent}
             errorMsg={errorMsg}
-            onSubmit={sendMagicLink}
+            onSubmit={sendSignupLink}
             onResend={onResend}
           />
         </TabsContent>
