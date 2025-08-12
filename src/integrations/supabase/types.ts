@@ -1000,6 +1000,10 @@ export type Database = {
         Args: { _public_id: string }
         Returns: undefined
       }
+      cotizacion_public_get: {
+        Args: { _public_id: string }
+        Returns: Json
+      }
       cotizacion_send: {
         Args: { _id: string }
         Returns: undefined

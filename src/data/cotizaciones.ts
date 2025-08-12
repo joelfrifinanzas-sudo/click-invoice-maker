@@ -88,12 +88,15 @@ export async function sendCotizacion(id: string): Promise<{ error: string | null
 
 export async function getCotizacionByPublicId(publicId: string): Promise<{ data: (Cotizacion & { items: CotizacionItem[] }) | null; error: string | null }> {
   try {
-    const { data, error } = await supabase
-      .from("cotizaciones")
-      .select("*, items:cotizacion_items(*)")
-      .eq("public_id", publicId)
-      .maybeSingle();
-    return { data: (data as any) ?? null, error: error?.message ?? null };
+    // Use secure RPC that fetches only the requested quote and its items
+    const { data, error } = await (supabase as any).rpc("cotizacion_public_get", { _public_id: publicId });
+    if (error) return { data: null, error: error.message };
+    if (!data || Object.keys(data || {}).length === 0) return { data: null, error: null };
+
+    // data is JSONB: remove hidden fields already handled in SQL; coerce to expected shape
+    const items = (data.items as any[]) ?? [];
+    const { items: _omit, ...rest } = data as any;
+    return { data: { ...(rest as Cotizacion), items: items as CotizacionItem[] } as any, error: null };
   } catch (e: any) {
     return { data: null, error: e?.message ?? "Unknown error" };
   }
