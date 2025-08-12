@@ -41,6 +41,7 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
   const { toast } = useToast();
   const [savingAction, setSavingAction] = React.useState<'save' | 'save-create-invoice'>('save');
   const [saving, setSaving] = React.useState(false);
+  const nameTriggerRef = React.useRef<HTMLButtonElement | null>(null);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -134,6 +135,14 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
         return;
       }
       toast({ title: "Cliente guardado", description: data.nombre_visualizacion });
+      // Reset form and focus first field (combobox trigger) for quick consecutive entries
+      form.reset({
+        tipo_cliente: "Individuo",
+        pais_tel: "DO",
+        es_contribuyente: false,
+        activo: true,
+      } as any);
+      setTimeout(() => nameTriggerRef.current?.focus(), 0);
       onSaved?.(data, savingAction);
     } catch (e: any) {
       console.error("Client save exception", e);
@@ -268,6 +277,7 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
                 <Popover open={comboOpen} onOpenChange={setComboOpen}>
                   <PopoverTrigger asChild>
                     <Button
+                      ref={nameTriggerRef}
                       variant="outline"
                       role="combobox"
                       aria-expanded={comboOpen}
