@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BackButton } from '@/components/BackButton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ export const CompanyProfilePage = () => {
   const [dbCompany, setDbCompany] = useState<any | null>(null);
   const [itbisPct, setItbisPct] = useState<number>(18);
   const [loadingDb, setLoadingDb] = useState<boolean>(true);
+  const navigate = useNavigate();
 
   // SEO: Title + meta description + canonical
   useEffect(() => {
@@ -261,25 +263,13 @@ export const CompanyProfilePage = () => {
                     Agrega usuarios y asigna roles como Cajero, Supervisor o Administrador. Requiere Supabase conectado.
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    <Button
-                      onClick={() =>
-                        toast({
-                          title: 'Conecta Supabase',
-                          description: 'Para crear usuarios reales y asignar roles, conecta Supabase.',
-                        })
-                      }
-                    >
+                    <Button onClick={() => navigate('/usuarios')}>
                       + Crear usuario
                     </Button>
                     <Button
                       variant="secondary"
-                      onClick={() =>
-                        toast({
-                          title: 'Ver roles',
-                          description: 'Gestiona roles cuando Supabase esté conectado.',
-                        })
-                      }
-                    >
+                      onClick={() => navigate('/usuarios')}
+                   >
                       Ver roles
                     </Button>
                   </div>
