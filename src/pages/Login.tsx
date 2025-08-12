@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 export default function Login() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -107,21 +108,63 @@ export default function Login() {
     }
   }
 
+  async function ensureAccountSetup(userId: string, userEmail?: string | null) {
+    const { data: profile } = await supabase
+      .from("users_profiles")
+      .select("company_id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    let companyId = (profile as any)?.company_id as string | null | undefined;
+
+    if (!companyId) {
+      const defaultName = (userEmail?.split("@")[0] || "Mi Empresa").slice(0, 80);
+      const { data: company } = await supabase
+        .from("companies")
+        .insert({ owner_user_id: userId, name: defaultName })
+        .select("id")
+        .maybeSingle();
+      companyId = company?.id ?? null;
+
+      if (companyId) {
+        await supabase
+          .from("users_profiles")
+          .upsert({ id: userId, company_id: companyId })
+          .select("company_id")
+          .maybeSingle();
+        try {
+          await supabase.rpc("add_owner_membership", { _company_id: companyId, _user_id: userId });
+        } catch {}
+      }
+    }
+
+    try { await supabase.rpc("sync_my_claims"); } catch {}
+    try { await supabase.rpc("touch_login"); } catch {}
+  }
+
   async function verifyLoginCode() {
     setErrorMsg(null);
     setSending(true);
     try {
       if (!email || !code || code.length < 6) throw new Error("Ingresa el código completo");
-      // Intento 1: verificar como 'magiclink' (sign in)
-      let { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'magiclink' as any });
+      // Paso principal: verificar como 'email' (OTP de 6 dígitos)
+      let { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' as any });
       if (error) {
-        // Intento 2 (fallback): verificar como 'email'
-        const res2 = await supabase.auth.verifyOtp({ email, token: code, type: 'email' as any });
+        // Fallback: verificar como 'magiclink' por si el template usa ese tipo
+        const res2 = await supabase.auth.verifyOtp({ email, token: code, type: 'magiclink' as any });
         data = res2.data; error = res2.error;
       }
       if (error) throw error;
 
+      // Asegurar perfil/empresa/rol y redirigir
+      const sess = await supabase.auth.getSession();
+      const u = sess.data.session?.user;
+      if (u) {
+        await ensureAccountSetup(u.id, u.email);
+      }
+
       toast({ title: "Código verificado", description: "Sesión iniciada correctamente." });
+      navigate("/app/inicio", { replace: true });
     } catch (e: any) {
       const msg = e?.message || "Código inválido o expirado";
       setErrorMsg(msg);
@@ -147,7 +190,15 @@ export default function Login() {
 
       // Guardar metadatos del usuario
       await supabase.auth.updateUser({ data: { first_name: firstName, last_name: lastName, phone } });
+
+      // Asegurar perfil/empresa/rol y redirigir
+      const sess = await supabase.auth.getSession();
+      const u = sess.data.session?.user;
+      if (u) {
+        await ensureAccountSetup(u.id, u.email);
+      }
       toast({ title: "Cuenta verificada", description: "Sesión iniciada correctamente." });
+      navigate("/app/inicio", { replace: true });
     } catch (e: any) {
       const msg = e?.message || "Código inválido o expirado";
       setErrorMsg(msg);
@@ -272,7 +323,7 @@ function AuthEmailForm({
 
       <Button type="submit" className="w-full" disabled={sending || !email || (sent && code.length < 6)}>
         {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {sent ? "Verificar código" : "Enviar enlace/código"}
+        {sent ? "Verificar código" : "Enviar código"}
       </Button>
 
       <div className="text-center">
