@@ -81,10 +81,10 @@ export default function Login() {
     try {
       try { localStorage.setItem("auth:last_email", email); } catch {}
       const redirectUrl = `${window.location.origin}/auth/callback`;
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: redirectUrl },
-      } as any);
+        options: { emailRedirectTo: redirectUrl, shouldCreateUser: true },
+      });
       if (error) throw error;
       lastSentAt.current = Date.now();
       setSent(true);
