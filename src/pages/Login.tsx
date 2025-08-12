@@ -100,7 +100,7 @@ export default function Login() {
 
       lastSentAt.current = Date.now();
       setSent(true);
-      toast({ title: "Código enviado", description: "Revisa tu correo e ingresa el código de 6 dígitos." });
+      toast({ title: "Enlace enviado", description: "Revisa tu correo y haz clic en el enlace para confirmar." });
     } catch (e: any) {
       const msg = e?.message || "Error desconocido";
       setErrorMsg(msg);
@@ -377,7 +377,7 @@ function SignupForm({
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
-        if (sent) onVerify(); else onSubmit();
+        if (!sent) onSubmit();
       }}
     >
       {!sent && (
@@ -411,29 +411,19 @@ function SignupForm({
 
       {sent && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">Código de verificación</label>
-          <InputOTP maxLength={6} value={code} onChange={setCode}>
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
-          <p className="text-xs text-muted-foreground">Ingresa el código de 6 dígitos enviado a tu correo.</p>
+          <p className="text-sm">Hemos enviado un enlace de confirmación a tu correo. Ábrelo para completar el registro.</p>
+          <p className="text-xs text-muted-foreground">Si no lo ves, revisa spam o promociones.</p>
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={sending || !email || (sent && code.length < 6)}>
+      <Button type="submit" className="w-full" disabled={sending || !email || sent}>
         {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {sent ? "Verificar y crear cuenta" : "Crear cuenta"}
+        {sent ? "Enlace enviado" : "Enviar enlace"}
       </Button>
 
       <div className="text-center">
         <button type="button" onClick={onResend} className="text-xs underline disabled:opacity-50" disabled={sending}>
-          Reenviar {sent ? "código" : "enlace/código"}
+          Reenviar enlace
         </button>
       </div>
     </form>
