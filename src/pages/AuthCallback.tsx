@@ -27,6 +27,13 @@ export default function AuthCallback() {
   });
   const [resending, setResending] = useState(false);
   const { access_token, refresh_token, error } = useMemo(() => parseHash(location.hash), [location.hash]);
+  const { code, qerror } = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return {
+      code: params.get("code"),
+      qerror: params.get("error_description") || params.get("error"),
+    };
+  }, [location.search]);
 
   useEffect(() => {
     // Basic SEO + noindex for this transitional page
@@ -99,8 +106,12 @@ export default function AuthCallback() {
         let session = sessRes.data.session;
 
         if (!session) {
-          if (error) throw new Error(error);
-          if (access_token && refresh_token) {
+          if (qerror || error) throw new Error(qerror || error!);
+          if (code) {
+            const { data, error: exchErr } = await supabase.auth.exchangeCodeForSession(window.location.href);
+            if (exchErr) throw exchErr;
+            session = data.session;
+          } else if (access_token && refresh_token) {
             const { data, error: setErr } = await supabase.auth.setSession({ access_token, refresh_token });
             if (setErr) throw setErr;
             session = data.session;
@@ -129,7 +140,7 @@ export default function AuthCallback() {
 
     proceed();
     return () => { cancelled = true; };
-  }, [access_token, refresh_token, error, navigate, toast]);
+  }, [access_token, refresh_token, error, code, qerror, navigate, toast]);
 
   const handleResend = async () => {
     if (!email) return;
