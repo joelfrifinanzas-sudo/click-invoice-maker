@@ -29,6 +29,7 @@ import Creditos from "./pages/Creditos";
 import Pagos from "./pages/Pagos";
 import NotFound from "./pages/NotFound";
 import FacturaDetalle from "./pages/FacturaDetalle";
+import UsuariosPermisos from "./pages/UsuariosPermisos";
 import { useIsMobile } from "./hooks/use-mobile";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { RequireAccess } from "./components/RequireAccess";
@@ -83,6 +84,7 @@ function AppRoutes() {
       <Route path="/articulos" element={<RequireAccess routeKey="articulos"><Articulos /></RequireAccess>} />
       <Route path="/creditos" element={<RequireAccess routeKey="creditos"><Creditos /></RequireAccess>} />
       <Route path="/pagos" element={<RequireAccess routeKey="pagos"><Pagos /></RequireAccess>} />
+      <Route path="/usuarios" element={<RequireAccess routeKey="configuracion"><UsuariosPermisos /></RequireAccess>} />
       <Route path="/plan-pro" element={<RequireAccess routeKey="plan-pro"><PlanPro /></RequireAccess>} />
       <Route path="/contactos" element={<RequireAccess routeKey="contactos"><Contactos /></RequireAccess>} />
       <Route path="/perfil-empresa" element={<RequireAccess routeKey="perfil-empresa"><CompanyProfilePage /></RequireAccess>} />

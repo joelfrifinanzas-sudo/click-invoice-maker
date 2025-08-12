@@ -111,7 +111,7 @@ export function Header() {
     "Perfil del negocio": "/perfil-negocio",
     "Perfil de la empresa": "/perfil-empresa",
     "Marca y preferencias": "/configuracion",
-    "Gestión de usuarios": null,
+    "Gestión de usuarios": "/usuarios",
     "Métodos de pago": null,
   };
   const visibleModules = useMemo(() => {
@@ -413,7 +413,7 @@ export function Header() {
             )}
             {(role === 'superadmin' || role === 'admin') && (
               <>
-                <DropdownMenuItem onSelect={goUsers}>Gestión de usuarios</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => navigate('/usuarios')}>Gestión de usuarios</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => navigate('/pagos')}>Métodos de pago</DropdownMenuItem>
               </>
             )}
