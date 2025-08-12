@@ -37,6 +37,7 @@ import SuperAdmin from "./pages/SuperAdmin";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 import { RequireClient } from "./components/RequireClient";
 import { InactivityLogout } from "./components/security/InactivityLogout";
 
@@ -60,6 +61,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Protected app area */}
       <Route path="/app" element={<ProtectedRoute />}>
