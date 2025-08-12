@@ -108,12 +108,16 @@ export default function UsuariosPermisos() {
     }
   };
 
-  const resendInvite = async (email: string) => {
+  const resendInvite = async (m: Member) => {
     try {
+      if (m.status !== 'invited') {
+        toast({ title: 'Solo para invitados', description: 'Reenviar aplica cuando el estado es "invited".' });
+        return;
+      }
       const redirectUrl = `${window.location.origin}/auth/callback`;
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: redirectUrl } });
+      const { error } = await supabase.auth.signInWithOtp({ email: m.email, options: { shouldCreateUser: true, emailRedirectTo: redirectUrl } });
       if (error) throw error;
-      toast({ title: "Invitación reenviada", description: `Se envió enlace a ${email}` });
+      toast({ title: "Invitación reenviada", description: `Se envió enlace a ${m.email}` });
     } catch (e: any) {
       toast({ title: "No se pudo reenviar", description: e?.message || "Intente más tarde", variant: "destructive" });
     }
@@ -272,7 +276,7 @@ export default function UsuariosPermisos() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => resendInvite(m.email)} title="Reenviar invitación">
+                        <Button variant="outline" size="sm" onClick={() => resendInvite(m)} title="Reenviar invitación">
                           <MailPlus className="h-4 w-4 mr-1" /> Reenviar
                         </Button>
                         {canChangeSensitive && (

@@ -7,6 +7,8 @@ export type AuthContextType = {
   session: Session | null;
   loading: boolean;
   companyId: string | null;
+  memberRole: 'SUPER_ADMIN' | 'ADMIN' | 'SUPERVISOR' | 'CAJERA' | 'CLIENTE' | null;
+  hasRole: (...roles: Array<'SUPER_ADMIN' | 'ADMIN' | 'SUPERVISOR' | 'CAJERA' | 'CLIENTE'>) => boolean;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signUp: (email: string, password: string, companyName?: string) => Promise<{ error: any | null }>;
   signOut: () => Promise<void>;
@@ -19,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [memberRole, setMemberRole] = useState<AuthContextType["memberRole"]>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
@@ -30,6 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setCompanyId(null);
+        setMemberRole(null);
+        try { localStorage.removeItem('app:role'); } catch {}
       }
     });
 
@@ -49,40 +54,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function ensureProfileAndCompany(u: User) {
-    // 1) Fetch profile
-    const { data: profile, error } = await supabase
+    // 1) Fetch or create profile/company
+    const { data: profile } = await supabase
       .from("users_profiles")
       .select("id, company_id")
       .eq("id", u.id)
       .maybeSingle();
 
-    if (error) return; // ignore silently
+    let cid = profile?.company_id as string | null | undefined;
 
-    if (profile?.company_id) {
-      setCompanyId(profile.company_id);
-      return;
+    if (!cid) {
+      const defaultName = (u.email?.split("@")[0] || "Mi Empresa").slice(0, 80);
+      const { data: company } = await supabase
+        .from("companies")
+        .insert({ owner_user_id: u.id, name: defaultName })
+        .select("id")
+        .maybeSingle();
+      cid = company?.id ?? null;
+
+      if (cid) {
+        try {
+          const { data: up } = await supabase
+            .from("users_profiles")
+            .upsert({ id: u.id, company_id: cid })
+            .select("company_id")
+            .maybeSingle();
+          cid = up?.company_id ?? cid;
+        } catch {}
+      }
     }
 
-    // 2) Create a company for this user if not present
-    const defaultName = (u.email?.split("@")[0] || "Mi Empresa").slice(0, 80);
-    const { data: company, error: compErr } = await supabase
-      .from("companies")
-      .insert({ owner_user_id: u.id, name: defaultName })
-      .select("id")
-      .maybeSingle();
+    if (cid) setCompanyId(cid);
 
-    if (compErr || !company?.id) return;
-
-    try {
-      const { data: up } = await supabase
-        .from("users_profiles")
-        .upsert({ id: u.id, company_id: company.id })
-        .select("company_id")
-        .maybeSingle();
-      const cid = up?.company_id ?? company.id;
-      setCompanyId(cid);
-    } catch (_) {
-      // ignore
+    // 2) Fetch membership role for active member
+    if (cid) {
+      try {
+        const { data: mem } = await supabase
+          .from("company_members")
+          .select("role,status")
+          .eq("company_id", cid)
+          .eq("user_id", u.id)
+          .maybeSingle();
+        const r = (mem as any)?.role ?? null;
+        setMemberRole(r);
+        try { if (r) localStorage.setItem('app:role', r); } catch {}
+      } catch {}
     }
   }
 
@@ -116,7 +132,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  const value = useMemo<AuthContextType>(() => ({ user, session, loading, companyId, signIn, signUp, signOut }), [user, session, loading, companyId]);
+  const hasRole: AuthContextType["hasRole"] = (...roles) => {
+    const current = (memberRole ?? (localStorage.getItem('app:role') as any)) as AuthContextType["memberRole"];
+    return !!current && roles.includes(current);
+  };
+
+  const value = useMemo<AuthContextType>(() => ({ user, session, loading, companyId, memberRole, hasRole, signIn, signUp, signOut }), [user, session, loading, companyId, memberRole]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

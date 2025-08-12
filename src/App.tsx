@@ -35,6 +35,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { RequireAccess } from "./components/RequireAccess";
 import AccessDenied from "./pages/AccessDenied";
 import { RequireSuperAdmin } from "./components/RequireSuperAdmin";
+import { RequireRoles } from "./components/RequireRoles";
 import SuperAdmin from "./pages/SuperAdmin";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -68,6 +69,8 @@ function AppRoutes() {
       {/* Protected app area */}
       <Route path="/app" element={<ProtectedRoute />}>
         <Route path="inicio" element={<Inicio />} />
+        <Route path="facturar" element={<RequireRoles roles={["SUPER_ADMIN","ADMIN","CAJERA"]}><CrearFactura /></RequireRoles>} />
+        <Route path="admin/*" element={<RequireRoles roles={["SUPER_ADMIN","ADMIN"]}><Inicio /></RequireRoles>} />
       </Route>
 
       {/* Public & RBAC routes */}
