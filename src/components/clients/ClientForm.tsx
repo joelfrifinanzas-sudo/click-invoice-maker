@@ -38,6 +38,7 @@ const schema = z.object({
 export function ClientForm({ initialData, onSaved }: { initialData?: Client; onSaved?: (c: Client, action: 'save' | 'save-create-invoice') => void }) {
   const { toast } = useToast();
   const [savingAction, setSavingAction] = React.useState<'save' | 'save-create-invoice'>('save');
+  const [saving, setSaving] = React.useState(false);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -100,13 +101,22 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
       }
     }
 
-    const { data, error } = await upsertClient(values as any);
-    if (error || !data) {
-      toast({ title: "No se pudo guardar", description: error || "Verifique los campos requeridos", variant: "destructive" });
-      return;
+    try {
+      setSaving(true);
+      const { data, error } = await upsertClient(values as any);
+      if (error || !data) {
+        console.error("Client save failed", error);
+        toast({ title: "No se pudo guardar", description: error || "Verifique los campos requeridos", variant: "destructive" });
+        return;
+      }
+      toast({ title: "Cliente guardado", description: data.nombre_visualizacion });
+      onSaved?.(data, savingAction);
+    } catch (e: any) {
+      console.error("Client save exception", e);
+      toast({ title: "No se pudo guardar", description: e?.message ?? "Error desconocido", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    toast({ title: "Cliente guardado", description: data.nombre_visualizacion });
-    onSaved?.(data, savingAction);
   }
 
   // Autocompletar desde CSV público con caché 24h
@@ -343,10 +353,17 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
         </div>
 
         <div className="flex flex-wrap gap-3 justify-end">
-          <Button type="button" variant="secondary" onClick={() => { setSavingAction('save-create-invoice'); form.handleSubmit(onSubmit)(); }}>
-            Guardar y crear factura
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => { setSavingAction('save-create-invoice'); form.handleSubmit(onSubmit)(); }}
+            disabled={saving}
+          >
+            {saving && savingAction === 'save-create-invoice' ? 'Guardando…' : 'Guardar y crear factura'}
           </Button>
-          <Button type="submit" onClick={() => setSavingAction('save')}>Guardar</Button>
+          <Button type="submit" onClick={() => setSavingAction('save')} disabled={saving}>
+            {saving && savingAction === 'save' ? 'Guardando…' : 'Guardar'}
+          </Button>
           <Button type="button" variant="ghost" onClick={() => history.back()}>Cancelar</Button>
         </div>
       </form>

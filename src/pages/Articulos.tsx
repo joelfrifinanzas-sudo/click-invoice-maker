@@ -248,6 +248,7 @@ export default function Articulos() {
         active: true,
       });
       if (error) {
+        console.error("Product save failed", error);
         toast({ title: "No se pudo guardar", description: error, variant: "destructive" });
         return;
       }
@@ -263,6 +264,7 @@ export default function Articulos() {
       setPage(0);
       await loadProducts();
     } catch (e: any) {
+      console.error("Product save exception", e);
       toast({ title: "Error", description: e?.message ?? "Error desconocido", variant: "destructive" });
     }
   };
@@ -492,7 +494,7 @@ export default function Articulos() {
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitDisabled || form.formState.isSubmitting}>
-                    Guardar producto
+                    {form.formState.isSubmitting ? 'Guardando…' : 'Guardar producto'}
                   </Button>
                   <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => navigate("/articulos")}>Cancelar</Button>
                 </div>
