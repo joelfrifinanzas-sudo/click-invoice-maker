@@ -1136,6 +1136,10 @@ export type Database = {
         Args: { new_row: Database["public"]["Tables"]["clientes"]["Row"] }
         Returns: boolean
       }
+      cm_accept_any_invitation_for_me: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       cm_bootstrap_membership: {
         Args: { _company_id: string; _email: string }
         Returns: {

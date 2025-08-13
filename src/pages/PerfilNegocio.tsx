@@ -8,13 +8,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { CompanyProfile } from '@/types/company';
 import { getCompanyProfile, saveCompanyProfile } from '@/utils/companyProfile';
-import { getCurrentCompany, patchCurrentCompany } from '@/data/companyDb';
+import { getCurrentCompany } from '@/data/companyDb';
 import { Landmark, Image as ImageIcon, Palette, Save } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export const BusinessProfilePage = () => {
   const { toast } = useToast();
   const [profile, setProfile] = useState<CompanyProfile>(getCompanyProfile());
   const [dbCompany, setDbCompany] = useState<any | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   // SEO: Title + meta description + canonical
   useEffect(() => {
@@ -50,6 +52,8 @@ export const BusinessProfilePage = () => {
           businessRnc: data.rnc ?? prev.businessRnc,
           businessAddress: data.address ?? prev.businessAddress,
           businessPhone: data.phone ?? prev.businessPhone,
+          businessEmail: (data as any).email_facturacion ?? prev.businessEmail,
+          logo: (data as any).logo_url ?? prev.logo,
         }));
       }
     })();
@@ -62,11 +66,16 @@ export const BusinessProfilePage = () => {
 
   const handleFileUpload = (file: File) => {
     if (!file.type.startsWith('image/')) return;
+    setLogoFile(file);
     const reader = new FileReader();
     reader.onload = (e) => setProfile((prev) => ({ ...prev, logo: e.target?.result as string }));
     reader.readAsDataURL(file);
   };
-  const removeLogo = () => setProfile((p) => ({ ...p, logo: null }));
+
+  const removeLogo = () => {
+    setProfile((p) => ({ ...p, logo: null }));
+    setLogoFile(null);
+  };
 
   const isValidRnc = (v: string) => /^\d{9,11}$/.test(v.replace(/\D/g, ''));
   const isValidPhone = (v: string) => /^\+?\d{7,15}$/.test(v.replace(/[^+\d]/g, ''));
@@ -91,18 +100,83 @@ export const BusinessProfilePage = () => {
     }
 
     try {
-      const patch: any = {};
-      if (dbCompany) {
-        const rncDigits = (profile.businessRnc || '').replace(/\D/g, '') || null;
-        const phoneNorm = (profile.businessPhone || '').replace(/[^+\d]/g, '') || null;
-        if (profile.businessName !== dbCompany.name) patch.name = profile.businessName || null;
-        if (rncDigits !== (dbCompany.rnc || null)) patch.rnc = rncDigits;
-        if ((profile.businessAddress || null) !== (dbCompany.address || null)) patch.address = profile.businessAddress || null;
-        if (phoneNorm !== (dbCompany.phone || null)) patch.phone = phoneNorm;
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth.user;
+      if (!user) throw new Error('Debes iniciar sesión');
+
+      // 2a) Upload logo if present
+      let logoUrl: string | null = null;
+      if (logoFile) {
+        const path = `logos/${user.id}/${Date.now()}_${logoFile.name}`;
+        const { error: upErr } = await supabase.storage
+          .from('company-logos')
+          .upload(path, logoFile, { upsert: true, cacheControl: '3600', contentType: logoFile.type });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from('company-logos').getPublicUrl(path);
+        logoUrl = pub.publicUrl;
       }
-      if (Object.keys(patch).length) {
-        const { error } = await patchCurrentCompany(patch);
-        if (error) throw new Error(error);
+
+      const rncDigits = (profile.businessRnc || '').replace(/\D/g, '') || null;
+      const phoneNorm = (profile.businessPhone || '').replace(/[^+\d]/g, '') || null;
+
+      // 2b) Read current profile company
+      const { data: prof } = await supabase
+        .from('users_profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      let companyId = (prof?.company_id as string | null) ?? null;
+
+      if (!companyId) {
+        // Try to accept an invitation
+        let invitedCompanyId: string | null = null;
+        try {
+          const { data: invited } = await supabase.rpc('cm_accept_any_invitation_for_me');
+          invitedCompanyId = (invited as any) ?? null;
+        } catch {}
+
+        if (invitedCompanyId) {
+          companyId = invitedCompanyId;
+          await supabase.from('users_profiles').upsert({ id: user.id, company_id: companyId });
+        } else {
+          // Create the company
+          const insertPayload: any = {
+            owner_user_id: user.id,
+            name: profile.businessName || null,
+            rnc: rncDigits,
+            phone: phoneNorm,
+            address: profile.businessAddress || null,
+            email_facturacion: profile.businessEmail || null,
+            currency: profile.currency || 'DOP',
+            logo_url: logoUrl,
+          };
+          const { data: newCompany, error: insErr } = await supabase
+            .from('companies')
+            .insert(insertPayload)
+            .select('*')
+            .maybeSingle();
+          if (insErr) throw insErr;
+          companyId = newCompany?.id ?? null;
+
+          if (companyId) {
+            // Bootstrap membership into company_members
+            try { await supabase.rpc('cm_bootstrap_membership', { _company_id: companyId, _email: user.email }); } catch {}
+            await supabase.from('users_profiles').upsert({ id: user.id, company_id: companyId });
+          }
+        }
+      } else {
+        // 2c) Update existing company
+        const patch: any = {
+          name: profile.businessName || null,
+          rnc: rncDigits,
+          address: profile.businessAddress || null,
+          phone: phoneNorm,
+          email_facturacion: profile.businessEmail || null,
+        };
+        if (logoUrl) patch.logo_url = logoUrl;
+        const { error: upErr } = await supabase.from('companies').update(patch).eq('id', companyId);
+        if (upErr) throw upErr;
       }
 
       saveCompanyProfile(profile);
