@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,9 @@ export default function Login() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [invalidLink, setInvalidLink] = useState(false);
+  const [unauth, setUnauth] = useState(false);
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -156,6 +159,20 @@ export default function Login() {
       if (remembered) setEmail(remembered);
     } catch {}
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const e = params.get('e');
+    const ua = params.get('unauth');
+    if (e === 'invalid_link') {
+      setInvalidLink(true);
+      toast({ title: 'Enlace inválido o expirado', description: 'Podemos reenviarlo a tu correo.', variant: 'destructive' });
+    }
+    if (ua) {
+      setUnauth(true);
+      toast({ title: 'Acceso no autorizado', description: 'Selecciona un contexto válido para continuar.', variant: 'destructive' });
+    }
+  }, [location.search, toast]);
 
   const canResendIn = useMemo(() => {
     const now = Date.now();
@@ -371,6 +388,16 @@ export default function Login() {
       {phase === "email" ? (
         <section className="space-y-4">
           <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
+          {(invalidLink || unauth) && (
+            <div className="rounded-md border p-3 text-sm">
+              <p>{invalidLink ? "El enlace es inválido o expiró." : "No tienes permisos para esa ruta."}</p>
+              <div className="mt-2">
+                <Button variant="secondary" onClick={() => sendLoginLink()} disabled={!email || sending}>
+                  {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Reenviar enlace
+                </Button>
+              </div>
+            </div>
+          )}
           <form
             className="space-y-4"
             onSubmit={(e) => {
