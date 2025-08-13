@@ -12,6 +12,14 @@ export async function getCurrentContext(): Promise<{ data: CurrentContext | null
     const user = auth.user;
     if (!user) return { data: null, error: "Not authenticated" };
 
+    // Prefer explicit selection stored locally
+    try {
+      const lsCompanyId = localStorage.getItem('app:company_id');
+      if (lsCompanyId) {
+        return { data: { user, companyId: lsCompanyId }, error: null };
+      }
+    } catch {}
+
     const { data: profile, error } = await supabase
       .from("users_profiles")
       .select("company_id")

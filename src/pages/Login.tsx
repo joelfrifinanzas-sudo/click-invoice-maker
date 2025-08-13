@@ -30,24 +30,27 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [loginWithPassword, setLoginWithPassword] = useState(false);
+  type AppUiRole = 'SUPER_ADMIN' | 'ADMIN' | 'SUPERVISOR' | 'CAJERA' | 'CLIENTE';
   const [phase, setPhase] = useState<"email" | "context">("email");
   const [memberships, setMemberships] = useState<{ company_id: string; company_name: string; role: string }[]>([]);
   const [loadingCtx, setLoadingCtx] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [selectedMembershipRole, setSelectedMembershipRole] = useState<string>("");
-  const [uiRole, setUiRole] = useState<string>("CLIENTE");
+  const [uiRole, setUiRole] = useState<AppUiRole>("CLIENTE");
 
-  const getUiOptionsForMembership = (role: string) => {
+  const getUiOptionsForMembership = (role: string): AppUiRole[] => {
     const r = (role || '').toUpperCase();
-    if (r === 'SUPER_ADMIN' || r === 'OWNER') return ['SUPER_ADMIN','ADMIN','SUPERVISOR','CAJERA','CLIENTE'] as const;
-    if (r === 'ADMIN' || r === 'MANAGER') return ['ADMIN','SUPERVISOR','CAJERA','CLIENTE'] as const;
-    if (r === 'SUPERVISOR') return ['SUPERVISOR','CAJERA','CLIENTE'] as const;
-    if (r === 'CAJERA' || r === 'CASHIER') return ['CAJERA','CLIENTE'] as const;
-    return ['CLIENTE'] as const;
+    if (r === 'SUPER_ADMIN' || r === 'OWNER') return ['SUPER_ADMIN','ADMIN','SUPERVISOR','CAJERA','CLIENTE'];
+    if (r === 'ADMIN' || r === 'MANAGER') return ['ADMIN','SUPERVISOR','CAJERA','CLIENTE'];
+    if (r === 'SUPERVISOR') return ['SUPERVISOR','CAJERA','CLIENTE'];
+    if (r === 'CAJERA' || r === 'CASHIER') return ['CAJERA','CLIENTE'];
+    return ['CLIENTE'];
   };
 
-  const persistSelection = async (companyId: string, uiRoleSel: typeof uiRole) => {
+  const persistSelection = async (companyId: string, membershipRole: string, uiRoleSel: AppUiRole) => {
     try { localStorage.setItem('app:company_id', companyId); } catch {}
+    try { localStorage.setItem('app:membership_role', membershipRole); } catch {}
+    try { localStorage.setItem('app:ui_role', uiRoleSel); } catch {}
     try {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id;
@@ -55,7 +58,7 @@ export default function Login() {
         await supabase.from('users_profiles').update({ last_company_id: companyId }).eq('id', uid);
       }
     } catch {}
-    const mapToken = (r: typeof uiRole): 'admin'|'supervisor'|'cajero'|'cliente' => {
+    const mapToken = (r: AppUiRole): 'admin'|'supervisor'|'cajero'|'cliente' => {
       if (r === 'SUPER_ADMIN' || r === 'ADMIN') return 'admin';
       if (r === 'SUPERVISOR') return 'supervisor';
       if (r === 'CAJERA') return 'cajero';
@@ -82,7 +85,7 @@ export default function Login() {
 
       if (list.length === 1) {
         const only = list[0];
-        await persistSelection(only.company_id, getUiOptionsForMembership(only.role)[0]);
+        await persistSelection(only.company_id, only.role, getUiOptionsForMembership(only.role)[0]);
         navigate('/app/inicio', { replace: true });
         return;
       }
@@ -428,7 +431,7 @@ export default function Login() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
                 <div className="text-left">
                   <label className="text-sm font-medium">Actuar como</label>
-                  <Select value={uiRole} onValueChange={(v) => setUiRole(v as any)}>
+                  <Select value={uiRole} onValueChange={(v) => setUiRole(v as AppUiRole)}>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Selecciona rol" />
                     </SelectTrigger>
@@ -444,7 +447,7 @@ export default function Login() {
                   <Button
                     disabled={!selectedCompany}
                     onClick={async () => {
-                      await persistSelection(selectedCompany, uiRole);
+                      await persistSelection(selectedCompany, selectedMembershipRole, uiRole);
                       navigate("/app/inicio", { replace: true });
                     }}
                   >
