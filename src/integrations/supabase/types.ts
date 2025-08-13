@@ -294,10 +294,12 @@ export type Database = {
           address: string | null
           created_at: string
           currency: string
+          email_facturacion: string | null
           id: string
           itbis_rate: number
           limit_invoices_per_month: number | null
           limit_users: number | null
+          logo_url: string | null
           name: string
           owner_user_id: string
           phone: string | null
@@ -311,10 +313,12 @@ export type Database = {
           address?: string | null
           created_at?: string
           currency?: string
+          email_facturacion?: string | null
           id?: string
           itbis_rate?: number
           limit_invoices_per_month?: number | null
           limit_users?: number | null
+          logo_url?: string | null
           name: string
           owner_user_id: string
           phone?: string | null
@@ -328,10 +332,12 @@ export type Database = {
           address?: string | null
           created_at?: string
           currency?: string
+          email_facturacion?: string | null
           id?: string
           itbis_rate?: number
           limit_invoices_per_month?: number | null
           limit_users?: number | null
+          logo_url?: string | null
           name?: string
           owner_user_id?: string
           phone?: string | null
@@ -1257,10 +1263,12 @@ export type Database = {
           address: string | null
           created_at: string
           currency: string
+          email_facturacion: string | null
           id: string
           itbis_rate: number
           limit_invoices_per_month: number | null
           limit_users: number | null
+          logo_url: string | null
           name: string
           owner_user_id: string
           phone: string | null
@@ -1331,10 +1339,12 @@ export type Database = {
           address: string | null
           created_at: string
           currency: string
+          email_facturacion: string | null
           id: string
           itbis_rate: number
           limit_invoices_per_month: number | null
           limit_users: number | null
+          logo_url: string | null
           name: string
           owner_user_id: string
           phone: string | null
