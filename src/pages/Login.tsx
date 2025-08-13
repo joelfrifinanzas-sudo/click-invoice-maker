@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Login() {
   const { user } = useAuth();
@@ -31,12 +33,78 @@ export default function Login() {
   const [phase, setPhase] = useState<"email" | "context">("email");
   const [memberships, setMemberships] = useState<{ company_id: string; company_name: string; role: string }[]>([]);
   const [loadingCtx, setLoadingCtx] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<string>("");
+  const [selectedMembershipRole, setSelectedMembershipRole] = useState<string>("");
+  const [uiRole, setUiRole] = useState<string>("CLIENTE");
+
+  const getUiOptionsForMembership = (role: string) => {
+    const r = (role || '').toUpperCase();
+    if (r === 'SUPER_ADMIN' || r === 'OWNER') return ['SUPER_ADMIN','ADMIN','SUPERVISOR','CAJERA','CLIENTE'] as const;
+    if (r === 'ADMIN' || r === 'MANAGER') return ['ADMIN','SUPERVISOR','CAJERA','CLIENTE'] as const;
+    if (r === 'SUPERVISOR') return ['SUPERVISOR','CAJERA','CLIENTE'] as const;
+    if (r === 'CAJERA' || r === 'CASHIER') return ['CAJERA','CLIENTE'] as const;
+    return ['CLIENTE'] as const;
+  };
+
+  const persistSelection = async (companyId: string, uiRoleSel: typeof uiRole) => {
+    try { localStorage.setItem('app:company_id', companyId); } catch {}
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (uid) {
+        await supabase.from('users_profiles').update({ last_company_id: companyId }).eq('id', uid);
+      }
+    } catch {}
+    const mapToken = (r: typeof uiRole): 'admin'|'supervisor'|'cajero'|'cliente' => {
+      if (r === 'SUPER_ADMIN' || r === 'ADMIN') return 'admin';
+      if (r === 'SUPERVISOR') return 'supervisor';
+      if (r === 'CAJERA') return 'cajero';
+      return 'cliente';
+    };
+    try { localStorage.setItem('user-role', mapToken(uiRoleSel)); } catch {}
+  };
 
   const loadMemberships = async () => {
     setLoadingCtx(true);
     try {
-      const { data } = await supabase.from("my_memberships").select("*");
-      setMemberships((data as any[]) || []);
+      const [mRes, authRes] = await Promise.all([
+        supabase.from("my_memberships").select("*"),
+        supabase.auth.getUser(),
+      ]);
+      const list = (mRes.data as any[]) || [];
+      setMemberships(list);
+      const uid = authRes.data.user?.id;
+
+      if (list.length === 0) {
+        navigate('/perfil-negocio', { replace: true });
+        return;
+      }
+
+      if (list.length === 1) {
+        const only = list[0];
+        await persistSelection(only.company_id, getUiOptionsForMembership(only.role)[0]);
+        navigate('/app/inicio', { replace: true });
+        return;
+      }
+
+      // multiple memberships: preselect last_company or first
+      let lastCompany: string | null = null;
+      if (uid) {
+        const { data: prof } = await supabase
+          .from('users_profiles')
+          .select('last_company_id')
+          .eq('id', uid)
+          .maybeSingle();
+        lastCompany = (prof as any)?.last_company_id ?? null;
+      }
+
+      const initialCompany = lastCompany && list.some(x => x.company_id === lastCompany)
+        ? lastCompany
+        : list[0].company_id;
+      setSelectedCompany(initialCompany);
+      const role = list.find(x => x.company_id === initialCompany)?.role || list[0].role;
+      setSelectedMembershipRole(role);
+      setUiRole(getUiOptionsForMembership(role)[0]);
     } finally {
       setLoadingCtx(false);
     }
@@ -64,6 +132,16 @@ export default function Login() {
     });
     return () => { mounted = false; subscription.unsubscribe(); };
   }, []);
+
+  useEffect(() => {
+    if (!selectedCompany) return;
+    const m = memberships.find((x) => x.company_id === selectedCompany);
+    if (m) {
+      setSelectedMembershipRole(m.role);
+      const allowed = getUiOptionsForMembership(m.role);
+      if (!allowed.includes(uiRole)) setUiRole(allowed[0]);
+    }
+  }, [selectedCompany, memberships, uiRole]);
 
   useEffect(() => {
     document.title = mode === "signup" ? "Crear cuenta | App" : "Iniciar sesión | App";
@@ -314,16 +392,67 @@ export default function Login() {
           </form>
         </section>
       ) : (
-        <section className="text-center space-y-4">
-          <div className="mx-auto h-10 w-10 animate-spin">
-            <Loader2 className="h-10 w-10" />
-          </div>
-          <h1 className="text-xl font-semibold">Resolviendo contexto…</h1>
-          <p className="text-muted-foreground">{loadingCtx ? "Cargando sesión y membresías…" : `Listas ${memberships.length} membresía(s).`}</p>
-          {!loadingCtx && (
-            <div className="flex items-center justify-center">
-              <Button onClick={() => navigate("/app/inicio", { replace: true })}>Entrar</Button>
-            </div>
+        <section className="space-y-6">
+          {loadingCtx ? (
+            <>
+              <div className="mx-auto h-10 w-10 animate-spin"><Loader2 className="h-10 w-10" /></div>
+              <h1 className="text-xl font-semibold text-center">Resolviendo contexto…</h1>
+              <p className="text-muted-foreground text-center">Cargando sesión y membresías…</p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-xl font-semibold">Selecciona contexto</h1>
+              <div className="space-y-3">
+                {memberships.map((m) => (
+                  <label
+                    key={m.company_id}
+                    className={`flex items-center justify-between rounded-md border p-3 cursor-pointer transition-shadow ${selectedCompany === m.company_id ? 'ring-2 ring-primary' : ''}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="company"
+                        checked={selectedCompany === m.company_id}
+                        onChange={() => setSelectedCompany(m.company_id)}
+                      />
+                      <div>
+                        <div className="font-medium">{m.company_name}</div>
+                        <div className="text-xs text-muted-foreground">{m.company_id}</div>
+                      </div>
+                    </div>
+                    <Badge variant="secondary">{(m.role || '').toUpperCase()}</Badge>
+                  </label>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+                <div className="text-left">
+                  <label className="text-sm font-medium">Actuar como</label>
+                  <Select value={uiRole} onValueChange={(v) => setUiRole(v as any)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecciona rol" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50">
+                      {getUiOptionsForMembership(selectedMembershipRole).map((opt) => (
+                        <SelectItem key={opt} value={opt}>{opt.replace('_', ' ')}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">No podrás exceder tu rol de membresía.</p>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    disabled={!selectedCompany}
+                    onClick={async () => {
+                      await persistSelection(selectedCompany, uiRole);
+                      navigate("/app/inicio", { replace: true });
+                    }}
+                  >
+                    Continuar
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </section>
       )}
