@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { listClients, Client } from "@/data/clients";
 import { useNavigate } from "react-router-dom";
-
+import { NuevoClienteDialog } from "@/components/clientes/NuevoClienteDialog";
 export default function Clientes() {
   useScrollToTop();
   const navigate = useNavigate();
@@ -20,6 +20,8 @@ export default function Clientes() {
   const [rows, setRows] = React.useState<Client[]>([]);
   const [total, setTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
+  const [nuevoOpen, setNuevoOpen] = React.useState(false);
+  const [refreshKey, setRefreshKey] = React.useState(0);
 
   React.useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 400);
@@ -40,7 +42,7 @@ export default function Clientes() {
       setLoading(false);
     });
     return () => { mounted = false; };
-  }, [debounced, page]);
+  }, [debounced, page, refreshKey]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -50,7 +52,10 @@ export default function Clientes() {
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <ModuleHeader title="Clientes" description="Administra tu base de datos de clientes" showBackButton={false} />
-            <Button onClick={() => navigate('/clientes/nuevo')}>+ Nuevo</Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setNuevoOpen(true)}>Nuevo cliente</Button>
+              <Button onClick={() => navigate('/clientes/nuevo')}>+ Nuevo</Button>
+            </div>
           </div>
 
           <div className="bg-card border rounded-lg p-4">
@@ -158,6 +163,7 @@ export default function Clientes() {
           </div>
         </div>
       </div>
+      <NuevoClienteDialog open={nuevoOpen} onOpenChange={setNuevoOpen} onCreated={() => setRefreshKey((k) => k + 1)} />
     </Layout>
   );
 }
