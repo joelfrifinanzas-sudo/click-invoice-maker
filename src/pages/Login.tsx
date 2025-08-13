@@ -400,37 +400,74 @@ export default function Login() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-10">
-      {phase === "email" ? (
-        <section className="space-y-4">
+      <main className="mx-auto max-w-md px-6 py-10">
+        {phase === "email" ? (
+          <section className="space-y-4">
           <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
-            {(invalidLink || unauth) && (
-              <div className="rounded-md border p-3 text-sm">
-                <p>{invalidLink ? "El enlace es inválido o expiró." : "No tienes permisos para esa ruta."}</p>
-              </div>
-            )}
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendLoginLink();
-            }}
-          >
-            <div>
-              <label htmlFor="email" className="text-sm font-medium">Correo electrónico</label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
+          {(invalidLink || unauth) && (
+            <div className="rounded-md border p-3 text-sm">
+              <p>{invalidLink ? "El enlace es inválido o expiró." : "No tienes permisos para esa ruta."}</p>
             </div>
-            {errorMsg && (
-              <div role="alert" aria-live="polite" className="text-sm text-destructive">{errorMsg}</div>
-            )}
-            <Button type="submit" className="w-full" disabled={sending || !email}>
-              {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Enviar enlace
-            </Button>
-            {sent && (
-              <p className="text-xs text-muted-foreground text-center">Revisa tu correo y abre el enlace para continuar.</p>
-            )}
-          </form>
+          )}
+
+          <Tabs value={loginWithPassword ? 'password' : 'otp'} onValueChange={(v) => setLoginWithPassword(v === 'password')}>
+            <TabsList className="w-full">
+              <TabsTrigger className="flex-1" value="password">Contraseña</TabsTrigger>
+              <TabsTrigger className="flex-1" value="otp">Código</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="password">
+              <AuthEmailForm
+                email={email}
+                setEmail={setEmail}
+                password={password}
+                setPassword={setPassword}
+                sending={sending}
+                errorMsg={errorMsg}
+                onPasswordLogin={signInWithPassword}
+                buttonLabel="Confirmar"
+              />
+            </TabsContent>
+
+            <TabsContent value="otp">
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  verifyLoginCode();
+                }}
+              >
+                <div>
+                  <label htmlFor="email-otp" className="text-sm font-medium">Correo electrónico</label>
+                  <Input id="email-otp" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Código (6 dígitos)</label>
+                  <div className="mt-1">
+                    <InputOTP maxLength={6} value={code} onChange={setCode}>
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+                </div>
+
+                {errorMsg && (
+                  <div role="alert" aria-live="polite" className="text-sm text-destructive">{errorMsg}</div>
+                )}
+
+                <Button type="submit" className="w-full" disabled={sending || !email || code.length < 6}>
+                  {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Confirmar
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </section>
       ) : (
         <section className="space-y-6">
@@ -509,6 +546,7 @@ function AuthEmailForm({
   sending,
   errorMsg,
   onPasswordLogin,
+  buttonLabel,
 }: {
   email: string;
   setEmail: (v: string) => void;
@@ -517,6 +555,7 @@ function AuthEmailForm({
   sending: boolean;
   errorMsg: string | null;
   onPasswordLogin: () => void | Promise<void>;
+  buttonLabel?: string;
 }) {
   return (
     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onPasswordLogin(); }}>
@@ -535,7 +574,7 @@ function AuthEmailForm({
 
       <Button type="submit" className="w-full" disabled={sending || !email || password.length < 6}>
         {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Iniciar sesión
+        {buttonLabel ?? "Confirmar"}
       </Button>
     </form>
   );
