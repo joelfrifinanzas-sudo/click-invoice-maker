@@ -1171,6 +1171,18 @@ export type Database = {
           user_id: string | null
         }
       }
+      company_create_and_link: {
+        Args: {
+          _name: string
+          _rnc?: string
+          _phone?: string
+          _currency?: string
+        }
+        Returns: {
+          company_id: string
+          assigned_role: string
+        }[]
+      }
       compute_global_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["global_role"]

@@ -140,30 +140,33 @@ export const BusinessProfilePage = () => {
           companyId = invitedCompanyId;
           await supabase.from('users_profiles').upsert({ id: user.id, company_id: companyId });
         } else {
-          // Create the company
-          const insertPayload: any = {
-            owner_user_id: user.id,
-            name: profile.businessName || null,
-            rnc: rncDigits,
-            phone: phoneNorm,
+          // Create company and link membership transactionally via RPC (RLS enforced)
+          const { data: created, error: rpcErr } = await supabase.rpc('company_create_and_link', {
+            _name: profile.businessName || '',
+            _rnc: rncDigits,
+            _phone: phoneNorm,
+            _currency: profile.currency || 'DOP',
+          });
+          if (rpcErr) throw rpcErr;
+          const row = Array.isArray(created) ? (created[0] as any) : (created as any);
+          companyId = row?.company_id ?? null;
+          const assignedRole = row?.assigned_role ?? null;
+          if (!companyId) throw new Error('No se pudo obtener company_id');
+
+          // Associate profile to the new company
+          await supabase.from('users_profiles').upsert({ id: user.id, company_id: companyId });
+
+          // Step 4: Save secondary data only after successful link
+          const patch2: any = {
             address: profile.businessAddress || null,
             email_facturacion: profile.businessEmail || null,
-            currency: profile.currency || 'DOP',
-            logo_url: logoUrl,
           };
-          const { data: newCompany, error: insErr } = await supabase
-            .from('companies')
-            .insert(insertPayload)
-            .select('*')
-            .maybeSingle();
-          if (insErr) throw insErr;
-          companyId = newCompany?.id ?? null;
+          if (logoUrl) patch2.logo_url = logoUrl;
+          const { error: up2 } = await supabase.from('companies').update(patch2).eq('id', companyId);
+          if (up2) throw up2;
 
-          if (companyId) {
-            // Bootstrap membership into company_members
-            try { await supabase.rpc('cm_bootstrap_membership', { _company_id: companyId, _email: user.email }); } catch {}
-            await supabase.from('users_profiles').upsert({ id: user.id, company_id: companyId });
-          }
+          // Inform result includes company_id and role
+          toast({ title: 'Empresa creada', description: `ID: ${companyId} • Rol: ${assignedRole || 'owner'}` });
         }
       } else {
         // 2c) Update existing company
