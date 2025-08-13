@@ -19,6 +19,8 @@ export default function Login() {
   const location = useLocation();
   const [invalidLink, setInvalidLink] = useState(false);
   const [unauth, setUnauth] = useState(false);
+  // Runtime origin for auth redirects (env vars are not used in Lovable)
+  const BASE_URL = typeof window !== 'undefined' ? window.location.origin : "";
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -199,7 +201,7 @@ export default function Login() {
     setSending(true);
     try {
       try { localStorage.setItem("auth:last_email", email); } catch {}
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const redirectUrl = `${BASE_URL}/auth/callback`;
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: redirectUrl, shouldCreateUser: true },
@@ -228,7 +230,7 @@ export default function Login() {
       if (!password || password.length < 6) throw new Error("La contraseña debe tener al menos 6 caracteres");
       if (password !== password2) throw new Error("Las contraseñas no coinciden");
       try { localStorage.setItem("auth:last_email", email); } catch {}
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const redirectUrl = `${BASE_URL}/auth/callback`;
       const { error } = await supabase.auth.signUp({
         email,
         password,
