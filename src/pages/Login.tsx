@@ -404,16 +404,11 @@ export default function Login() {
       {phase === "email" ? (
         <section className="space-y-4">
           <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
-          {(invalidLink || unauth) && (
-            <div className="rounded-md border p-3 text-sm">
-              <p>{invalidLink ? "El enlace es inválido o expiró." : "No tienes permisos para esa ruta."}</p>
-              <div className="mt-2">
-                <Button variant="secondary" onClick={() => sendLoginLink()} disabled={!email || sending}>
-                  {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Reenviar enlace
-                </Button>
+            {(invalidLink || unauth) && (
+              <div className="rounded-md border p-3 text-sm">
+                <p>{invalidLink ? "El enlace es inválido o expiró." : "No tienes permisos para esa ruta."}</p>
               </div>
-            </div>
-          )}
+            )}
           <form
             className="space-y-4"
             onSubmit={(e) => {

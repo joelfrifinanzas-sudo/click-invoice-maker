@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
+
 
 function parseHash(hash: string) {
   const h = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -22,10 +22,6 @@ export default function AuthCallback() {
   const { toast } = useToast();
   const [status, setStatus] = useState<string>("Procesando autenticación...");
   const [err, setErr] = useState<string | null>(null);
-  const [email, setEmail] = useState<string>(() => {
-    try { return localStorage.getItem("auth:last_email") || ""; } catch { return ""; }
-  });
-  const [resending, setResending] = useState(false);
   const BASE_URL = typeof window !== 'undefined' ? window.location.origin : "";
   const { access_token, refresh_token, error } = useMemo(() => parseHash(location.hash), [location.hash]);
   const { code, qerror } = useMemo(() => {
@@ -197,21 +193,6 @@ export default function AuthCallback() {
     return () => { cancelled = true; };
   }, [access_token, refresh_token, error, code, qerror, navigate, toast]);
 
-  const handleResend = async () => {
-    if (!email) return;
-    setResending(true);
-    try {
-      try { localStorage.setItem("auth:last_email", email); } catch {}
-      const redirectUrl = `${BASE_URL}/auth/callback`;
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectUrl } });
-      if (error) throw error;
-      toast({ title: "Enlace enviado", description: "Revisa tu correo para continuar." });
-    } catch (e: any) {
-      toast({ title: "No se pudo enviar el enlace", description: e?.message || "Intenta de nuevo más tarde", variant: "destructive" });
-    } finally {
-      setResending(false);
-    }
-  };
 
   return (
     <main className="min-h-screen w-full flex items-center justify-center p-6">
@@ -221,16 +202,11 @@ export default function AuthCallback() {
         </div>
         <h1 className="text-xl font-semibold">Autenticando…</h1>
         <p className="text-muted-foreground">{status}</p>
-        {err && (
-          <div className="space-y-2">
-            <p className="text-sm">Intentar de nuevo con: <strong>{email || "(sin correo guardado)"}</strong></p>
-            <div className="flex items-center justify-center">
-              <Button onClick={handleResend} disabled={!email || resending}>
-                {resending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Reenviar enlace
-              </Button>
+          {err && (
+            <div className="space-y-2">
+              <p className="text-sm">No se pudo confirmar el enlace. Te llevaremos al inicio de sesión.</p>
             </div>
-          </div>
-        )}
+          )}
       </section>
     </main>
   );
