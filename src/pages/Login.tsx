@@ -34,7 +34,7 @@ export default function Login() {
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
-  const [loginWithPassword, setLoginWithPassword] = useState(false);
+  const [loginWithPassword, setLoginWithPassword] = useState(true);
   type AppUiRole = 'SUPER_ADMIN' | 'ADMIN' | 'SUPERVISOR' | 'CAJERA' | 'CLIENTE';
   const [phase, setPhase] = useState<"email" | "context">("email");
   const [memberships, setMemberships] = useState<{ company_id: string; company_name: string; role: string }[]>([]);
@@ -367,8 +367,9 @@ export default function Login() {
         await ensureAccountSetup(u.id, u.email);
       }
 
-      toast({ title: "Sesión iniciada", description: "Bienvenido." });
-      navigate("/app/inicio", { replace: true });
+      toast({ title: "Sesión iniciada", description: "Selecciona tu empresa." });
+      setPhase("context");
+      await loadMemberships();
     } catch (e: any) {
       const msg = e?.message || "No se pudo iniciar sesión";
       setErrorMsg(msg);
