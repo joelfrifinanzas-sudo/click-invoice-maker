@@ -37,6 +37,7 @@ export default function Login() {
   const [phase, setPhase] = useState<"email" | "context">("email");
   const [memberships, setMemberships] = useState<{ company_id: string; company_name: string; role: string }[]>([]);
   const [loadingCtx, setLoadingCtx] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [selectedMembershipRole, setSelectedMembershipRole] = useState<string>("");
   const [uiRole, setUiRole] = useState<AppUiRole>("CLIENTE");
@@ -126,13 +127,14 @@ export default function Login() {
       } else {
         setPhase("email");
       }
+      setCheckingSession(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
-      if (session) {
+      if (event === 'SIGNED_IN') {
         setPhase("context");
         loadMemberships();
-      } else {
+      } else if (event === 'SIGNED_OUT') {
         setPhase("email");
       }
     });
@@ -382,6 +384,18 @@ export default function Login() {
     }
     if (mode === "signup") await sendSignupLink(); else await sendLoginLink();
   };
+
+  if (checkingSession) {
+    return (
+      <main className="mx-auto max-w-md px-6 py-10">
+        <section className="space-y-6">
+          <div className="mx-auto h-10 w-10 animate-spin"><Loader2 className="h-10 w-10" /></div>
+          <h1 className="text-xl font-semibold text-center">Cargando sesión…</h1>
+          <p className="text-muted-foreground text-center">Verificando estado de autenticación…</p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-md px-6 py-10">
