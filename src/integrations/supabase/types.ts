@@ -739,6 +739,7 @@ export type Database = {
         Row: {
           canceled_at: string | null
           canceled_by: string | null
+          cliente_id: string | null
           company_id: string
           created_at: string
           currency: string
@@ -758,6 +759,7 @@ export type Database = {
         Insert: {
           canceled_at?: string | null
           canceled_by?: string | null
+          cliente_id?: string | null
           company_id: string
           created_at?: string
           currency?: string
@@ -777,6 +779,7 @@ export type Database = {
         Update: {
           canceled_at?: string | null
           canceled_by?: string | null
+          cliente_id?: string | null
           company_id?: string
           created_at?: string
           currency?: string
@@ -795,6 +798,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_invoices_cliente_id_clients"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_invoices_company"
             columns: ["company_id"]
             isOneToOne: false
@@ -806,6 +816,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
           {
