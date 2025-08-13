@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,42 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [loginWithPassword, setLoginWithPassword] = useState(false);
+  const [phase, setPhase] = useState<"email" | "context">("email");
+  const [memberships, setMemberships] = useState<{ company_id: string; company_name: string; role: string }[]>([]);
+  const [loadingCtx, setLoadingCtx] = useState(false);
+
+  const loadMemberships = async () => {
+    setLoadingCtx(true);
+    try {
+      const { data } = await supabase.from("my_memberships").select("*");
+      setMemberships((data as any[]) || []);
+    } finally {
+      setLoadingCtx(false);
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      if (session) {
+        setPhase("context");
+        loadMemberships();
+      } else {
+        setPhase("email");
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      if (session) {
+        setPhase("context");
+        loadMemberships();
+      } else {
+        setPhase("email");
+      }
+    });
+    return () => { mounted = false; subscription.unsubscribe(); };
+  }, []);
 
   useEffect(() => {
     document.title = mode === "signup" ? "Crear cuenta | App" : "Iniciar sesión | App";
@@ -47,7 +83,7 @@ export default function Login() {
     return Math.ceil(wait / 1000);
   }, [sending, sent]);
 
-  if (user) return <Navigate to="/app/inicio" replace />;
+  // Autenticado: se manejará con la fase 'context' en este mismo componente
 
   async function sendLoginLink() {
     setErrorMsg(null);
@@ -251,52 +287,46 @@ export default function Login() {
 
   return (
     <main className="mx-auto max-w-md px-6 py-10">
-      <h1 className="text-2xl font-semibold mb-6">{mode === "signup" ? "Crear cuenta" : "Iniciar sesión"}</h1>
-
-      <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="w-full">
-        <TabsList className="mb-4 w-full">
-          <TabsTrigger value="login" className="flex-1">Iniciar sesión</TabsTrigger>
-          <TabsTrigger value="signup" className="flex-1">Crear cuenta</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="login" className="mt-0">
-          <AuthEmailForm
-            email={email}
-            setEmail={setEmail}
-            password={password}
-            setPassword={setPassword}
-            sending={sending}
-            errorMsg={errorMsg}
-            onPasswordLogin={signInWithPassword}
-          />
-        </TabsContent>
-
-        <TabsContent value="signup" className="mt-0">
-          <SignupForm
-            firstName={firstName}
-            setFirstName={setFirstName}
-            lastName={lastName}
-            setLastName={setLastName}
-            phone={phone}
-            setPhone={setPhone}
-            email={email}
-            setEmail={setEmail}
-            password={password}
-            setPassword={setPassword}
-            password2={password2}
-            setPassword2={setPassword2}
-            sending={sending}
-            sent={sent}
-            errorMsg={errorMsg}
-            onSubmit={sendSignupLink}
-            onVerify={verifySignupCode}
-            onResend={onResend}
-          />
-        </TabsContent>
-      </Tabs>
-
-      <Separator className="my-6" />
-      <p className="text-xs text-muted-foreground">Inicia sesión con tu correo y contraseña. Para nuevas cuentas, confirma desde el enlace enviado a tu correo.</p>
+      {phase === "email" ? (
+        <section className="space-y-4">
+          <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendLoginLink();
+            }}
+          >
+            <div>
+              <label htmlFor="email" className="text-sm font-medium">Correo electrónico</label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
+            </div>
+            {errorMsg && (
+              <div role="alert" aria-live="polite" className="text-sm text-destructive">{errorMsg}</div>
+            )}
+            <Button type="submit" className="w-full" disabled={sending || !email}>
+              {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Enviar enlace
+            </Button>
+            {sent && (
+              <p className="text-xs text-muted-foreground text-center">Revisa tu correo y abre el enlace para continuar.</p>
+            )}
+          </form>
+        </section>
+      ) : (
+        <section className="text-center space-y-4">
+          <div className="mx-auto h-10 w-10 animate-spin">
+            <Loader2 className="h-10 w-10" />
+          </div>
+          <h1 className="text-xl font-semibold">Resolviendo contexto…</h1>
+          <p className="text-muted-foreground">{loadingCtx ? "Cargando sesión y membresías…" : `Listas ${memberships.length} membresía(s).`}</p>
+          {!loadingCtx && (
+            <div className="flex items-center justify-center">
+              <Button onClick={() => navigate("/app/inicio", { replace: true })}>Entrar</Button>
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }
