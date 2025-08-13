@@ -75,6 +75,22 @@ export default function AuthCallback() {
       let companyId = profile?.company_id as string | null | undefined;
 
       if (!companyId) {
+        // 1) Intentar adjuntar invitación existente
+        try {
+          const { data: invitedId } = await supabase.rpc("cm_accept_any_invitation_for_me");
+          if (invitedId) {
+            companyId = invitedId as unknown as string;
+            await supabase
+              .from("users_profiles")
+              .upsert({ id: userId, company_id: companyId })
+              .select("company_id")
+              .maybeSingle();
+          }
+        } catch {}
+      }
+
+      if (!companyId) {
+        // 2) Crear empresa mínima y ligar al perfil
         const defaultName = (userEmail?.split("@")[0] || "Mi Empresa").slice(0, 80);
         const { data: company } = await supabase
           .from("companies")
@@ -154,6 +170,7 @@ export default function AuthCallback() {
         setErr(msg);
         setStatus(`Error: ${msg}`);
         toast({ title: "Enlace inválido o expirado", description: msg, variant: "destructive" });
+        setTimeout(() => navigate("/login?e=invalid_link", { replace: true }), 300);
       }
     };
 
