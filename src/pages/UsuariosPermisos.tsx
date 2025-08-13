@@ -168,7 +168,10 @@ export default function UsuariosPermisos() {
       const { data, error } = await supabase.functions.invoke("admin-create-user", {
         body: { email, password, role },
       });
-      if (error) throw error;
+      if (error) {
+        const server = (data as any)?.error ? (data as any) : null;
+        throw new Error(server?.error || error.message || "Edge Function error");
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       toast({ title: "Usuario creado con éxito", description: email });
       setInviteOpen(false);
