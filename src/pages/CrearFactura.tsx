@@ -23,14 +23,9 @@ export default function CrearFactura() {
   const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState<'factura' | 'cotizacion'>('factura');
-const [clientDialogOpen, setClientDialogOpen] = useState<boolean>(true);
-const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-useEffect(() => {
-  if (!selectedClient) setClientDialogOpen(true);
-}, [selectedClient]);
 
   const checkInvoiceLimit = async () => {
     try {
@@ -79,7 +74,7 @@ useEffect(() => {
 const { error: dbError } = await createDraftInvoice({
         items,
         itbis_rate: itbisRate,
-        customer_id: null, // TODO: migrar a client_id si se requiere persistir a tabla clients
+        cliente_id: data.clienteId ?? null,
       });
       if (dbError) {
         console.warn('No se pudo guardar en la base de datos:', dbError);
@@ -105,11 +100,6 @@ const { error: dbError } = await createDraftInvoice({
   return (
     <ErrorBoundary>
       {/* Dialogo para seleccionar/crear cliente */}
-<ClientPickerDialog
-        open={clientDialogOpen}
-        onOpenChange={setClientDialogOpen}
-        onConfirm={(c) => { setSelectedClient(c); setClientDialogOpen(false); }}
-      />
       {!showPreview ? (
         <div className="min-h-screen bg-white">
           {/* Back Button */}
@@ -121,15 +111,6 @@ const { error: dbError } = await createDraftInvoice({
             {activeTab === 'factura' ? (
 <InvoiceForm
                 onGenerateInvoice={handleGenerateInvoice}
-                prefill={{
-                  clientName: selectedClient?.nombre_visualizacion,
-                  clientId: selectedClient?.documento || '',
-                  clientPhone: selectedClient?.telefono_movil || selectedClient?.telefono_laboral || '+1 ',
-                }}
-                selectedClientHint={{
-                  requiresFiscal: !!selectedClient?.es_contribuyente,
-                  defaultConsumerFinal: selectedClient?.tipo_cliente === 'Individuo' && !selectedClient?.documento,
-                }}
               />
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">

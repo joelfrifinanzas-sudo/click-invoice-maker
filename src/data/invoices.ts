@@ -15,7 +15,7 @@ export type CreateDraftInvoiceInput = {
     itbis_rate?: number | null;
   }>;
   itbis_rate?: number; // default 0.18
-  customer_id?: string | null; // optional: link invoice to a customer
+  cliente_id?: string | null; // optional: link invoice to a client (clients.id)
 };
 
 export async function createDraftInvoice(input: CreateDraftInvoiceInput): Promise<{ data: { invoice: Invoice; items: InvoiceItem[] } | null; error: string | null }> {
@@ -29,7 +29,7 @@ export async function createDraftInvoice(input: CreateDraftInvoiceInput): Promis
       company_id: ctx.data.companyId,
       status: "pendiente",
       itbis_rate: input.itbis_rate ?? 0.18,
-      customer_id: input.customer_id ?? null,
+      cliente_id: input.cliente_id ?? null,
     } as any;
 
     const { data: inv, error: invErr } = await supabase

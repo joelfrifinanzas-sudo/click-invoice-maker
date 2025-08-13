@@ -43,6 +43,7 @@ import { useToast } from '@/hooks/use-toast';
 import { logError } from '@/utils/logger';
 import { getNextNCF } from '@/data/ncf';
 import { getCurrentCompany } from '@/data/companyDb';
+import { ClientCombobox } from '@/components/clients/ClientCombobox';
 
 export interface ServiceItem {
   concept: string;
@@ -68,6 +69,7 @@ export interface InvoiceData {
   invoiceType: string;
   paymentStatus: 'pagado' | 'credito';
   notas?: string;
+  clienteId?: string | null;
 }
 
 interface InvoiceFormProps {
@@ -96,6 +98,7 @@ export const InvoiceForm = ({ onGenerateInvoice, prefill, selectedClientHint }: 
     invoiceType: 'sin-ncf',
     paymentStatus: 'credito',
     notas: '',
+    clienteId: null,
   });
 
   const [isEditingNCF, setIsEditingNCF] = useState(false);
@@ -737,21 +740,19 @@ export const InvoiceForm = ({ onGenerateInvoice, prefill, selectedClientHint }: 
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="clientName" className="text-responsive-sm font-medium">
-                            Nombre del cliente *
-                            {isLookingUpClient && (
-                              <span className="ml-2 text-responsive-xs text-muted-foreground animate-pulse">
-                                Consultando...
-                              </span>
-                            )}
-                          </Label>
-                          <Input
-                            id="clientName"
-                            value={formData.clientName}
-                            onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-                            placeholder="Ej: Juan Pérez Martínez"
-                            className={cn(isLookingUpClient && "bg-muted/50")}
-                            required
+<Label htmlFor="clientName" className="text-responsive-sm font-medium">
+                            Cliente *</Label>
+                          <ClientCombobox
+                            value={formData.clienteId ?? null}
+                            onChange={(id, client) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                clienteId: id ?? null,
+                                clientName: client?.nombre_visualizacion ?? prev.clientName,
+                                clientId: client?.documento ?? prev.clientId,
+                                clientPhone: client?.telefono_movil || client?.telefono_laboral || prev.clientPhone,
+                              }));
+                            }}
                           />
                         </div>
                         {formData.invoiceType !== 'sin-ncf' && (
