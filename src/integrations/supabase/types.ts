@@ -170,6 +170,53 @@ export type Database = {
         }
         Relationships: []
       }
+      clientes: {
+        Row: {
+          cedula_rnc: string | null
+          company_id: string
+          created_at: string
+          direccion: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          nombre: string
+          notas: string | null
+          telefono: string | null
+        }
+        Insert: {
+          cedula_rnc?: string | null
+          company_id: string
+          created_at?: string
+          direccion?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          nombre: string
+          notas?: string | null
+          telefono?: string | null
+        }
+        Update: {
+          cedula_rnc?: string | null
+          company_id?: string
+          created_at?: string
+          direccion?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          nombre?: string
+          notas?: string | null
+          telefono?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           activo: boolean
@@ -1061,6 +1108,10 @@ export type Database = {
           failures: number
           retry_after_seconds: number
         }[]
+      }
+      clientes_cajera_update_allowed: {
+        Args: { new_row: Database["public"]["Tables"]["clientes"]["Row"] }
+        Returns: boolean
       }
       cm_bootstrap_membership: {
         Args: { _company_id: string; _email: string }
