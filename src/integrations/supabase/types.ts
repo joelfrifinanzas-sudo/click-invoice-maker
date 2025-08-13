@@ -1007,6 +1007,7 @@ export type Database = {
           display_name: string | null
           global_role: Database["public"]["Enums"]["global_role"] | null
           id: string
+          last_company_id: string | null
           last_login: string | null
           phone: string | null
           status: Database["public"]["Enums"]["account_status"]
@@ -1019,6 +1020,7 @@ export type Database = {
           display_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id: string
+          last_company_id?: string | null
           last_login?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
@@ -1031,6 +1033,7 @@ export type Database = {
           display_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id?: string
+          last_company_id?: string | null
           last_login?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
@@ -1049,6 +1052,22 @@ export type Database = {
       }
     }
     Views: {
+      my_memberships: {
+        Row: {
+          company_id: string | null
+          company_name: string | null
+          role: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           company_id: string | null
