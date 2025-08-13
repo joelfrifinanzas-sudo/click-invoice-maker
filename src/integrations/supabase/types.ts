@@ -1325,6 +1325,10 @@ export type Database = {
         Args: { _email: string }
         Returns: undefined
       }
+      su_unset_root: {
+        Args: { _email: string }
+        Returns: undefined
+      }
       su_upsert_ncf_sequence: {
         Args: { _company_id: string; _ncf_type: string; _next_seq: number }
         Returns: undefined
