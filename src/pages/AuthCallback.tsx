@@ -26,6 +26,7 @@ export default function AuthCallback() {
     try { return localStorage.getItem("auth:last_email") || ""; } catch { return ""; }
   });
   const [resending, setResending] = useState(false);
+  const BASE_URL = typeof window !== 'undefined' ? window.location.origin : "";
   const { access_token, refresh_token, error } = useMemo(() => parseHash(location.hash), [location.hash]);
   const { code, qerror } = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -155,16 +156,34 @@ export default function AuthCallback() {
           setStatus("Aplicando permisos...");
           await ensureMembershipRole(companyId, session.user.email);
           try { await supabase.rpc("sync_my_claims"); } catch {}
-          try {
-            const { data: auth2 } = await supabase.auth.getUser();
-            const role = (auth2.user?.user_metadata as any)?.role ?? null;
-            try { localStorage.setItem("app:company_id", companyId); } catch {}
-            try { if (role) localStorage.setItem("app:role", role); } catch {}
-          } catch {}
         }
 
-        setStatus("¡Autenticado! Redirigiendo...");
-        setTimeout(() => navigate("/inicio", { replace: true }), 300);
+        if (cancelled) return;
+        setStatus("Cargando membresías...");
+        const { data: mList, error: mErr } = await supabase.from("my_memberships").select("*");
+        if (mErr) throw mErr;
+        const list = (mList as any[]) || [];
+
+        if (list.length === 0) {
+          navigate("/perfil-negocio", { replace: true });
+          return;
+        }
+
+        if (list.length === 1) {
+          const only = list[0];
+          try { localStorage.setItem("app:company_id", only.company_id); } catch {}
+          try { localStorage.setItem("app:membership_role", String(only.role || "")); } catch {}
+          try {
+            const { data: auth2 } = await supabase.auth.getUser();
+            const uid = auth2.user?.id;
+            if (uid) await supabase.from("users_profiles").update({ last_company_id: only.company_id }).eq("id", uid);
+          } catch {}
+          navigate("/app/inicio", { replace: true });
+          return;
+        }
+
+        // Multiples empresas: vamos al selector de contexto en /login
+        navigate("/login?state=context", { replace: true });
       } catch (e: any) {
         const msg = e?.message || "Fallo desconocido";
         setErr(msg);
@@ -183,7 +202,7 @@ export default function AuthCallback() {
     setResending(true);
     try {
       try { localStorage.setItem("auth:last_email", email); } catch {}
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const redirectUrl = `${BASE_URL}/auth/callback`;
       const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectUrl } });
       if (error) throw error;
       toast({ title: "Enlace enviado", description: "Revisa tu correo para continuar." });
