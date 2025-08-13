@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import UserMembershipsDialog from "./UserMembershipsDialog";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 export type DirectoryUser = {
   id: string;
@@ -22,12 +23,34 @@ export default function UsersDirectory() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<DirectoryUser | null>(null);
+  const [promotingId, setPromotingId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const fetchUsers = async () => {
     setLoading(true);
     const { data } = await supabase.rpc("su_users_list", { _name: name || null, _email: email || null });
     setUsers((data || []) as DirectoryUser[]);
     setLoading(false);
+  };
+
+  const promoteToSuperAdmin = async (u: DirectoryUser) => {
+    if (!u.email) {
+      toast({ title: "Email requerido", description: "Este usuario no tiene email." });
+      return;
+    }
+    if (!confirm(`¿Convertir a ${u.email} en Super Admin?`)) return;
+    try {
+      setPromotingId(u.id);
+      const { error } = await supabase.rpc("su_set_root_email", { _email: u.email });
+      if (error) throw error;
+      toast({ title: "Asignado", description: `${u.email} ahora es Super Admin.` });
+      // Al promover, desaparece de la lista (RPC su_users_list excluye roots)
+      fetchUsers();
+    } catch (e: any) {
+      toast({ title: "Error", description: e?.message || "No se pudo asignar Super Admin" });
+    } finally {
+      setPromotingId(null);
+    }
   };
 
   useEffect(() => {
@@ -67,7 +90,10 @@ export default function UsersDirectory() {
                 <TableCell>{u.phone || "-"}</TableCell>
                 <TableCell>{u.companies_count}</TableCell>
                 <TableCell>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : "-"}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right space-x-2">
+                  <Button variant="secondary" size="sm" disabled={promotingId === u.id || !u.email} onClick={() => promoteToSuperAdmin(u)}>
+                    {promotingId === u.id ? "Asignando..." : "Hacer Super Admin"}
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => setSelected(u)}>Membresías</Button>
                 </TableCell>
               </TableRow>

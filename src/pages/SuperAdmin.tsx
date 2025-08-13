@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import CompanyForm from "@/components/superadmin/CompanyForm";
 import UsersDirectory from "@/components/superadmin/UsersDirectory";
 import PlanCatalog from "@/components/superadmin/PlanCatalog";
+import { useToast } from "@/hooks/use-toast";
 
 const sections = [
   { key: "empresas", label: "Empresas" },
@@ -40,6 +41,11 @@ export default function SuperAdmin() {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Company | null>(null);
+  const { toast } = useToast();
+
+  type RootUser = { user_id: string; email: string | null; created_at: string };
+  const [roots, setRoots] = useState<RootUser[]>([]);
+  const [loadingRoots, setLoadingRoots] = useState(false);
 
   // SEO basics for SPA
   useEffect(() => {
@@ -73,6 +79,8 @@ export default function SuperAdmin() {
   useEffect(() => {
     if (active === "empresas") {
       fetchCompanies();
+    } else if (active === "usuarios") {
+      loadRoots();
     }
   }, [active]);
 
@@ -96,9 +104,74 @@ export default function SuperAdmin() {
     fetchCompanies();
   };
 
+  const loadRoots = async () => {
+    setLoadingRoots(true);
+    const { data, error } = await supabase
+      .from("app_roots")
+      .select("user_id,email,created_at")
+      .order("created_at", { ascending: false });
+    if (!error && data) setRoots(data as RootUser[]);
+    setLoadingRoots(false);
+  };
+
+  const handleRemoveRoot = async (email: string | null) => {
+    if (!email) return;
+    if (!confirm(`¿Quitar Super Admin a ${email}?`)) return;
+    const { error } = await (supabase as any).rpc("su_unset_root", { _email: email });
+    if (error) {
+      toast({ title: "Error", description: error.message });
+    } else {
+      toast({ title: "Actualizado", description: `${email} ya no es Super Admin` });
+      loadRoots();
+    }
+  };
+
   const content = useMemo(() => {
     if (active === "usuarios") {
-      return <UsersDirectory />;
+      return (
+        <div className="space-y-4">
+          <UsersDirectory />
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle>Super Admin actuales</CardTitle>
+              <Button variant="outline" size="sm" onClick={loadRoots} disabled={loadingRoots}>
+                {loadingRoots ? "Actualizando..." : "Actualizar"}
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Desde</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {roots.map((r) => (
+                    <TableRow key={r.user_id}>
+                      <TableCell>{r.email}</TableCell>
+                      <TableCell>{new Date(r.created_at).toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="destructive" size="sm" onClick={() => handleRemoveRoot(r.email)}>
+                          Quitar Super Admin
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!loadingRoots && roots.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-6">
+                        No hay Super Admin registrados
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      );
     }
     if (active === "planes") {
       return <PlanCatalog />;
