@@ -5,29 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-
-export type NuevoCliente = {
-  id: string;
-  company_id: string;
-  nombre: string;
-  email: string | null;
-  telefono: string | null;
-  cedula_rnc: string | null;
-  direccion: string | null;
-  notas: string | null;
-  is_active: boolean;
-  created_at: string;
-};
+import { upsertClient, type Client } from "@/data/clients";
 
 export function NuevoClienteDialog({ open, onOpenChange, onCreated }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onCreated?: (c: NuevoCliente) => void;
+  onCreated?: (c: Client) => void;
 }) {
   const { toast } = useToast();
-  const { companyId } = useAuth();
   const [pending, setPending] = React.useState(false);
   const [form, setForm] = React.useState({
     nombre: "",
@@ -42,10 +27,6 @@ export function NuevoClienteDialog({ open, onOpenChange, onCreated }: {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyId) {
-      toast({ title: "Completa empresa", description: "Debes seleccionar o crear una empresa antes de crear clientes." });
-      return;
-    }
     if (!form.nombre.trim()) {
       toast({ title: "Falta el nombre", description: "El nombre es requerido." });
       return;
@@ -53,30 +34,26 @@ export function NuevoClienteDialog({ open, onOpenChange, onCreated }: {
 
     setPending(true);
     try {
-      const payload = {
-        company_id: companyId,
-        nombre: form.nombre.trim(),
+      const { data, error } = await upsertClient({
+        tipo_cliente: "Individuo",
+        nombre_visualizacion: form.nombre.trim(),
+        nombre_pila: form.nombre.trim(),
         email: form.email.trim() || null,
-        telefono: form.telefono.trim() || null,
-        cedula_rnc: form.cedula_rnc.trim() || null,
-        direccion: form.direccion.trim() || null,
+        telefono_movil: form.telefono.trim() || null,
+        documento: form.cedula_rnc.trim() || null,
         notas: form.notas.trim() || null,
-      };
-      const { data, error } = await supabase
-        .from('clientes')
-        .insert([payload])
-        .select('*')
-        .single();
+        activo: true
+      });
 
       if (error) {
-        toast({ title: "Error al guardar", description: error.message });
+        toast({ title: "Error al guardar", description: error });
         return;
       }
 
-      toast({ title: "Cliente creado", description: `Se creó ${data?.nombre || 'el cliente'}.` });
+      toast({ title: "Cliente creado", description: `Se creó ${data?.nombre_visualizacion || 'el cliente'}.` });
       reset();
       onOpenChange(false);
-      if (data && onCreated) onCreated(data as NuevoCliente);
+      if (data && onCreated) onCreated(data);
     } catch (err: any) {
       toast({ title: "Error inesperado", description: err?.message || String(err) });
     } finally {
