@@ -85,8 +85,15 @@ export default function Login() {
       const uid = authRes.data.user?.id;
 
       if (list.length === 0) {
-        navigate('/perfil-negocio', { replace: true });
-        return;
+        // Solo navegar a perfil-negocio si el usuario no tiene compañía creada
+        const { data: prof } = await supabase.from('users_profiles').select('company_id').eq('id', uid).maybeSingle();
+        if (!prof?.company_id) {
+          navigate('/perfil-negocio', { replace: true });
+          return;
+        } else {
+          navigate('/app/inicio', { replace: true });
+          return;
+        }
       }
 
       if (list.length === 1) {

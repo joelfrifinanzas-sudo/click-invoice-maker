@@ -184,6 +184,8 @@ export const BusinessProfilePage = () => {
 
       saveCompanyProfile(profile);
       toast({ title: 'Datos del negocio guardados', description: 'El perfil se actualizó correctamente.' });
+      
+      // Evitar redirección después de guardar - mantener al usuario en la página
     } catch (e: any) {
       toast({ title: 'Error al guardar', description: e?.message || 'Intenta nuevamente', variant: 'destructive' });
     }
