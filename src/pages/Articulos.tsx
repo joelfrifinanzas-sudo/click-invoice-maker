@@ -16,8 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Package, Edit, Trash2, Barcode, ImagePlus, X, ChevronDown } from "lucide-react";
 import { formatMoneyDOP } from "@/utils/formatters";
 import { listProducts } from "@/data/products";
-import { supabase } from "@/integrations/supabase/client";
-import { getCurrentContext } from "@/data/utils";
+import { upsertProduct, listProductos, type Producto } from "@/data/productos";
 import type { Product } from "@/data/products";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -61,7 +60,7 @@ export default function Articulos() {
   const { toast } = useToast();
 
   // Remote products list (Supabase)
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Producto[]>([]);
   const [page, setPage] = useState(0);
   const pageSize = 12;
   const [hasNext, setHasNext] = useState(false);
@@ -114,7 +113,7 @@ export default function Articulos() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await listProducts({ search: search || undefined, activeOnly: true, page, limit: pageSize + 1 });
+      const { data, error } = await listProductos({ search: search || undefined, activeOnly: true, page, limit: pageSize + 1 });
       if (error) {
         toast({ title: "Error cargando productos", description: error, variant: "destructive" });
         return;
@@ -229,7 +228,7 @@ export default function Articulos() {
       // DB uniqueness check for barcode -> map to sku
       const barcode = values.codigoBarras?.trim();
       if (barcode) {
-        const { data: existing, error } = await listProducts({ limit: 200 });
+        const { data: existing, error } = await listProductos({ limit: 200 });
         if (error) {
           toast({ title: "Error verificando código", description: error, variant: "destructive" });
           return;
@@ -242,25 +241,19 @@ export default function Articulos() {
       }
 
       const unitPrice = moneyToNumber(values.precioVenta || "0");
-      const ctx = await getCurrentContext();
-      if (!ctx.data || !ctx.data.companyId) {
-        const desc = ctx.error?.includes('Missing company_id') ? 'Selecciona o crea una empresa para continuar.' : (ctx.error || 'No autenticado');
-        toast({ title: ctx.error?.includes('Missing company_id') ? 'Completa empresa' : 'No se pudo guardar', description: desc, variant: "destructive" });
-        return;
-      }
-      const { data, error } = await supabase.from("products").insert({
+      
+      const { data, error } = await upsertProduct({
         name: values.nombre.trim(),
         currency: "DOP",
         itbis_rate: 0.18,
         unit_price: unitPrice,
         active: true,
-        owner_user_id: ctx.data.user.id,
-        company_id: ctx.data.companyId,
-        sku: (barcode || null) as any,
-      }).select("*").maybeSingle();
+        sku: barcode || null,
+      });
+
       if (error) {
         console.error("Product save failed", error);
-        toast({ title: "No se pudo guardar", description: error.message, variant: "destructive" });
+        toast({ title: "No se pudo guardar", description: error, variant: "destructive" });
         return;
       }
 
