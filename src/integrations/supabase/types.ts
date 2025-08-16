@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -172,39 +172,48 @@ export type Database = {
       }
       clientes: {
         Row: {
+          archived: boolean | null
           cedula_rnc: string | null
           company_id: string
           created_at: string
+          created_by: string | null
           direccion: string | null
           email: string | null
           id: string
           is_active: boolean
           nombre: string
           notas: string | null
+          status: string | null
           telefono: string | null
         }
         Insert: {
+          archived?: boolean | null
           cedula_rnc?: string | null
           company_id: string
           created_at?: string
+          created_by?: string | null
           direccion?: string | null
           email?: string | null
           id?: string
           is_active?: boolean
           nombre: string
           notas?: string | null
+          status?: string | null
           telefono?: string | null
         }
         Update: {
+          archived?: boolean | null
           cedula_rnc?: string | null
           company_id?: string
           created_at?: string
+          created_by?: string | null
           direccion?: string | null
           email?: string | null
           id?: string
           is_active?: boolean
           nombre?: string
           notas?: string | null
+          status?: string | null
           telefono?: string | null
         }
         Relationships: [
@@ -1126,11 +1135,11 @@ export type Database = {
       }
       audit_log: {
         Args: {
-          _event_type: Database["public"]["Enums"]["audit_event_type"]
           _company_id?: string
-          _subject_id?: string
-          _message?: string
           _details?: Json
+          _event_type: Database["public"]["Enums"]["audit_event_type"]
+          _message?: string
+          _subject_id?: string
         }
         Returns: undefined
       }
@@ -1142,8 +1151,8 @@ export type Database = {
         Args: {
           _email: string
           _ip: string
-          _window_mins?: number
           _max_attempts?: number
+          _window_mins?: number
         }
         Returns: {
           blocked: boolean
@@ -1173,14 +1182,14 @@ export type Database = {
       }
       company_create_and_link: {
         Args: {
-          _name: string
-          _rnc?: string
-          _phone?: string
           _currency?: string
+          _name: string
+          _phone?: string
+          _rnc?: string
         }
         Returns: {
-          company_id: string
           assigned_role: string
+          company_id: string
         }[]
       }
       compute_global_role: {
@@ -1209,8 +1218,8 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -1252,9 +1261,9 @@ export type Database = {
       }
       su_add_user_to_company: {
         Args: {
-          _user_id: string
           _company_id: string
           _role: Database["public"]["Enums"]["company_role"]
+          _user_id: string
         }
         Returns: undefined
       }
@@ -1265,30 +1274,30 @@ export type Database = {
       su_assign_members: {
         Args: {
           _company_id: string
-          _user_ids: string[]
           _role: Database["public"]["Enums"]["company_role"]
+          _user_ids: string[]
         }
         Returns: number
       }
       su_audit_list: {
         Args: {
           _company_id?: string
-          _user_id?: string
           _event_type?: Database["public"]["Enums"]["audit_event_type"]
           _from?: string
           _to?: string
+          _user_id?: string
         }
         Returns: {
-          id: string
-          created_at: string
-          user_id: string
-          user_email: string
-          user_name: string
           company_id: string
           company_name: string
+          created_at: string
           event_type: Database["public"]["Enums"]["audit_event_type"]
-          subject_id: string
+          id: string
           message: string
+          subject_id: string
+          user_email: string
+          user_id: string
+          user_name: string
         }[]
       }
       su_companies_list: {
@@ -1316,10 +1325,10 @@ export type Database = {
       su_company_members: {
         Args: { _company_id: string }
         Returns: {
-          user_id: string
-          email: string
           display_name: string
+          email: string
           role: Database["public"]["Enums"]["company_role"]
+          user_id: string
         }[]
       }
       su_company_remove_member: {
@@ -1327,46 +1336,46 @@ export type Database = {
         Returns: undefined
       }
       su_company_set_active: {
-        Args: { _company_id: string; _active: boolean }
+        Args: { _active: boolean; _company_id: string }
         Returns: undefined
       }
       su_company_set_member_role: {
         Args: {
           _company_id: string
-          _user_id: string
           _role: Database["public"]["Enums"]["company_role"]
+          _user_id: string
         }
         Returns: undefined
       }
       su_company_upsert: {
         Args:
           | {
-              _id: string
-              _name: string
-              _rnc: string
-              _phone: string
+              _active: boolean
               _address: string
               _currency: string
+              _id: string
               _itbis_rate: number
-              _active: boolean
-              _plan: string
               _limit_invoices_per_month: number
               _limit_users: number
+              _name: string
               _owner_user_id?: string
+              _phone: string
+              _plan: string
+              _rnc: string
             }
           | {
-              _id: string
-              _name: string
-              _rnc: string
-              _phone: string
+              _active: boolean
               _address: string
               _currency: string
+              _id: string
               _itbis_rate: number
-              _active: boolean
-              _plan: string
               _limit_invoices_per_month: number
               _limit_users: number
+              _name: string
               _owner_user_id?: string
+              _phone: string
+              _plan: string
+              _rnc: string
               _storage_limit_mb?: number
             }
         Returns: {
@@ -1396,19 +1405,19 @@ export type Database = {
       su_list_ncf_sequences: {
         Args: { _company_id: string }
         Returns: {
+          company_id: string
           ncf_type: string
           next_seq: number
-          company_id: string
         }[]
       }
       su_plan_upsert: {
         Args: {
-          _name: string
           _description: string
+          _features?: Json
           _limit_invoices_per_month: number
           _limit_users: number
+          _name: string
           _storage_limit_mb: number
-          _features?: Json
         }
         Returns: {
           created_at: string
@@ -1455,22 +1464,22 @@ export type Database = {
         }[]
       }
       su_users_list: {
-        Args: { _name?: string; _email?: string }
+        Args: { _email?: string; _name?: string }
         Returns: {
-          id: string
-          email: string
-          display_name: string
-          phone: string
           companies_count: number
+          display_name: string
+          email: string
+          id: string
           last_sign_in_at: string
+          phone: string
         }[]
       }
       su_users_without_membership: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          email: string
           display_name: string
+          email: string
+          id: string
           last_sign_in_at: string
         }[]
       }

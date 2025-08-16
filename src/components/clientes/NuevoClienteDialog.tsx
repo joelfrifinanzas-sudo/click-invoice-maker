@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { upsertClient, type Client } from "@/data/clients";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentContext } from "@/data/utils";
 
 export function NuevoClienteDialog({ open, onOpenChange, onCreated }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onCreated?: (c: Client) => void;
+  onCreated?: () => void;
 }) {
   const { toast } = useToast();
   const [pending, setPending] = React.useState(false);
@@ -34,26 +35,35 @@ export function NuevoClienteDialog({ open, onOpenChange, onCreated }: {
 
     setPending(true);
     try {
-      const { data, error } = await upsertClient({
-        tipo_cliente: "Individuo",
-        nombre_visualizacion: form.nombre.trim(),
-        nombre_pila: form.nombre.trim(),
-        email: form.email.trim() || null,
-        telefono_movil: form.telefono.trim() || null,
-        documento: form.cedula_rnc.trim() || null,
-        notas: form.notas.trim() || null,
-        activo: true
-      });
-
-      if (error) {
-        toast({ title: "Error al guardar", description: error });
+      const ctx = await getCurrentContext();
+      if (!ctx.data) {
+        toast({ title: "Error", description: "No se pudo obtener el contexto de la empresa" });
         return;
       }
 
-      toast({ title: "Cliente creado", description: `Se creó ${data?.nombre_visualizacion || 'el cliente'}.` });
+      const { data, error } = await supabase.from("clientes").insert({
+        company_id: ctx.data.companyId,
+        nombre: form.nombre.trim(),
+        email: form.email.trim() || null,
+        telefono: form.telefono.trim() || null,
+        cedula_rnc: form.cedula_rnc.trim() || null,
+        direccion: form.direccion.trim() || null,
+        notas: form.notas.trim() || null,
+        created_by: ctx.data.user.id,
+        status: "active",
+        archived: false,
+        is_active: true
+      }).select().single();
+
+      if (error) {
+        toast({ title: "Error al guardar", description: error.message });
+        return;
+      }
+
+      toast({ title: "Cliente creado", description: `Se creó ${data?.nombre || 'el cliente'}.` });
       reset();
       onOpenChange(false);
-      if (data && onCreated) onCreated(data);
+      if (onCreated) onCreated();
     } catch (err: any) {
       toast({ title: "Error inesperado", description: err?.message || String(err) });
     } finally {

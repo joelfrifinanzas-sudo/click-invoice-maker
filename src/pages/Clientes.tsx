@@ -7,9 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { listClients, Client } from "@/data/clients";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentContext } from "@/data/utils";
 import { useNavigate } from "react-router-dom";
 import { NuevoClienteDialog } from "@/components/clientes/NuevoClienteDialog";
+type Cliente = {
+  id: string;
+  nombre: string;
+  email: string | null;
+  telefono: string | null;
+  cedula_rnc: string | null;
+  direccion: string | null;
+  notas: string | null;
+  is_active: boolean;
+  status: string;
+  archived: boolean;
+  created_at: string;
+};
+
 export default function Clientes() {
   useScrollToTop();
   const navigate = useNavigate();
@@ -17,7 +32,7 @@ export default function Clientes() {
   const [debounced, setDebounced] = React.useState("");
   const [page, setPage] = React.useState(1);
   const pageSize = 20;
-  const [rows, setRows] = React.useState<Client[]>([]);
+  const [rows, setRows] = React.useState<Cliente[]>([]);
   const [total, setTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
   const [nuevoOpen, setNuevoOpen] = React.useState(false);
@@ -34,13 +49,45 @@ export default function Clientes() {
 
   React.useEffect(() => {
     let mounted = true;
-    setLoading(true);
-    listClients({ search: debounced, page, pageSize }).then(({ data, total }) => {
-      if (!mounted) return;
-      setRows(data);
-      setTotal(total);
-      setLoading(false);
-    });
+    
+    const fetchClientes = async () => {
+      setLoading(true);
+      try {
+        const ctx = await getCurrentContext();
+        if (!ctx.data || !mounted) return;
+
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+
+        let query = supabase
+          .from("clientes")
+          .select("*", { count: "exact" })
+          .eq("company_id", ctx.data.companyId)
+          .eq("status", "active")
+          .eq("archived", false)
+          .order("created_at", { ascending: false })
+          .range(from, to);
+
+        if (debounced.trim()) {
+          const term = `%${debounced.trim()}%`;
+          query = query.or(`nombre.ilike.${term},cedula_rnc.ilike.${term},email.ilike.${term}`);
+        }
+
+        const { data, error, count } = await query;
+        if (error) throw error;
+        
+        if (mounted) {
+          setRows((data as Cliente[]) || []);
+          setTotal(count || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching clientes:", error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchClientes();
     return () => { mounted = false; };
   }, [debounced, page, refreshKey]);
 
@@ -52,10 +99,7 @@ export default function Clientes() {
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <ModuleHeader title="Clientes" description="Administra tu base de datos de clientes" showBackButton={false} />
-            <div className="flex gap-2">
-              <Button onClick={() => setNuevoOpen(true)}>Nuevo cliente</Button>
-              <Button onClick={() => navigate('/clientes/nuevo')}>+ Nuevo</Button>
-            </div>
+            <Button onClick={() => setNuevoOpen(true)}>+ Nuevo</Button>
           </div>
 
           <div className="bg-card border rounded-lg p-4">
@@ -78,14 +122,14 @@ export default function Clientes() {
                 </div>
               ) : (
                 rows.map((c) => (
-                  <button key={c.id} onClick={() => navigate(`/clientes/${c.id}`)} className="w-full text-left border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{c.nombre_visualizacion}</div>
-                        <div className="text-muted-foreground text-sm">{c.tipo_cliente} • {c.documento || '—'}</div>
-                        <div className="text-muted-foreground text-sm">{c.email || '—'} • {c.telefono_movil || c.telefono_laboral || '—'}</div>
-                      </div>
-                      <Badge variant={c.activo ? 'default' : 'secondary'}>{c.activo ? 'Activo' : 'Inactivo'}</Badge>
+                     <button key={c.id} onClick={() => navigate(`/clientes/${c.id}`)} className="w-full text-left border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                     <div className="flex items-center justify-between">
+                       <div>
+                         <div className="font-medium">{c.nombre}</div>
+                         <div className="text-muted-foreground text-sm">{c.cedula_rnc || '—'}</div>
+                         <div className="text-muted-foreground text-sm">{c.email || '—'} • {c.telefono || '—'}</div>
+                       </div>
+                       <Badge variant={c.is_active ? 'default' : 'secondary'}>{c.is_active ? 'Activo' : 'Inactivo'}</Badge>
                     </div>
                   </button>
                 ))
@@ -95,43 +139,41 @@ export default function Clientes() {
             {/* Desktop table */}
             <div className="hidden sm:block">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre de visualización</TableHead>
-                    <TableHead>Tipo de cliente</TableHead>
-                    <TableHead>Documento</TableHead>
-                    <TableHead>Correo</TableHead>
-                    <TableHead>Teléfono</TableHead>
-                    <TableHead>Estado</TableHead>
-                  </TableRow>
-                </TableHeader>
+                 <TableHeader>
+                   <TableRow>
+                     <TableHead>Nombre</TableHead>
+                     <TableHead>Documento</TableHead>
+                     <TableHead>Correo</TableHead>
+                     <TableHead>Teléfono</TableHead>
+                     <TableHead>Estado</TableHead>
+                   </TableRow>
+                 </TableHeader>
                 <TableBody>
-                  {loading ? (
-                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Cargando...</TableCell></TableRow>
-                  ) : rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center">
-                        <div className="py-8">
-                          <p className="text-muted-foreground mb-4">No hay clientes aún</p>
-                          <Button onClick={() => navigate('/clientes/nuevo')}>Crear primer cliente</Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                   {loading ? (
+                     <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Cargando...</TableCell></TableRow>
+                   ) : rows.length === 0 ? (
+                     <TableRow>
+                       <TableCell colSpan={5} className="text-center">
+                         <div className="py-8">
+                           <p className="text-muted-foreground mb-4">No hay clientes aún</p>
+                           <Button onClick={() => setNuevoOpen(true)}>Crear primer cliente</Button>
+                         </div>
+                       </TableCell>
+                     </TableRow>
                   ) : (
-                    rows.map((c) => (
-                      <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/clientes/${c.id}`)}>
-                        <TableCell className="font-medium">{c.nombre_visualizacion}</TableCell>
-                        <TableCell>{c.tipo_cliente}</TableCell>
-                        <TableCell>{c.documento || '—'}</TableCell>
-                        <TableCell>{c.email || '—'}</TableCell>
-                        <TableCell>{c.telefono_movil || c.telefono_laboral || '—'}</TableCell>
-                        <TableCell>
-                          <Badge variant={c.activo ? 'default' : 'secondary'}>
-                            {c.activo ? 'Activo' : 'Inactivo'}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                     rows.map((c) => (
+                       <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/clientes/${c.id}`)}>
+                         <TableCell className="font-medium">{c.nombre}</TableCell>
+                         <TableCell>{c.cedula_rnc || '—'}</TableCell>
+                         <TableCell>{c.email || '—'}</TableCell>
+                         <TableCell>{c.telefono || '—'}</TableCell>
+                         <TableCell>
+                           <Badge variant={c.is_active ? 'default' : 'secondary'}>
+                             {c.is_active ? 'Activo' : 'Inactivo'}
+                           </Badge>
+                         </TableCell>
+                       </TableRow>
+                     ))
                   )}
                 </TableBody>
               </Table>
