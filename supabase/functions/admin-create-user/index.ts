@@ -1,6 +1,7 @@
 // Admin Create User Edge Function
-// Accepts POST { email, password, role }
+// Accepts POST { email, password, role, company_id }
 // Creates a Supabase auth user with email confirmed and stores role in user_metadata
+// Also inserts the user into user_company table
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -20,6 +21,7 @@ type CreateUserPayload = {
   email?: string;
   password?: string;
   role?: string;
+  company_id?: string;
 };
 
 function jsonResponse(body: unknown, status = 200) {
@@ -61,6 +63,7 @@ Deno.serve(async (req) => {
   const email = (payload.email || "").trim().toLowerCase();
   const password = payload.password || "";
   const role = (payload.role || "").trim().toLowerCase();
+  const company_id = payload.company_id;
 
   // Validate inputs
   if (!email || !isValidEmail(email)) {
@@ -71,6 +74,9 @@ Deno.serve(async (req) => {
   }
   if (!ALLOWED_ROLES.includes(role as AllowedRole)) {
     return jsonResponse({ error: `Rol inválido. Permitidos: ${ALLOWED_ROLES.join(", ")}` }, 400);
+  }
+  if (!company_id) {
+    return jsonResponse({ error: "company_id es requerido" }, 400);
   }
 
   // Admin client for privileged operations
@@ -92,6 +98,20 @@ Deno.serve(async (req) => {
 
   if (!data?.user?.id) {
     return jsonResponse({ error: "Respuesta inesperada del servidor" }, 500);
+  }
+
+  // Insert into user_company table with employee role
+  const { error: memberError } = await admin
+    .from("user_company")
+    .insert({
+      user_id: data.user.id,
+      company_id: company_id,
+      role: "employee"
+    });
+
+  if (memberError) {
+    console.error("Error inserting into user_company:", memberError);
+    // Don't fail the entire operation, just log the error
   }
 
   return jsonResponse({ success: true, userId: data.user.id }, 200);

@@ -95,6 +95,7 @@ export default function UsuariosPermisos() {
         .from("company_members")
         .select("id,email,user_id,role,status,created_at", { count: "exact" })
         .eq("company_id", companyId)
+        .eq("status", "active")  // Only show active members
         .order("created_at", { ascending: false })
         .range(from, to);
       const q = search.trim() ? query.ilike("email", `%${search.trim()}%`) : query;
@@ -166,7 +167,7 @@ export default function UsuariosPermisos() {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("admin-create-user", {
-        body: { email, password, role },
+        body: { email, password, role, company_id: companyId },
       });
       if (error) {
         const server = (data as any)?.error ? (data as any) : null;
@@ -178,6 +179,8 @@ export default function UsuariosPermisos() {
       setCreateEmail("");
       setCreatePassword("");
       setCreateRole("cajera");
+      // Refresh the members list to show the new user immediately
+      void fetchMembers();
     } catch (e: any) {
       toast({ title: "No se pudo crear", description: e?.message || "Intente más tarde", variant: "destructive" });
     } finally {
