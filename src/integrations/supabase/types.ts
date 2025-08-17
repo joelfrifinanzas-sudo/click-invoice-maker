@@ -228,74 +228,39 @@ export type Database = {
       }
       clients: {
         Row: {
-          activo: boolean
-          apellido: string | null
+          archived: boolean
+          company_id: string
           created_at: string
-          documento: string | null
+          created_by: string
           email: string | null
-          es_contribuyente: boolean
           id: string
-          nombre_empresa: string | null
-          nombre_pila: string | null
-          nombre_visualizacion: string
-          notas: string | null
-          owner_id: string | null
-          pais_tel: string
-          saludo: string | null
-          telefono_laboral: string | null
-          telefono_movil: string | null
-          tenant_id: string
-          tipo_cliente: Database["public"]["Enums"]["client_type"]
+          name: string
+          phone: string | null
+          status: string
         }
         Insert: {
-          activo?: boolean
-          apellido?: string | null
+          archived?: boolean
+          company_id: string
           created_at?: string
-          documento?: string | null
+          created_by: string
           email?: string | null
-          es_contribuyente?: boolean
           id?: string
-          nombre_empresa?: string | null
-          nombre_pila?: string | null
-          nombre_visualizacion: string
-          notas?: string | null
-          owner_id?: string | null
-          pais_tel?: string
-          saludo?: string | null
-          telefono_laboral?: string | null
-          telefono_movil?: string | null
-          tenant_id: string
-          tipo_cliente: Database["public"]["Enums"]["client_type"]
+          name: string
+          phone?: string | null
+          status?: string
         }
         Update: {
-          activo?: boolean
-          apellido?: string | null
+          archived?: boolean
+          company_id?: string
           created_at?: string
-          documento?: string | null
+          created_by?: string
           email?: string | null
-          es_contribuyente?: boolean
           id?: string
-          nombre_empresa?: string | null
-          nombre_pila?: string | null
-          nombre_visualizacion?: string
-          notas?: string | null
-          owner_id?: string | null
-          pais_tel?: string
-          saludo?: string | null
-          telefono_laboral?: string | null
-          telefono_movil?: string | null
-          tenant_id?: string
-          tipo_cliente?: Database["public"]["Enums"]["client_type"]
+          name?: string
+          phone?: string | null
+          status?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "clients_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       companies: {
         Row: {
@@ -812,13 +777,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_invoices_cliente_id_clients"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "fk_invoices_company"
             columns: ["company_id"]
@@ -1494,29 +1452,6 @@ export type Database = {
       touch_login: {
         Args: Record<PropertyKey, never>
         Returns: boolean
-      }
-      upsert_client: {
-        Args: { payload: Json }
-        Returns: {
-          activo: boolean
-          apellido: string | null
-          created_at: string
-          documento: string | null
-          email: string | null
-          es_contribuyente: boolean
-          id: string
-          nombre_empresa: string | null
-          nombre_pila: string | null
-          nombre_visualizacion: string
-          notas: string | null
-          owner_id: string | null
-          pais_tel: string
-          saludo: string | null
-          telefono_laboral: string | null
-          telefono_movil: string | null
-          tenant_id: string
-          tipo_cliente: Database["public"]["Enums"]["client_type"]
-        }
       }
     }
     Enums: {
