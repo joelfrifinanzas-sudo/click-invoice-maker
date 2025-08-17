@@ -7,9 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Client, ClientType } from "@/data/clients";
-import { supabase } from "@/integrations/supabase/client";
-import { getCurrentContext } from "@/data/utils";
+import { Client, ClientType, upsertClient } from "@/data/clients";
 import { useToast } from "@/hooks/use-toast";
 import { validateCedula, validateRNC } from "@/utils/validationUtils";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -106,15 +104,9 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
 
     try {
       setSaving(true);
-      const ctx = await getCurrentContext();
-      if (!ctx.data || !ctx.data.companyId) {
-        toast({ title: "Completa empresa", description: "Selecciona o crea una empresa para continuar.", variant: "destructive" });
-        return;
-      }
 
-      const payload = {
-        owner_id: ctx.data.user.id,
-        tenant_id: ctx.data.companyId,
+      const { data, error } = await upsertClient({
+        id: undefined,
         tipo_cliente: values.tipo_cliente,
         saludo: values.saludo || null,
         nombre_pila: values.nombre_pila || null,
@@ -129,14 +121,14 @@ export function ClientForm({ initialData, onSaved }: { initialData?: Client; onS
         es_contribuyente: !!values.es_contribuyente,
         notas: values.notas || null,
         activo: values.activo !== false,
-      } as any;
+      });
 
-      const { data, error } = await supabase.from("clients").insert(payload).select("*").maybeSingle();
       if (error || !data) {
         console.error("Client save failed", error);
-        toast({ title: "No se pudo guardar", description: error?.message ?? "Verifique los campos requeridos", variant: "destructive" });
+        toast({ title: "No se pudo guardar", description: error ?? "Verifique los campos requeridos", variant: "destructive" });
         return;
       }
+
       toast({ title: "Cliente guardado", description: data.nombre_visualizacion });
       // Reset form and focus first field (combobox trigger) for quick consecutive entries
       form.reset({

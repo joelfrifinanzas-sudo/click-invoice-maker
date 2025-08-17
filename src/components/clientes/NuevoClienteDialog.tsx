@@ -41,18 +41,14 @@ export function NuevoClienteDialog({ open, onOpenChange, onCreated }: {
         return;
       }
 
-      const { data, error } = await supabase.from("clientes").insert({
+      const { data, error } = await supabase.from("clients").insert({
         company_id: ctx.data.companyId,
-        nombre: form.nombre.trim(),
-        email: form.email.trim() || null,
-        telefono: form.telefono.trim() || null,
-        cedula_rnc: form.cedula_rnc.trim() || null,
-        direccion: form.direccion.trim() || null,
-        notas: form.notas.trim() || null,
         created_by: ctx.data.user.id,
+        name: form.nombre.trim(),
+        email: form.email.trim() || null,
+        phone: form.telefono.trim() || null,
         status: "active",
-        archived: false,
-        is_active: true
+        archived: false
       }).select().single();
 
       if (error) {
@@ -60,7 +56,7 @@ export function NuevoClienteDialog({ open, onOpenChange, onCreated }: {
         return;
       }
 
-      toast({ title: "Cliente creado", description: `Se creó ${data?.nombre || 'el cliente'}.` });
+      toast({ title: "Cliente creado", description: `Se creó ${data?.name || 'el cliente'}.` });
       reset();
       onOpenChange(false);
       if (onCreated) onCreated();

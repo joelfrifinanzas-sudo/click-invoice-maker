@@ -13,13 +13,9 @@ import { useNavigate } from "react-router-dom";
 import { NuevoClienteDialog } from "@/components/clientes/NuevoClienteDialog";
 type Cliente = {
   id: string;
-  nombre: string;
+  name: string;
   email: string | null;
-  telefono: string | null;
-  cedula_rnc: string | null;
-  direccion: string | null;
-  notas: string | null;
-  is_active: boolean;
+  phone: string | null;
   status: string;
   archived: boolean;
   created_at: string;
@@ -60,7 +56,7 @@ export default function Clientes() {
         const to = from + pageSize - 1;
 
         let query = supabase
-          .from("clientes")
+          .from("clients")
           .select("*", { count: "exact" })
           .eq("company_id", ctx.data.companyId)
           .eq("status", "active")
@@ -70,7 +66,7 @@ export default function Clientes() {
 
         if (debounced.trim()) {
           const term = `%${debounced.trim()}%`;
-          query = query.or(`nombre.ilike.${term},cedula_rnc.ilike.${term},email.ilike.${term}`);
+          query = query.or(`name.ilike.${term},email.ilike.${term},phone.ilike.${term}`);
         }
 
         const { data, error, count } = await query;
@@ -125,11 +121,11 @@ export default function Clientes() {
                      <button key={c.id} onClick={() => navigate(`/clientes/${c.id}`)} className="w-full text-left border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                      <div className="flex items-center justify-between">
                        <div>
-                         <div className="font-medium">{c.nombre}</div>
-                         <div className="text-muted-foreground text-sm">{c.cedula_rnc || '—'}</div>
-                         <div className="text-muted-foreground text-sm">{c.email || '—'} • {c.telefono || '—'}</div>
+                         <div className="font-medium">{c.name}</div>
+                         <div className="text-muted-foreground text-sm">—</div>
+                         <div className="text-muted-foreground text-sm">{c.email || '—'} • {c.phone || '—'}</div>
                        </div>
-                       <Badge variant={c.is_active ? 'default' : 'secondary'}>{c.is_active ? 'Activo' : 'Inactivo'}</Badge>
+                       <Badge variant={c.status === 'active' && !c.archived ? 'default' : 'secondary'}>{c.status === 'active' && !c.archived ? 'Activo' : 'Inactivo'}</Badge>
                     </div>
                   </button>
                 ))
@@ -161,19 +157,19 @@ export default function Clientes() {
                        </TableCell>
                      </TableRow>
                   ) : (
-                     rows.map((c) => (
-                       <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/clientes/${c.id}`)}>
-                         <TableCell className="font-medium">{c.nombre}</TableCell>
-                         <TableCell>{c.cedula_rnc || '—'}</TableCell>
-                         <TableCell>{c.email || '—'}</TableCell>
-                         <TableCell>{c.telefono || '—'}</TableCell>
-                         <TableCell>
-                           <Badge variant={c.is_active ? 'default' : 'secondary'}>
-                             {c.is_active ? 'Activo' : 'Inactivo'}
-                           </Badge>
-                         </TableCell>
-                       </TableRow>
-                     ))
+                      rows.map((c) => (
+                        <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/clientes/${c.id}`)}>
+                          <TableCell className="font-medium">{c.name}</TableCell>
+                          <TableCell>—</TableCell>
+                          <TableCell>{c.email || '—'}</TableCell>
+                          <TableCell>{c.phone || '—'}</TableCell>
+                          <TableCell>
+                            <Badge variant={c.status === 'active' && !c.archived ? 'default' : 'secondary'}>
+                              {c.status === 'active' && !c.archived ? 'Activo' : 'Inactivo'}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
                   )}
                 </TableBody>
               </Table>
