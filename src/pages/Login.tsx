@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyRoleSelector } from "@/components/auth/CompanyRoleSelector";
 
 export default function Login() {
   const { user } = useAuth();
@@ -76,22 +77,45 @@ export default function Login() {
   const loadMemberships = async () => {
     setLoadingCtx(true);
     try {
-      const [mRes, authRes] = await Promise.all([
-        supabase.from("my_memberships").select("*"),
-        supabase.auth.getUser(),
-      ]);
-      const list = (mRes.data as any[]) || [];
+      const { data: authRes } = await supabase.auth.getUser();
+      const uid = authRes.user?.id;
+
+      if (!uid) {
+        setPhase("email");
+        return;
+      }
+
+      // Use the user_company table to get memberships
+      const { data: membershipData } = await supabase
+        .from('user_company')
+        .select(`
+          company_id,
+          role,
+          companies!inner(name)
+        `)
+        .eq('user_id', uid);
+
+      const list = (membershipData || []).map((m: any) => ({
+        company_id: m.company_id,
+        company_name: m.companies?.name || `Company ${m.company_id.slice(0, 8)}`,
+        role: m.role
+      }));
+
       setMemberships(list);
-      const uid = authRes.data.user?.id;
 
       if (list.length === 0) {
-        // Solo navegar a perfil-negocio si el usuario no tiene compañía creada
-        const { data: prof } = await supabase.from('users_profiles').select('company_id').eq('id', uid).maybeSingle();
+        // Check if user has a company but no membership
+        const { data: prof } = await supabase
+          .from('users_profiles')
+          .select('company_id')
+          .eq('id', uid)
+          .maybeSingle();
+        
         if (!prof?.company_id) {
           navigate('/perfil-negocio', { replace: true });
           return;
         } else {
-          navigate('/app/inicio', { replace: true });
+          navigate('/inicio', { replace: true });
           return;
         }
       }
@@ -99,11 +123,11 @@ export default function Login() {
       if (list.length === 1) {
         const only = list[0];
         await persistSelection(only.company_id, only.role, getUiOptionsForMembership(only.role)[0]);
-        navigate('/app/inicio', { replace: true });
+        navigate('/inicio', { replace: true });
         return;
       }
 
-      // multiple memberships: preselect last_company or first
+      // Multiple memberships: preselect last_company or first
       let lastCompany: string | null = null;
       if (uid) {
         const { data: prof } = await supabase
