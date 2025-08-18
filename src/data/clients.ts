@@ -136,7 +136,7 @@ export async function upsertClient(input: UpsertClientInput) {
     "Cliente";
   const phone = input.telefono_movil || input.telefono_laboral || null;
 
-  const insertPayload: Partial<CanonicalClient> = {
+  const insertPayload = {
     company_id: ctx.data.companyId,
     created_by: ctx.data.user.id,
     name,
@@ -144,7 +144,7 @@ export async function upsertClient(input: UpsertClientInput) {
     phone,
     status: input.activo === false ? "inactive" : "active",
     archived: false,
-  } as any;
+  };
 
   const { data, error } = await supabase
     .from("clients")
